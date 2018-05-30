@@ -6,11 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
+	"sort"
 	"syscall"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
 	"github.com/jochasinga/requests"
 	uuid "github.com/satori/go.uuid"
 	git "gopkg.in/src-d/go-git.v4"
@@ -100,6 +99,23 @@ func fetchChainspec() (map[string]interface{}, error) {
 	return spec, nil
 }
 
+func getGenesisContractABI(path string) (*abi.ABI, error) {
+	compiledContractJSON, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var compiledContract map[string]interface{}
+	err = json.Unmarshal(compiledContractJSON, &compiledContract)
+	if err != nil {
+		return nil, err
+	}
+	contractAbi, ok := compiledContract["abi"].(interface{})
+	if !ok {
+		return nil, fmt.Errorf("Unable to read ABI from compiled contract: %s", path)
+	}
+	return parseContractABI(contractAbi)
+}
+
 func getGenesisContractBytecode(path string) ([]byte, error) {
 	compiledContractJSON, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -127,6 +143,30 @@ func insertGenesisContractAccount(path, genesisAccountAddr string, genesisAccoun
 		"constructor": string(bytecode),
 	}
 	return nil
+}
+
+func insertNetworkConsensusContractAccount(contractPath, genesisAccountAddr string, genesisAccounts map[string]interface{}, constructorParams []interface{}) error {
+	var err error
+	if bytecode, err := getGenesisContractBytecode(contractPath); err == nil {
+		if err != nil {
+			fmt.Printf("Failed to get genesis contract ABI: %s", err.Error())
+			return err
+		}
+		keys := make([]int, 0)
+		for k := range constructorParams {
+			keys = append(keys, k)
+		}
+		sort.Ints(keys)
+		var calldata string
+		for _, k := range keys {
+			calldata = fmt.Sprintf("%s%s", calldata, constructorParams[k])
+		}
+		genesisAccounts[genesisAccountAddr] = map[string]interface{}{
+			"balance":     "1",
+			"constructor": fmt.Sprintf("%s%s", bytecode, calldata),
+		}
+	}
+	return err
 }
 
 // BuildChainspec uses the given auth_os and network consensus refs to compile
@@ -173,48 +213,32 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 					if name != networkConsensusContractName {
 						insertGenesisContractAccount(contractPath, addr, accounts)
 					} else {
-						var compiledContractABI []map[string]interface{}
-						if compiledContractJSON, err := ioutil.ReadFile(contractPath); err == nil {
-							if err := json.Unmarshal(compiledContractJSON, &compiledContractABI); err == nil {
-								if compiledABIJSON, err := json.Marshal(compiledContractABI); err != nil {
-									if consensusABI, err := abi.JSON(strings.NewReader(string(compiledABIJSON))); err != nil {
-										encodedArgs, err := consensusABI.Constructor.Inputs.PackValues([]interface{}{
-											masterOfCeremony,
-											accounts["RegistryStorage"],
-											accounts["InitRegistry"],
-											accounts["AppConsole"],
-											accounts["VersionConsole"],
-											accounts["ImplConsole"],
-											accounts["Aura"],
-											accounts["ValidatorConsole"],
-											accounts["VotingConsole"],
-										})
-										bytecode, err := getGenesisContractBytecode(contractPath)
-										if err == nil {
-											consensusGenesisConstructor := append(bytecode, encodedArgs...)
-											accounts[addr] = map[string]interface{}{
-												"balance":     "1",
-												"constructor": string(consensusGenesisConstructor),
-											}
-										}
-									}
-								}
+						addrs := make([]string, 0)
+						for _, v := range genesisContractAccounts {
+							addrs = append(addrs, v)
+						}
+						sort.Strings(addrs)
+						consensusConstructorParams := make([]interface{}, 0)
+						consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", masterOfCeremony[2:]))
+						for _, _addr := range addrs {
+							if addr != _addr {
+								consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", _addr[2:]))
 							}
 						}
-
+						insertNetworkConsensusContractAccount(contractPath, addr, accounts, consensusConstructorParams)
 					}
 				}
 			}
 
 			spec, err = json.Marshal(template)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
 	os.RemoveAll(osWorkdir)
 	os.RemoveAll(consensusWorkdir)
 
+	if err != nil {
+		return nil, err
+	}
 	return spec, nil
 }
