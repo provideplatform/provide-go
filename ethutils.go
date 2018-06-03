@@ -3,6 +3,10 @@ package provide
 import (
 	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -14,11 +18,14 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/scrypt"
+
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/randentropy"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -138,6 +145,9 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 	var args []interface{}
 
 	for i := range params {
+		if i >= len(method.Inputs) {
+			break
+		}
 		input := method.Inputs[i]
 		Log.Debugf("Attempting to coerce encoding of %v abi parameter; value: %s", input.Type, params[i])
 		param, err := coerceAbiParameter(input.Type, params[i])
@@ -149,6 +159,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 				param = []byte(param.(string))
 			default:
 				// no-op
+				Log.Debugf("Unmodified parameter (type: %s); value: %s", input.Type, param)
 			}
 
 			args = append(args, param)
@@ -167,9 +178,14 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 
 // ExecuteContract builds valid calldata for signature and broadcasts a contract execution tx via JSON-RPC
 func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*interface{}, error) {
-	var err error
 	// TODO: verify that to is a valid contract address
-	_abi, err := parseContractABI(contractABI)
+	var _abi *abi.ABI
+	var err error
+	if _, ok := contractABI.(*abi.ABI); ok {
+		_abi = contractABI.(*abi.ABI)
+	} else {
+		_abi, err = parseContractABI(contractABI)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed to execute contract method %s on contract %s; no ABI resolved: %s", method, *to, err.Error())
 	}
@@ -227,15 +243,126 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 	return nil, err
 }
 
-// GenerateKeyPair - creates and returns an ECDSA keypair
-func GenerateKeyPair() (address, encodedPrivateKey *string, err error) {
-	privateKey, err := ethcrypto.GenerateKey()
+// GenerateKeyPair - creates and returns an ECDSA keypair;
+// the returned *ecdsa.PrivateKey can be encoded with: hex.EncodeToString(ethcrypto.FromECDSA(privateKey))
+func GenerateKeyPair() (address *string, privateKey *ecdsa.PrivateKey, err error) {
+	privateKey, err = ethcrypto.GenerateKey()
 	if err != nil {
 		return nil, nil, err
 	}
 	address = stringOrNil(ethcrypto.PubkeyToAddress(privateKey.PublicKey).Hex())
-	encodedPrivateKey = stringOrNil(hex.EncodeToString(ethcrypto.FromECDSA(privateKey)))
-	return address, encodedPrivateKey, nil
+	return address, privateKey, nil
+}
+
+// MarshalKeyPairJSON - returns keystore JSON representation of given private key
+func MarshalKeyPairJSON(addr common.Address, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+	type keyJSON struct {
+		ID         string `json:"id"`
+		Address    string `json:"address"`
+		PrivateKey string `json:"privatekey"`
+		Version    int    `json:"version"`
+	}
+	keyUUID, _ := generateKeyUUID()
+	key := keyJSON{
+		ID:         keyUUID,
+		Address:    hex.EncodeToString(addr[:]),
+		PrivateKey: hex.EncodeToString(ethcrypto.FromECDSA(privateKey)),
+		Version:    3,
+	}
+	return json.Marshal(key)
+}
+
+// MarshalEncryptedKey encrypts key as version 3.
+func MarshalEncryptedKey(addr common.Address, privateKey *ecdsa.PrivateKey, secret string) ([]byte, error) {
+	const (
+		// n,r,p = 2^12, 8, 6 uses 4MB memory and approx 100ms CPU time on a modern CPU.
+		LightScryptN = 1 << 12
+		LightScryptP = 6
+
+		scryptR     = 4
+		scryptDKLen = 32
+	)
+
+	type cipherparamsJSON struct {
+		IV string `json:"iv"`
+	}
+
+	type cryptoJSON struct {
+		Cipher       string                 `json:"cipher"`
+		CipherText   string                 `json:"ciphertext"`
+		CipherParams cipherparamsJSON       `json:"cipherparams"`
+		KDF          string                 `json:"kdf"`
+		KDFParams    map[string]interface{} `json:"kdfparams"`
+		MAC          string                 `json:"mac"`
+	}
+
+	type web3v3 struct {
+		ID      string     `json:"id"`
+		Address string     `json:"address"`
+		Crypto  cryptoJSON `json:"crypto"`
+		Version int        `json:"version"`
+	}
+
+	salt := randentropy.GetEntropyCSPRNG(32)
+	derivedKey, err := scrypt.Key([]byte(secret), salt, LightScryptN, scryptR, LightScryptP, scryptDKLen)
+	if err != nil {
+		return nil, err
+	}
+	encryptKey := derivedKey[:16]
+	keyBytes := ethcrypto.FromECDSA(privateKey)
+
+	iv := randentropy.GetEntropyCSPRNG(aes.BlockSize) // 16
+	cipherText, err := aesCTRXOR(encryptKey, keyBytes, iv)
+	if err != nil {
+		return nil, err
+	}
+	mac := ethcrypto.Keccak256(derivedKey[16:32], cipherText)
+
+	keyUUID, _ := generateKeyUUID()
+
+	return json.Marshal(web3v3{
+		ID:      keyUUID,
+		Address: hex.EncodeToString(addr[:]),
+		Crypto: cryptoJSON{
+			Cipher:     "aes-128-ctr",
+			CipherText: hex.EncodeToString(cipherText),
+			CipherParams: cipherparamsJSON{
+				IV: hex.EncodeToString(iv),
+			},
+			KDF: "scrypt",
+			KDFParams: map[string]interface{}{
+				"n":     LightScryptN,
+				"r":     scryptR,
+				"p":     LightScryptP,
+				"dklen": scryptDKLen,
+				"salt":  hex.EncodeToString(salt),
+			},
+			MAC: hex.EncodeToString(mac),
+		},
+		Version: 3,
+	})
+}
+
+func aesCTRXOR(key, inText, iv []byte) ([]byte, error) {
+	// AES-128 is selected due to size of encryptKey.
+	aesBlock, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	stream := cipher.NewCTR(aesBlock, iv)
+	outText := make([]byte, len(inText))
+	stream.XORKeyStream(outText, inText)
+	return outText, err
+}
+
+func generateKeyUUID() (string, error) {
+	var u [16]byte
+	if _, err := rand.Read(u[:]); err != nil {
+		return "", err
+	}
+	u[6] = (u[6] & 0x0f) | 0x40 // version 4
+	u[8] = (u[8] & 0x3f) | 0x80 // variant 10
+	return fmt.Sprintf("%x-%x-%x-%x-%x", u[:4], u[4:6], u[6:8], u[8:10], u[10:]), nil
 }
 
 // HashFunctionSelector returns the first 4 bytes of the Keccak256 hash of the given function selector
