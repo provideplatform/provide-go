@@ -226,6 +226,8 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 							}
 						}
 						insertNetworkConsensusContractAccount(contractPath, addr, accounts, consensusConstructorParams)
+
+						template["engine"].(map[string]interface{})["authorityRound"].(map[string]interface{})["params"].(map[string]interface{})["validators"].(map[string]interface{})["multi"].(map[string]interface{})["0"].(map[string]interface{})["contract"] = addr
 					}
 				}
 			}
