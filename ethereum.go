@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	ethereum "github.com/ethereum/go-ethereum"
@@ -39,7 +40,13 @@ func GetChainConfig(networkID, rpcURL string) *params.ChainConfig {
 	if cfg, ok := chainConfigs[networkID]; ok {
 		return cfg
 	}
-	return params.MainnetChainConfig
+	cfg := params.MainnetChainConfig
+	chainID, err := strconv.ParseUint(networkID, 10, 0)
+	if err != nil {
+		cfg.ChainId = big.NewInt(int64(chainID))
+		chainConfigs[networkID] = cfg
+	}
+	return cfg
 }
 
 // GetChainID retrieves the current chainID via JSON-RPC
