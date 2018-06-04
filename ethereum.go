@@ -2,6 +2,7 @@ package provide
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -96,13 +97,19 @@ func GetNativeBalance(networkID, rpcURL, addr string) (*big.Int, error) {
 // protocol version, and syncing state.
 func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	ethClient, err := ResolveEthClient(networkID, rpcURL)
-	if err != nil {
-		Log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
+	if err != nil || rpcURL == "" {
+		meta := map[string]interface{}{
+			"error": nil,
+		}
+		if err != nil {
+			Log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
+			meta["error"] = err.Error()
+		} else if rpcURL == "" {
+			meta["error"] = errors.New("No 'full-node' JSON-RPC URL configured or resolvable")
+		}
 		return &NetworkStatus{
 			State: stringOrNil("configuring"),
-			Meta: map[string]interface{}{
-				"error": err.Error(),
-			},
+			Meta:  meta,
 		}, nil
 	}
 
