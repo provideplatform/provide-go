@@ -2,7 +2,6 @@ package provide
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -105,7 +104,7 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 			Log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
 			meta["error"] = err.Error()
 		} else if rpcURL == "" {
-			meta["error"] = errors.New("No 'full-node' JSON-RPC URL configured or resolvable")
+			meta["error"] = "No 'full-node' JSON-RPC URL configured or resolvable"
 		}
 		return &NetworkStatus{
 			State: stringOrNil("configuring"),
