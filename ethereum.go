@@ -319,16 +319,11 @@ func TraceTx(networkID, rpcURL string, hash *string) (interface{}, error) {
 
 // GetTxReceipt retrieves the full transaction receipt via JSON-RPC given the transaction hash
 func GetTxReceipt(networkID, rpcURL, txHash, from string) (*types.Receipt, error) {
-	var err error
-	var receipt *types.Receipt
 	client, err := DialJsonRpc(networkID, rpcURL)
-	// FIXME-- make sure 0-prefixed and non-prefixed hashes work... txHash := fmt.Sprintf("0x%s", *t.Hash)
-	// FIXME-- set a timeout on the following code that currently blocks util the tx receipt is retrieved:
-	Log.Debugf("Attempting to retrieve tx receipt for broadcast tx: %s", txHash)
-	err = ethereum.NotFound
-	for receipt == nil && err == ethereum.NotFound {
-		Log.Debugf("Retrieving broadcast tx receipt for tx: %s", txHash)
-		receipt, err = client.TransactionReceipt(context.TODO(), common.HexToHash(txHash))
+	if err != nil {
+		Log.Warningf("Failed to retrieve tx receipt for broadcast tx: %s; %s", txHash, err.Error())
+		return nil, err
 	}
-	return receipt, err
+	Log.Debugf("Attempting to retrieve tx receipt for broadcast tx: %s", txHash)
+	return client.TransactionReceipt(context.TODO(), common.HexToHash(txHash))
 }
