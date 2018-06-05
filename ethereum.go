@@ -103,7 +103,7 @@ func GetNativeBalance(networkID, rpcURL, addr string) (*big.Int, error) {
 // protocol version, and syncing state.
 func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	ethClient, err := ResolveEthClient(networkID, rpcURL)
-	if err != nil || rpcURL == "" {
+	if err != nil || rpcURL == "" || ethClient == nil {
 		meta := map[string]interface{}{
 			"error": nil,
 		}
@@ -112,6 +112,8 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 			meta["error"] = err.Error()
 		} else if rpcURL == "" {
 			meta["error"] = "No 'full-node' JSON-RPC URL configured or resolvable"
+		} else if ethClient == nil {
+			meta["error"] = "Configured 'full-node' JSON-RPC client not resolved"
 		}
 		return &NetworkStatus{
 			State: stringOrNil("configuring"),
