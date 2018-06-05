@@ -409,21 +409,21 @@ func BroadcastSignedTx(networkID, rpcURL string, signedTx *types.Transaction) er
 }
 
 // SignTx signs a transaction using the given private key and calldata
-func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int) (*types.Transaction, error) {
+func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int) (*types.Transaction, *string, error) {
 	client, err := ResolveEthClient(networkID, rpcURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	_, err = GetSyncProgress(client)
 	if err == nil {
 		cfg := GetChainConfig(networkID, rpcURL)
 		blockNumber, err := GetLatestBlock(networkID, rpcURL)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		nonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		gasPrice, _ := client.SuggestGasPrice(context.TODO())
 		var _data []byte
@@ -436,7 +436,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), 0)
 			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
@@ -445,7 +445,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), 0)
 			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewContractCreation(nonce, val, gasLimit, gasPrice, _data)
@@ -453,25 +453,24 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 		signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
 		hash := signer.Hash(tx).Bytes()
 		Log.Debugf("Signing tx on behalf of %s", from)
-		_privateKey, err := ethcrypto.ToECDSA([]byte(privateKey))
+		_privateKey, err := ethcrypto.HexToECDSA(privateKey)
 		if err != nil {
-			return nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
+			return nil, nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
 		}
 		sig, err := ethcrypto.Sign(hash, _privateKey)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to sign tx on behalf of %s; %s", *to, err.Error())
+			return nil, nil, fmt.Errorf("Failed to sign tx on behalf of %s; %s", *to, err.Error())
 		}
 		if err == nil {
 			signedTx, _ := tx.WithSignature(signer, sig)
-			hash := stringOrNil(fmt.Sprintf("%x", signedTx.Hash()))
+			hash := stringOrNil(fmt.Sprintf("0x%x", signedTx.Hash()))
 			signedTxJSON, _ := signedTx.MarshalJSON()
 			Log.Debugf("Signed tx for broadcast via JSON-RPC: %s", signedTxJSON)
-			Log.Debugf("SignedTx hash == %s; ours == %s", signedTx.Hash(), hash)
-			return signedTx, nil
+			return signedTx, hash, nil
 		}
-		return nil, err
+		return nil, nil, err
 	}
-	return nil, err
+	return nil, nil, err
 }
 
 // ABI-related helpers
