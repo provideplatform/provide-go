@@ -43,7 +43,7 @@ func GetChainConfig(networkID, rpcURL string) *params.ChainConfig {
 	cfg := params.MainnetChainConfig
 	chainID, err := strconv.ParseUint(networkID, 10, 0)
 	if err != nil {
-		cfg.ChainId = big.NewInt(int64(chainID))
+		cfg.ChainID = big.NewInt(int64(chainID))
 		chainConfigs[networkID] = cfg
 	}
 	return cfg
