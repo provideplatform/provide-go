@@ -204,7 +204,7 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 		Log.Debugf("Attempting to encode %d parameters [ %s ] prior to executing %s on contract %s", len(params), params, methodDescriptor, to)
 		invocationSig, err := EncodeABI(abiMethod, params...)
 		if err != nil {
-			return "", nil, fmt.Errorf("Failed to encode %d parameters prior to attempting execution of %s on contract %s; %s", len(params), methodDescriptor, *to, err.Error())
+			return nil, nil, fmt.Errorf("Failed to encode %d parameters prior to attempting execution of %s on contract %s; %s", len(params), methodDescriptor, *to, err.Error())
 		}
 
 		data := common.Bytes2Hex(invocationSig)
