@@ -177,7 +177,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 }
 
 // ExecuteContract builds valid calldata for signature and broadcasts a contract execution tx via JSON-RPC
-func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*interface{}, error) {
+func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*string, *interface{}, error) {
 	// TODO: verify that to is a valid contract address
 	var _abi *abi.ABI
 	var err error
@@ -190,7 +190,7 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 		_abi, err = parseContractABI(contractABI)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Failed to execute contract method %s on contract %s; no ABI resolved: %s", method, *to, err.Error())
+		return nil, nil, fmt.Errorf("Failed to execute contract method %s on contract %s; no ABI resolved: %s", method, *to, err.Error())
 	}
 	var methodDescriptor = fmt.Sprintf("method %s", method)
 	var abiMethod *abi.Method
@@ -204,7 +204,7 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 		Log.Debugf("Attempting to encode %d parameters [ %s ] prior to executing %s on contract %s", len(params), params, methodDescriptor, to)
 		invocationSig, err := EncodeABI(abiMethod, params...)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to encode %d parameters prior to attempting execution of %s on contract %s; %s", len(params), methodDescriptor, *to, err.Error())
+			return "", nil, fmt.Errorf("Failed to encode %d parameters prior to attempting execution of %s on contract %s; %s", len(params), methodDescriptor, *to, err.Error())
 		}
 
 		data := common.Bytes2Hex(invocationSig)
@@ -227,7 +227,7 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 					Log.Debugf("Reflectively adding type hint for unpacking %s in return values slot %v", typestr, i)
 					typ, err := abi.NewType(typestr)
 					if err != nil {
-						return nil, fmt.Errorf("Failed to reflectively add appropriately-typed %s value for in return values slot %v); %s", typestr, i, err.Error())
+						return nil, nil, fmt.Errorf("Failed to reflectively add appropriately-typed %s value for in return values slot %v); %s", typestr, i, err.Error())
 					}
 					vals[i] = reflect.New(typ.Type).Interface()
 				}
@@ -236,14 +236,14 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 				Log.Debugf("Unpacked %v returned values from read of constant %s on contract: %s; values: %s", len(vals), methodDescriptor, to, vals)
 			}
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read constant %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
+				return nil, nil, fmt.Errorf("Failed to read constant %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
 			}
-			return &out, nil
+			return stringOrNil(data), &out, nil
 		}
 	} else {
 		err = fmt.Errorf("Failed to execute contract %s on contract: %s; method not found in ABI", methodDescriptor, *to)
 	}
-	return nil, err
+	return nil, nil, err
 }
 
 // GenerateKeyPair - creates and returns an ECDSA keypair;
