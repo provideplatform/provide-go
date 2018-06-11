@@ -183,6 +183,9 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 	var err error
 	if _, ok := contractABI.(*abi.ABI); ok {
 		_abi = contractABI.(*abi.ABI)
+	} else if _, ok := contractABI.(abi.ABI); ok {
+		castAbi := contractABI.(abi.ABI)
+		_abi = &castAbi
 	} else {
 		_abi, err = parseContractABI(contractABI)
 	}
