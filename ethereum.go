@@ -154,9 +154,9 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	if syncProgress == nil {
 		state = "synced"
 		hdr, err := ethClient.HeaderByNumber(context.TODO(), nil)
+		var jsonRpcResponse *EthereumJsonRpcResponse
 		if err != nil && hdr == nil {
 			Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
-			var jsonRpcResponse = &EthereumJsonRpcResponse{}
 			err = InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRpcResponse)
 			if err != nil {
 				Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
@@ -166,6 +166,10 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 					return nil, err
 				}
 			}
+		}
+		block = hdr.Number.Uint64()
+		jsonRpcResponse, err = GetBlockByNumber(networkID, rpcURL, block)
+		if err != nil {
 			if lastBlock, lastBlockOk := jsonRpcResponse.Result.(map[string]interface{}); lastBlockOk {
 				Log.Debugf("Got JSON-RPC response; %s", lastBlock)
 				meta["last_block"] = lastBlock
@@ -177,7 +181,6 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 				}
 			}
 		}
-		block = hdr.Number.Uint64()
 	} else {
 		block = syncProgress.CurrentBlock
 		height = &syncProgress.HighestBlock
