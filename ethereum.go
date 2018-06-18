@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -234,14 +235,17 @@ func GetCode(networkID, rpcURL, addr, scope string) (*string, error) {
 
 // GetSyncProgress retrieves the status of the current network sync
 func GetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error) {
-	progress, err := client.SyncProgress(context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+	progress, err := client.SyncProgress(ctx)
 	if err != nil {
 		Log.Warningf("Failed to read sync progress for *ethclient.Client instance: %s; %s", client, err.Error())
+		cancel()
 		return nil, err
 	}
 	if progress != nil {
 		Log.Debugf("Latest synced block reported by *ethclient.Client instance: %v [of %v]", client, progress.CurrentBlock, progress.HighestBlock)
 	}
+	cancel()
 	return progress, nil
 }
 
