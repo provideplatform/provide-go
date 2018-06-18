@@ -131,6 +131,7 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	syncProgress, err := GetSyncProgress(ethClient)
 	if err != nil {
 		Log.Warningf("Failed to read sync progress using JSON-RPC host; %s", err.Error())
+		clearCachedClients(networkID)
 		return nil, err
 	}
 	var state string

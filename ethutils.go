@@ -69,6 +69,7 @@ func DialJsonRpc(networkID, rpcURL string) (*ethclient.Client, error) {
 	_, err := GetSyncProgress(client)
 	if err != nil {
 		Log.Warningf("Failed to read sync progress for *ethclient.Client instance: %s; %s", client, err.Error())
+		clearCachedClients(networkID)
 		return nil, err
 	}
 
