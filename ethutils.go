@@ -42,6 +42,12 @@ var chainConfigs = map[string]*params.ChainConfig{}        // mapping of network
 var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of network ids to *ethclient.Client instances
 var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of network ids to *ethrpc.Client instances
 
+func clearCachedClients(networkID string) {
+	delete chainConfigs[networkID]
+	ethrpcClients[networkID] = make([]*ethrpc.Client, 0)
+	ethclientRpcClients[networkID] = make([]*ethclient.Client, 0)
+}
+
 // DialJsonRpc - dials and caches a new JSON-RPC client instance at the JSON-RPC url and caches it using the given network id
 func DialJsonRpc(networkID, rpcURL string) (*ethclient.Client, error) {
 	var client *ethclient.Client
