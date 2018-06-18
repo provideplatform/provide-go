@@ -174,9 +174,11 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 				Log.Debugf("Got JSON-RPC response; %s", lastBlock)
 				meta["last_block"] = lastBlock
 				if blockTimestamp, blockTimestampOk := lastBlock["timestamp"].(string); blockTimestampOk {
-					*lastBlockAt, err = hexutil.DecodeUint64(blockTimestamp)
-					if err == nil {
+					_lastBlockAt, err := hexutil.DecodeUint64(blockTimestamp)
+					if err != nil {
 						Log.Warningf("Failed to decode latest block timestamp for %s using JSON-RPC host; %s", rpcURL, err.Error())
+					} else {
+						lastBlockAt = &_lastBlockAt
 					}
 				}
 			}
