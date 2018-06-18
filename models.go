@@ -41,6 +41,7 @@ type NetworkStatus struct {
 	Block           uint64                 `json:"block"`            // current block
 	ChainID         *big.Int               `json:"chain_id"`         // the chain id
 	Height          *uint64                `json:"height"`           // total height of the blockchain; null after syncing completed
+	LastBlockAt     *uint64                `json:"last_block_at"`    // unix timestamp of the last block; i.e., when the last block was collated
 	PeerCount       uint64                 `json:"peer_count"`       // number of peers connected to the JSON-RPC client
 	ProtocolVersion *string                `json:"protocol_version"` // protocol version
 	State           *string                `json:"state"`            // i.e., syncing, synced, etc

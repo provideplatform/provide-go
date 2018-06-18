@@ -90,6 +90,13 @@ func GetLatestBlock(networkID, rpcURL string) (uint64, error) {
 	return status.Block, nil
 }
 
+// GetBlockByNumber retrieves a given block by number
+func GetBlockByNumber(networkID, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
+	var jsonRpcResponse = &EthereumJsonRpcResponse{}
+	err := InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRpcResponse)
+	return jsonRpcResponse, err
+}
+
 // GetNativeBalance retrieves a wallet's native currency balance
 func GetNativeBalance(networkID, rpcURL, addr string) (*big.Int, error) {
 	client, err := DialJsonRpc(networkID, rpcURL)
@@ -136,29 +143,38 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 		return nil, err
 	}
 	var state string
-	var block uint64   // current block; will be less than height while syncing in progress
-	var height *uint64 // total number of blocks
+	var block uint64        // current block; will be less than height while syncing in progress
+	var height *uint64      // total number of blocks
+	var lastBlockAt *uint64 // unix timestamp of last block
 	chainID := GetChainID(networkID, rpcURL)
 	peers := GetPeerCount(networkID, rpcURL)
 	protocolVersion := GetProtocolVersion(networkID, rpcURL)
+	meta := map[string]interface{}{}
 	var syncing = false
 	if syncProgress == nil {
 		state = "synced"
 		hdr, err := ethClient.HeaderByNumber(context.TODO(), nil)
 		if err != nil && hdr == nil {
-			Log.Warningf("Failed to read latest block header for using JSON-RPC host; %s", err.Error())
+			Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
 			var jsonRpcResponse = &EthereumJsonRpcResponse{}
 			err = InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRpcResponse)
 			if err != nil {
-				Log.Warningf("Failed to read latest block header for using JSON-RPC host; %s", err.Error())
+				Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
 				err = InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"earliest", true}, &jsonRpcResponse)
 				if err != nil {
-					Log.Warningf("Failed to read earliest block header for using JSON-RPC host; %s", err.Error())
+					Log.Warningf("Failed to read earliest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
 					return nil, err
 				}
 			}
-			if jsonRpcResponse.Result != nil {
-				Log.Debugf("Got JSON-RPC response; %s", jsonRpcResponse.Result)
+			if lastBlock, lastBlockOk := jsonRpcResponse.Result.(map[string]interface{}); lastBlockOk {
+				Log.Debugf("Got JSON-RPC response; %s", lastBlock)
+				meta["last_block"] = lastBlock
+				if blockTimestamp, blockTimestampOk := lastBlock["timestamp"].(string); blockTimestampOk {
+					*lastBlockAt, err = hexutil.DecodeUint64(blockTimestamp)
+					if err == nil {
+						Log.Warningf("Failed to decode latest block timestamp for %s using JSON-RPC host; %s", rpcURL, err.Error())
+					}
+				}
 			}
 		}
 		block = hdr.Number.Uint64()
@@ -172,10 +188,11 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 		Height:          height,
 		ChainID:         chainID,
 		PeerCount:       peers,
+		LastBlockAt:     lastBlockAt,
 		ProtocolVersion: protocolVersion,
 		State:           stringOrNil(state),
 		Syncing:         syncing,
-		Meta:            map[string]interface{}{},
+		Meta:            meta,
 	}, nil
 }
 
