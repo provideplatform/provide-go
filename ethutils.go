@@ -43,7 +43,7 @@ var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of network
 var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of network ids to *ethrpc.Client instances
 
 func clearCachedClients(networkID string) {
-	delete chainConfigs[networkID]
+	delete(chainConfigs, networkID)
 	ethrpcClients[networkID] = make([]*ethrpc.Client, 0)
 	ethclientRpcClients[networkID] = make([]*ethclient.Client, 0)
 }
