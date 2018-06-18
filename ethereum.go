@@ -125,12 +125,6 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 		if r := recover(); r != nil {
 			Log.Debugf("Recovered from attempting to retrieve sync progress from JSON-RPC host: %s", rpcURL)
 			clearCachedClients(networkID)
-			return &NetworkStatus{
-				State: stringOrNil("configuring"),
-				Meta: map[string]interface{}{
-					"error": "Current 'full-node' JSON-RPC URL unavailable",
-				},
-			}, nil
 		}
 	}()
 
