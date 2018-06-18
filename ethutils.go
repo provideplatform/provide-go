@@ -54,12 +54,12 @@ func DialJsonRpc(networkID, rpcURL string) (*ethclient.Client, error) {
 
 	if networkClients, _ := ethclientRpcClients[networkID]; len(networkClients) == 0 {
 		rpcClient, err := ResolveJsonRpcClient(networkID, rpcURL)
-		ethrpcClients[networkID] = append(ethrpcClients[networkID], rpcClient)
 		if err != nil {
 			Log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		client = ethclient.NewClient(rpcClient)
+		ethrpcClients[networkID] = append(ethrpcClients[networkID], rpcClient)
 		ethclientRpcClients[networkID] = append(networkClients, client)
 		Log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
