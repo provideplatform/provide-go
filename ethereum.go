@@ -127,7 +127,7 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 			clearCachedClients(networkID)
 			return &NetworkStatus{
 				State: stringOrNil("configuring"),
-				Meta:  map[string]interface{}{
+				Meta: map[string]interface{}{
 					"error": "Current 'full-node' JSON-RPC URL unavailable",
 				},
 			}, nil
@@ -238,7 +238,7 @@ func GetCode(networkID, rpcURL, addr, scope string) (*string, error) {
 }
 
 // GetSyncProgress retrieves the status of the current network sync
-func (clienGetSyncProgresst *ethclient.Client) (*ethereum.SyncProgress, error) {
+func GetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error) {
 	progress, err := client.SyncProgress(context.TODO())
 	if err != nil {
 		Log.Warningf("Failed to read sync progress for *ethclient.Client instance: %s; %s", client, err.Error())
