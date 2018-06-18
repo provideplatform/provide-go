@@ -169,7 +169,7 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 		}
 		block = hdr.Number.Uint64()
 		jsonRpcResponse, err = GetBlockByNumber(networkID, rpcURL, block)
-		if err != nil {
+		if err == nil {
 			if lastBlock, lastBlockOk := jsonRpcResponse.Result.(map[string]interface{}); lastBlockOk {
 				Log.Debugf("Got JSON-RPC response; %s", lastBlock)
 				meta["last_block"] = lastBlock
