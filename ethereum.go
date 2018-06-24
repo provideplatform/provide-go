@@ -57,6 +57,10 @@ func GetChainID(networkID, rpcURL string) *big.Int {
 		Log.Warningf("Failed to read network id for *ethclient.Client instance: %s; %s", ethClient, err.Error())
 		return nil
 	}
+	if ethClient == nil {
+		Log.Warningf("Failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", networkID, rpcURL)
+		return nil
+	}
 	chainID, err := ethClient.NetworkID(context.TODO())
 	if err != nil {
 		Log.Warningf("Failed to read network id for *ethclient.Client instance: %s; %s", ethClient, err.Error())
