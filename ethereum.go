@@ -838,6 +838,13 @@ func GetBlockByNumber(networkID, rpcURL string, blockNumber uint64) (*EthereumJs
 	return jsonRpcResponse, err
 }
 
+// GetHeaderByNumber retrieves a given block header by number
+func GetHeaderByNumber(networkID, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
+	var jsonRpcResponse = &EthereumJsonRpcResponse{}
+	err := InvokeJsonRpcClient(networkID, rpcURL, "eth_getHeaderByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRpcResponse)
+	return jsonRpcResponse, err
+}
+
 // GetNativeBalance retrieves a wallet's native currency balance
 func GetNativeBalance(networkID, rpcURL, addr string) (*big.Int, error) {
 	client, err := DialJsonRpc(networkID, rpcURL)
