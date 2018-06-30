@@ -939,7 +939,7 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	return &NetworkStatus{
 		Block:           block,
 		Height:          height,
-		ChainID:         chainID,
+		ChainID:         stringOrNil(hexutil.EncodeBig(chainID)),
 		PeerCount:       peers,
 		LastBlockAt:     lastBlockAt,
 		ProtocolVersion: protocolVersion,

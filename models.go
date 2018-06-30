@@ -1,7 +1,5 @@
 package provide
 
-import "math/big"
-
 // EthereumTxTraceResponse is returned upon successful contract execution
 type EthereumTxTraceResponse struct {
 	Result []struct {
@@ -36,10 +34,16 @@ type EthereumJsonRpcResponse struct {
 	Result interface{} `json:"result"`
 }
 
+// EthereumWebsocketSubscriptionResponse is a generic handler for ethereum websocket subscription responses
+type EthereumWebsocketSubscriptionResponse struct {
+	ID     uint64                 `json:"id"`
+	Params map[string]interface{} `json:"params"`
+}
+
 // NetworkStatus provides network-agnostic status
 type NetworkStatus struct {
 	Block           uint64                 `json:"block"`            // current block
-	ChainID         *big.Int               `json:"chain_id"`         // the chain id
+	ChainID         *string                `json:"chain_id"`         // the chain id
 	Height          *uint64                `json:"height"`           // total height of the blockchain; null after syncing completed
 	LastBlockAt     *uint64                `json:"last_block_at"`    // unix timestamp of the last block; i.e., when the last block was collated
 	PeerCount       uint64                 `json:"peer_count"`       // number of peers connected to the JSON-RPC client
