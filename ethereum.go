@@ -50,6 +50,12 @@ var mutex = &sync.Mutex{}
 func clearCachedClients(networkID string) {
 	mutex.Lock()
 	delete(chainConfigs, networkID)
+	for i := range ethrpcClients[networkID] {
+		ethrpcClients[networkID][i].Close()
+	}
+	for i := range ethclientRpcClients[networkID] {
+		ethclientRpcClients[networkID][i].Close()
+	}
 	ethrpcClients[networkID] = make([]*ethrpc.Client, 0)
 	ethclientRpcClients[networkID] = make([]*ethclient.Client, 0)
 	mutex.Unlock()
@@ -88,8 +94,10 @@ func DialJsonRpc(networkID, rpcURL string) (*ethclient.Client, error) {
 // InvokeJsonRpcClient - invokes the JSON-RPC client for the given network and url
 func InvokeJsonRpcClient(networkID, rpcURL, method string, params []interface{}, response interface{}) error {
 	client := &http.Client{
-		Transport: &http.Transport{}, // FIXME-- support self-signed certs here
-		Timeout:   time.Second * 60,
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
+		Timeout: time.Second * 60,
 	}
 	payload := map[string]interface{}{
 		"method":  method,
@@ -107,6 +115,7 @@ func InvokeJsonRpcClient(networkID, rpcURL, method string, params []interface{},
 		Log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
 		return err
 	}
+	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	err = json.Unmarshal(buf.Bytes(), response)
