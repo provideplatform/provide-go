@@ -440,7 +440,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 	_, err = GetSyncProgress(client)
 	if err == nil {
 		cfg := GetChainConfig(networkID, rpcURL)
-		blockNumber, err := GetLatestBlock(networkID, rpcURL)
+		blockNumber, err := GetLatestBlockNumber(networkID, rpcURL)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -822,13 +822,28 @@ func GetGasPrice(networkID, rpcURL string) *string {
 	return stringOrNil(resp.Result.(string))
 }
 
-// GetLatestBlock retrieves the best block known to the JSON-RPC client
-func GetLatestBlock(networkID, rpcURL string) (uint64, error) {
-	status, err := GetNetworkStatus(networkID, rpcURL)
+// GetLatestBlock retrieves the latsest block
+func GetLatestBlock(networkID, rpcURL string) (*EthereumJsonRpcResponse, error) {
+	var jsonRpcResponse = &EthereumJsonRpcResponse{}
+	err := InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRpcResponse)
+	return jsonRpcResponse, err
+}
+
+// GetLatestBlockNumber retrieves the latest block number
+func GetLatestBlockNumber(networkID, rpcURL string) (uint64, error) {
+	resp, err := GetLatestBlock(networkID, rpcURL)
 	if err != nil {
 		return 0, err
 	}
-	return status.Block, nil
+	blockNumberStr, blockNumberStrOk := resp.Result.(map[string]interface{})["number"].(string)
+	if !blockNumberStrOk {
+		return 0, errors.New("Unable to parse block number from JSON-RPC response")
+	}
+	blockNumber, err := hexutil.DecodeUint64(blockNumberStr)
+	if err != nil {
+		return 0, fmt.Errorf("Unable to decode block number hex; %s", err.Error())
+	}
+	return blockNumber, nil
 }
 
 // GetBlockByNumber retrieves a given block by number
@@ -901,36 +916,26 @@ func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	var syncing = false
 	if syncProgress == nil {
 		state = "synced"
-		hdr, err := ethClient.HeaderByNumber(context.TODO(), nil)
-		var jsonRpcResponse *EthereumJsonRpcResponse
-		if err != nil && hdr == nil {
-			Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
-			err = InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRpcResponse)
-			if err != nil {
-				Log.Warningf("Failed to read latest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
-				err = InvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"earliest", true}, &jsonRpcResponse)
-				if err != nil {
-					Log.Warningf("Failed to read earliest block header for %s using JSON-RPC host; %s", rpcURL, err.Error())
-					return nil, err
-				}
-			}
+		resp, err := GetLatestBlock(networkID, rpcURL)
+		if err != nil {
+			Log.Warningf("Failed to read latest block for %s using JSON-RPC host; %s", rpcURL, err.Error())
+			return nil, err
 		}
-		block = hdr.Number.Uint64()
-		jsonRpcResponse, err = GetBlockByNumber(networkID, rpcURL, block)
-		if err == nil {
-			if lastBlock, lastBlockOk := jsonRpcResponse.Result.(map[string]interface{}); lastBlockOk {
-				Log.Debugf("Got JSON-RPC response; %s", lastBlock)
-				meta["last_block"] = lastBlock
-				if blockTimestamp, blockTimestampOk := lastBlock["timestamp"].(string); blockTimestampOk {
-					_lastBlockAt, err := hexutil.DecodeUint64(blockTimestamp)
-					if err != nil {
-						Log.Warningf("Failed to decode latest block timestamp for %s using JSON-RPC host; %s", rpcURL, err.Error())
-					} else {
-						lastBlockAt = &_lastBlockAt
-					}
-				}
-			}
+		hdr := resp.Result.(map[string]interface{})
+		delete(hdr, "transactions") // HACK
+		delete(hdr, "uncles")       // HACK
+
+		meta["last_block_header"] = hdr
+		block, err = hexutil.DecodeUint64(hdr["number"].(string))
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode block number hex; %s", err.Error())
 		}
+
+		_lastBlockAt, err := hexutil.DecodeUint64(hdr["timestamp"].(string))
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decode block timestamp hex; %s", err.Error())
+		}
+		lastBlockAt = &_lastBlockAt
 	} else {
 		block = syncProgress.CurrentBlock
 		height = &syncProgress.HighestBlock
