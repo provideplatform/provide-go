@@ -99,7 +99,7 @@ func fetchChainspec() (map[string]interface{}, error) {
 	return spec, nil
 }
 
-func getGenesisContractABI(path string) (*abi.ABI, error) {
+func getGenesisContractABIJSON(path string) ([]byte, error) {
 	compiledContractJSON, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -109,11 +109,23 @@ func getGenesisContractABI(path string) (*abi.ABI, error) {
 	if err != nil {
 		return nil, err
 	}
-	contractAbi, ok := compiledContract["abi"].(interface{})
+	contractAbi, ok := compiledContract["abi"].([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("Unable to read ABI from compiled contract: %s", path)
 	}
-	return parseContractABI(contractAbi)
+	abiJSON, err := json.Marshal(contractAbi)
+	if err != nil {
+		return nil, err
+	}
+	return abiJSON, nil
+}
+
+func getGenesisContractABI(path string) (*abi.ABI, error) {
+	contractABI, err := getGenesisContractABIJSON(path)
+	if err != nil {
+		return nil, err
+	}
+	return parseContractABI(contractABI)
 }
 
 func getGenesisContractBytecode(path string) ([]byte, error) {
@@ -174,8 +186,9 @@ func insertNetworkConsensusContractAccount(contractPath, genesisAccountAddr stri
 // a generated chainspec based on a version of provide.network. The chainspec
 // template has all of its contract accounts starting with 0x0000000000000000000000000000000000000009
 // removed and replaced with bytecode dynamically generated based on the rules herein.
-func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContractAccounts map[string]string) ([]byte, error) {
+func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContractAccounts map[string]string) ([]byte, []byte, error) {
 	var spec []byte
+	var abi []byte
 	var osWorkdir, consensusWorkdir string
 
 	if osRef == "" {
@@ -194,6 +207,7 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 		}
 		if err == nil {
 			template, _ := fetchChainspec()
+			abiTemplate := map[string]interface{}{}
 			accounts := template["accounts"].(map[string]interface{})
 
 			delete(accounts, masterOfCeremonyGenesisAddress)
@@ -229,10 +243,27 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 
 						template["engine"].(map[string]interface{})["authorityRound"].(map[string]interface{})["params"].(map[string]interface{})["validators"].(map[string]interface{})["multi"].(map[string]interface{})["0"].(map[string]interface{})["contract"] = addr
 					}
+
+					_abi, err := getGenesisContractABIJSON(contractPath)
+					if err != nil {
+						Log.Warningf("Failed to read ABI for chainspec contract %s; %s", name, err.Error())
+					} else {
+						var unmarshaledAbi interface{}
+						json.Unmarshal(_abi, &unmarshaledAbi)
+						abiTemplate[addr] = unmarshaledAbi
+					}
 				}
 			}
 
 			spec, err = json.Marshal(template)
+			if err != nil {
+				Log.Warningf("Failed to marshal chainspec template to JSON; %s", err.Error())
+			}
+
+			abi, err = json.Marshal(abiTemplate)
+			if err != nil {
+				Log.Warningf("Failed to marshal chainspec ABI to JSON; %s", err.Error())
+			}
 		}
 	}
 
@@ -240,7 +271,7 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 	os.RemoveAll(consensusWorkdir)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return spec, nil
+	return spec, abi, nil
 }
