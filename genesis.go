@@ -242,29 +242,30 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 							Log.Warningf("Failed to parse ABI for network consensus contract %s; %s", name, err.Error())
 							continue
 						}
-
 						argvLength := contractABI.Constructor.Inputs.LengthNonIndexed()
-						_i := 0
+
 						addrs := make([]string, 0)
+						for _, v := range genesisContractAccounts {
+							addrs = append(addrs, v)
+						}
+						sort.Strings(addrs)
+
+						consensusConstructorParams := make([]interface{}, 0)
 						if argvLength > 0 {
-							for _, v := range genesisContractAccounts {
+							_i := 0
+							consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", masterOfCeremony[2:]))
+							for _, _addr := range addrs {
 								if _i == argvLength-1 {
 									break
 								}
-								addrs = append(addrs, v)
-								_i++
+								if addr != _addr {
+									consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", _addr[2:]))
+									_i++
+								}
 							}
 						}
-						sort.Strings(addrs)
-						consensusConstructorParams := make([]interface{}, 0)
-						consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", masterOfCeremony[2:]))
-						for _, _addr := range addrs {
-							if addr != _addr {
-								consensusConstructorParams = append(consensusConstructorParams, fmt.Sprintf("000000000000000000000000%s", _addr[2:]))
-							}
-						}
-						insertNetworkConsensusContractAccount(contractPath, addr, accounts, consensusConstructorParams)
 
+						insertNetworkConsensusContractAccount(contractPath, addr, accounts, consensusConstructorParams)
 						template["engine"].(map[string]interface{})["authorityRound"].(map[string]interface{})["params"].(map[string]interface{})["validators"].(map[string]interface{})["multi"].(map[string]interface{})["0"].(map[string]interface{})["contract"] = addr
 					}
 				}
