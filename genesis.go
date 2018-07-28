@@ -224,12 +224,36 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 			for name, addr := range genesisContractAccounts {
 				contractPath := fmt.Sprintf("%s/build/contracts/%s.json", consensusWorkdir, name)
 				if _, err := os.Stat(contractPath); err == nil {
+					_abi, err := getGenesisContractABIJSON(contractPath)
+					if err != nil {
+						Log.Warningf("Failed to read ABI for chainspec contract %s (will not be included in chainspec); %s", name, err.Error())
+						continue
+					} else {
+						var unmarshaledAbi interface{}
+						json.Unmarshal(_abi, &unmarshaledAbi)
+						abiTemplate[addr] = unmarshaledAbi
+					}
+
 					if name != networkConsensusContractName {
 						insertGenesisContractAccount(contractPath, addr, accounts)
 					} else {
+						contractABI, _ := parseContractABI(abiTemplate[addr])
+						if err != nil {
+							Log.Warningf("Failed to parse ABI for network consensus contract %s; %s", name, err.Error())
+							continue
+						}
+
+						argvLength := contractABI.Constructor.Inputs.LengthNonIndexed()
+						_i := 0
 						addrs := make([]string, 0)
-						for _, v := range genesisContractAccounts {
-							addrs = append(addrs, v)
+						if argvLength > 0 {
+							for _, v := range genesisContractAccounts {
+								if _i == argvLength-1 {
+									break
+								}
+								addrs = append(addrs, v)
+								_i++
+							}
 						}
 						sort.Strings(addrs)
 						consensusConstructorParams := make([]interface{}, 0)
@@ -242,15 +266,6 @@ func BuildChainspec(osRef, consensusRef, masterOfCeremony string, genesisContrac
 						insertNetworkConsensusContractAccount(contractPath, addr, accounts, consensusConstructorParams)
 
 						template["engine"].(map[string]interface{})["authorityRound"].(map[string]interface{})["params"].(map[string]interface{})["validators"].(map[string]interface{})["multi"].(map[string]interface{})["0"].(map[string]interface{})["contract"] = addr
-					}
-
-					_abi, err := getGenesisContractABIJSON(contractPath)
-					if err != nil {
-						Log.Warningf("Failed to read ABI for chainspec contract %s; %s", name, err.Error())
-					} else {
-						var unmarshaledAbi interface{}
-						json.Unmarshal(_abi, &unmarshaledAbi)
-						abiTemplate[addr] = unmarshaledAbi
 					}
 				}
 			}
