@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	"reflect"
@@ -26,7 +27,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/randentropy"
 	"github.com/ethereum/go-ethereum/rlp"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
 	"golang.org/x/crypto/scrypt"
@@ -335,7 +335,12 @@ func MarshalEncryptedKey(addr common.Address, privateKey *ecdsa.PrivateKey, secr
 		Version int        `json:"version"`
 	}
 
-	salt := randentropy.GetEntropyCSPRNG(32)
+	salt := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		Log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
+		return nil, err
+	}
+
 	derivedKey, err := scrypt.Key([]byte(secret), salt, LightScryptN, scryptR, LightScryptP, scryptDKLen)
 	if err != nil {
 		return nil, err
@@ -343,7 +348,12 @@ func MarshalEncryptedKey(addr common.Address, privateKey *ecdsa.PrivateKey, secr
 	encryptKey := derivedKey[:16]
 	keyBytes := ethcrypto.FromECDSA(privateKey)
 
-	iv := randentropy.GetEntropyCSPRNG(aes.BlockSize) // 16
+	iv := make([]byte, aes.BlockSize) // 16
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		Log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
+		return nil, err
+	}
+
 	cipherText, err := aesCTRXOR(encryptKey, keyBytes, iv)
 	if err != nil {
 		return nil, err
