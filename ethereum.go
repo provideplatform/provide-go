@@ -263,6 +263,9 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 				err = abiMethod.Outputs.Unpack(&vals, result)
 				out = vals
 				Log.Debugf("Unpacked %v returned values from read of constant %s on contract: %s; values: %s", len(vals), methodDescriptor, to, vals)
+				if vals != nil && len(vals) == abiMethod.Outputs.LengthNonIndexed() {
+					err = nil
+				}
 			}
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read constant %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
