@@ -206,7 +206,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 }
 
 // ExecuteContract builds valid calldata for signature and broadcasts a contract execution tx via JSON-RPC
-func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*interface{}, error) {
+func ExecuteContract(networkID, rpcURL, from string, to, privateKey, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*interface{}, error) {
 	// TODO: verify that to is a valid contract address
 	var _abi *abi.ABI
 	var err error
@@ -271,6 +271,12 @@ func ExecuteContract(networkID, rpcURL, from string, to, data *string, val *big.
 				return nil, fmt.Errorf("Failed to read constant %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
 			}
 			return &out, nil
+		}
+
+		signedTx, _, err := SignTx(networkID, rpcURL, from, *privateKey, to, stringOrNil(data), val)
+		err = BroadcastSignedTx(networkID, rpcURL, signedTx)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to execute %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
 		}
 	} else {
 		err = fmt.Errorf("Failed to execute contract %s on contract: %s; method not found in ABI", methodDescriptor, *to)
