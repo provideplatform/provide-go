@@ -508,7 +508,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
 		} else {
 			Log.Debugf("Attempting to deploy contract via tx; estimating total gas requirements")
-			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), 0)
+			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
 			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
