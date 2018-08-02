@@ -206,7 +206,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 }
 
 // ExecuteContract builds valid calldata for signature and broadcasts a contract execution tx via JSON-RPC
-func ExecuteContract(networkID, rpcURL, from string, to, privateKey, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}) (*interface{}, error) {
+func ExecuteContract(networkID, rpcURL, from string, to, privateKey, data *string, val *big.Int, method string, contractABI interface{}, params []interface{}, gas uint64) (*interface{}, error) {
 	// TODO: verify that to is a valid contract address
 	var _abi *abi.ABI
 	var err error
@@ -273,7 +273,7 @@ func ExecuteContract(networkID, rpcURL, from string, to, privateKey, data *strin
 			return &out, nil
 		}
 
-		signedTx, _, err := SignTx(networkID, rpcURL, from, *privateKey, to, stringOrNil(data), val)
+		signedTx, _, err := SignTx(networkID, rpcURL, from, *privateKey, to, stringOrNil(data), val, gas)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to execute %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
 		}
@@ -462,8 +462,10 @@ func BroadcastSignedTx(networkID, rpcURL string, signedTx *types.Transaction) er
 	return nil
 }
 
-// SignTx signs a transaction using the given private key and calldata
-func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int) (*types.Transaction, *string, error) {
+// SignTx signs a transaction using the given private key and calldata;
+// providing 0 gas results in the tx attempting to use up to the block
+// gas limit for execution
+func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int, gas uint64) (*types.Transaction, *string, error) {
 	client, err := DialJsonRpc(networkID, rpcURL)
 	if err != nil {
 		return nil, nil, err
@@ -487,10 +489,20 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 		var tx *types.Transaction
 		if to != nil {
 			addr := common.HexToAddress(*to)
-			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), 0)
+			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
 			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+				if gas == 0 {
+					blockGasLimit, gasLimitErr := GetBlockGasLimit(networkID, rpcURL)
+					if gasLimitErr == nil {
+						gasLimit = blockGasLimit
+						Log.Debugf("Resolved latest block gas limit after gas estimation failed; block gas limit: %v", gasLimit)
+						err = nil
+					}
+				}
+				if err != nil {
+					return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+				}
 			}
 			Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
@@ -875,6 +887,23 @@ func GetLatestBlockNumber(networkID, rpcURL string) (uint64, error) {
 		return 0, fmt.Errorf("Unable to decode block number hex; %s", err.Error())
 	}
 	return blockNumber, nil
+}
+
+// GetBlockGasLimit retrieves the latest block gas limit
+func GetBlockGasLimit(networkID, rpcURL string) (uint64, error) {
+	resp, err := GetLatestBlock(networkID, rpcURL)
+	if err != nil {
+		return 0, err
+	}
+	blockGasLimitStr, blockGasLimitStrOk := resp.Result.(map[string]interface{})["gasLimit"].(string)
+	if !blockGasLimitStrOk {
+		return 0, errors.New("Unable to parse block gas limit from JSON-RPC response")
+	}
+	blockGasLimit, err := hexutil.DecodeUint64(blockGasLimitStr)
+	if err != nil {
+		return 0, fmt.Errorf("Unable to decode block gas limit hex; %s", err.Error())
+	}
+	return blockGasLimit, nil
 }
 
 // GetBlockByNumber retrieves a given block by number
