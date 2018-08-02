@@ -464,7 +464,7 @@ func BroadcastSignedTx(networkID, rpcURL string, signedTx *types.Transaction) er
 
 // SignTx signs a transaction using the given private key and calldata
 func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int) (*types.Transaction, *string, error) {
-	client, err := ResolveEthClient(networkID, rpcURL)
+	client, err := DialJsonRpc(networkID, rpcURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -820,7 +820,7 @@ func GetChainConfig(networkID, rpcURL string) *params.ChainConfig {
 
 // GetChainID retrieves the current chainID via JSON-RPC
 func GetChainID(networkID, rpcURL string) *big.Int {
-	ethClient, err := ResolveEthClient(networkID, rpcURL)
+	ethClient, err := DialJsonRpc(networkID, rpcURL)
 	if err != nil {
 		Log.Warningf("Failed to read network id for *ethclient.Client instance: %s; %s", ethClient, err.Error())
 		return nil
@@ -904,7 +904,7 @@ func GetNativeBalance(networkID, rpcURL, addr string) (*big.Int, error) {
 // returned struct includes block height, chainID, number of connected peers,
 // protocol version, and syncing state.
 func GetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
-	ethClient, err := ResolveEthClient(networkID, rpcURL)
+	ethClient, err := DialJsonRpc(networkID, rpcURL)
 	if err != nil || rpcURL == "" || ethClient == nil {
 		meta := map[string]interface{}{
 			"error": nil,
