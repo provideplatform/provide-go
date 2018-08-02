@@ -274,6 +274,9 @@ func ExecuteContract(networkID, rpcURL, from string, to, privateKey, data *strin
 		}
 
 		signedTx, _, err := SignTx(networkID, rpcURL, from, *privateKey, to, stringOrNil(data), val)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to execute %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
+		}
 		err = BroadcastSignedTx(networkID, rpcURL, signedTx)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to execute %s on contract: %s (signature with encoded parameters: %s); %s", methodDescriptor, *to, data, err.Error())
