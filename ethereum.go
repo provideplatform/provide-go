@@ -492,17 +492,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
 			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
-				if gas == 0 {
-					blockGasLimit, gasLimitErr := GetBlockGasLimit(networkID, rpcURL)
-					if gasLimitErr == nil {
-						gasLimit = blockGasLimit
-						Log.Debugf("Resolved latest block gas limit after gas estimation failed; block gas limit: %v", gasLimit)
-						err = nil
-					}
-				}
-				if err != nil {
-					return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
-				}
+				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
