@@ -486,20 +486,23 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 		if data != nil {
 			_data = common.FromHex(*data)
 		}
+
 		var tx *types.Transaction
+		gasLimit := gas
+		if gasLimit == 0 {
+			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
+			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+		}
+
 		if to != nil {
 			addr := common.HexToAddress(*to)
-			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
-			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
 		} else {
-			Log.Debugf("Attempting to deploy contract via tx; estimating total gas requirements")
-			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
-			gasLimit, err := client.EstimateGas(context.TODO(), callMsg)
+			Log.Debugf("Attempting to deploy contract via tx; network: %s", networkID)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
