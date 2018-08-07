@@ -465,7 +465,7 @@ func BroadcastSignedTx(networkID, rpcURL string, signedTx *types.Transaction) er
 // SignTx signs a transaction using the given private key and calldata;
 // providing 0 gas results in the tx attempting to use up to the block
 // gas limit for execution
-func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int, gas uint64) (*types.Transaction, *string, error) {
+func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int, gasLimit uint64) (*types.Transaction, *string, error) {
 	client, err := DialJsonRpc(networkID, rpcURL)
 	if err != nil {
 		return nil, nil, err
@@ -488,11 +488,13 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 		}
 
 		var tx *types.Transaction
-		gasLimit := gas
-		if gasLimit == 0 {
-			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
-			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
-		}
+
+		// FIXME? the following code stopped working in a recent release
+		// gasLimit := gas
+		// if gasLimit == 0 {
+		// 	callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
+		// 	gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+		// }
 
 		if to != nil {
 			addr := common.HexToAddress(*to)
