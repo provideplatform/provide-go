@@ -4,27 +4,28 @@ package provide
 type EthereumTxTraceResponse struct {
 	Result []struct {
 		Action struct {
-			CallType string `json:"callType"`
-			From     string `json:"from"`
-			Gas      string `json:"gas"`
-			Init     string `json:"init"`
-			Input    string `json:"input"`
-			To       string `json:"to"`
-			Value    string `json:"value"`
+			CallType *string `json:"callType"`
+			From     *string `json:"from"`
+			Gas      *string `json:"gas"`
+			Init     *string `json:"init"`
+			Input    *string `json:"input"`
+			To       *string `json:"to"`
+			Value    *string `json:"value"`
 		} `json:"action"`
-		BlockHash   string `json:"blockHash"`
-		BlockNumber int    `json:"blockNumber"`
+		BlockHash   *string `json:"blockHash"`
+		BlockNumber int     `json:"blockNumber"`
 		Result      struct {
-			Address string `json:"address"`
-			Code    string `json:"code"`
-			GasUsed string `json:"gasUsed"`
-			Output  string `json:"output"`
+			Address *string `json:"address"`
+			Code    *string `json:"code"`
+			GasUsed *string `json:"gasUsed"`
+			Output  *string `json:"output"`
 		} `json:"result"`
+		Error               *string       `json:"error"`
 		Subtraces           int           `json:"subtraces"`
 		TraceAddress        []interface{} `json:"traceAddress"`
-		TransactionHash     string        `json:"transactionHash"`
+		TransactionHash     *string       `json:"transactionHash"`
 		TransactionPosition int           `json:"transactionPosition"`
-		Type                string        `json:"type"`
+		Type                *string       `json:"type"`
 	} `json:"result"`
 }
 
