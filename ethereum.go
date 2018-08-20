@@ -489,7 +489,6 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 
 		var tx *types.Transaction
 
-		// FIXME? the following code stopped working in a recent release
 		if gasLimit == 0 {
 			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gasLimit)
 			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
