@@ -490,11 +490,10 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 		var tx *types.Transaction
 
 		// FIXME? the following code stopped working in a recent release
-		// gasLimit := gas
-		// if gasLimit == 0 {
-		// 	callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gas)
-		// 	gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
-		// }
+		if gasLimit == 0 {
+			callMsg := asCallMsg(from, data, to, val, gasPrice.Uint64(), gasLimit)
+			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+		}
 
 		if to != nil {
 			addr := common.HexToAddress(*to)
@@ -790,6 +789,13 @@ func parseContractABI(contractAbi interface{}) (*abi.ABI, error) {
 	}
 
 	return &abival, nil
+}
+
+// EthCall invokes eth_call manually via JSON-RPC
+func EthCall(networkID, rpcURL string, params []interface{}) (*EthereumJsonRpcResponse, error) {
+	var jsonRpcResponse = &EthereumJsonRpcResponse{}
+	err := InvokeJsonRpcClient(networkID, rpcURL, "eth_call", params, &jsonRpcResponse)
+	return jsonRpcResponse, err
 }
 
 // GetBlockNumber retrieves the latest block known to the JSON-RPC client

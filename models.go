@@ -33,6 +33,7 @@ type EthereumTxTraceResponse struct {
 type EthereumJsonRpcResponse struct {
 	ID     uint64      `json:"id"`
 	Result interface{} `json:"result"`
+	Error  interface{} `json:"error"`
 }
 
 // EthereumWebsocketSubscriptionResponse is a generic handler for ethereum websocket subscription responses
