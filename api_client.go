@@ -29,8 +29,18 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
-		Log.Warningf("Failed to marshal JSON payload for (%s %s) invocation; %s", method, urlString, err.Error())
-		return -1, 0, err
+		Log.Warningf("Failed to parse URL for provide API (%s %s) invocation; %s", method, urlString, err.Error())
+		return -1, nil, err
+	}
+
+	if mthd == "GET" && params != nil {
+		q := reqURL.Query()
+		for name := range params {
+			if val, valOk := params[name].(string); valOk {
+				q.Set(name, val)
+			}
+		}
+		reqURL.RawQuery = q.Encode()
 	}
 
 	headers := map[string][]string{
@@ -83,7 +93,7 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 
 func (c *APIClient) get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
-	return c.sendRequest("GET", url, nil)
+	return c.sendRequest("GET", url, params)
 }
 
 func (c *APIClient) post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
