@@ -45,13 +45,11 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 
 	var req *http.Request
 
-	var payload []byte
-	writePayload := mthd == "POST" || mthd == "PUT"
-	if writePayload {
-		payload, err = json.Marshal(params)
+	if mthd == "POST" || mthd == "PUT" {
+		payload, err := json.Marshal(params)
 		if err != nil {
 			Log.Warningf("Failed to marshal JSON payload for provide API (%s %s) invocation; %s", method, urlString, err.Error())
-			return -1, 0, err
+			return -1, nil, err
 		}
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
 	} else {
