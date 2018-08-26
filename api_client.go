@@ -47,7 +47,6 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 		"Accept-Encoding": {"gzip, deflate"},
 		"Accept-Language": {"en-us"},
 		"Accept":          {"application/json"},
-		"Content-Type":    {"application/json"},
 	}
 	if c.Token != nil {
 		headers["Authorization"] = []string{fmt.Sprintf("bearer %s", *c.Token)}
@@ -62,6 +61,7 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 			return -1, nil, err
 		}
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
+		headers["Content-Type"] = []string{"application/json"}
 	} else {
 		req = &http.Request{
 			URL:    reqURL,
