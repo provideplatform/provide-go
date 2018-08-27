@@ -1,5 +1,25 @@
 package provide
 
+import (
+	"time"
+
+	"github.com/jinzhu/gorm"
+	"github.com/kthomas/go.uuid"
+)
+
+// Model base class
+type Model struct {
+	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
+	CreatedAt time.Time `sql:"not null" json:"created_at"`
+	Errors    []*Error  `sql:"-" json:"-"`
+}
+
+// Error struct
+type Error struct {
+	Message *string `json:"message"`
+	Status  *int    `json:"status"`
+}
+
 // EthereumTxTraceResponse is returned upon successful contract execution
 type EthereumTxTraceResponse struct {
 	Result []struct {
@@ -53,4 +73,12 @@ type NetworkStatus struct {
 	State           *string                `json:"state"`            // i.e., syncing, synced, etc
 	Syncing         bool                   `json:"syncing"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
 	Meta            map[string]interface{} `json:"meta"`             // network-specific metadata
+}
+
+// Paginate the given query given the page number and results per page;
+// returns the update query and total results
+func paginate(db *gorm.DB, model interface{}, page, rpp int64) (query *gorm.DB, totalResults *uint64) {
+	db.Model(model).Count(&totalResults)
+	query = db.Limit(rpp).Offset((page - 1) * rpp)
+	return query, totalResults
 }
