@@ -453,6 +453,12 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 // ABI-related helpers
 
 func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
+	typestr := fmt.Sprintf("%s", t)
+	defer func() {
+		if r := recover(); r != nil {
+			Log.Debugf("Failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
+		}
+	}()
 	switch t.T {
 	case abi.ArrayTy, abi.SliceTy:
 		switch v.(type) {
@@ -462,7 +468,6 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 			return forEachUnpack(t, []byte(v.(string)), 0, len(v.(string)))
 		default:
 			// HACK-- this fallback for edge case handling isn't the cleanest
-			typestr := fmt.Sprintf("%s", t)
 			if typestr == "uint256[]" {
 				Log.Debugf("Attempting fallback coercion of uint256[] abi parameter")
 				vals := make([]*big.Int, t.Size)
@@ -479,6 +484,14 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			return big.NewInt(int64(v.(int64))), nil
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if val, valOk := v.(string); valOk {
+				intval, err := strconv.Atoi(val)
+				if err != nil {
+					Log.Warningf("Failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
+					return nil, err
+				}
+				return big.NewInt(int64(intval)), nil
+			}
 			return big.NewInt(int64(v.(int64))), nil
 		case reflect.Float64:
 			return big.NewInt(int64(v.(float64))), nil
