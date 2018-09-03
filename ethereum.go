@@ -170,6 +170,12 @@ func ResolveJsonRpcClient(networkID, rpcURL string) (*ethrpc.Client, error) {
 // EncodeABI returns the ABI-encoded calldata for the given method and params
 func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 	var methodDescriptor = fmt.Sprintf("method %s", method.Name)
+	defer func() {
+		if r := recover(); r != nil {
+			Log.Debugf("Failed to encode ABI-compliant calldata for method: %s", methodDescriptor)
+		}
+	}()
+
 	Log.Debugf("Attempting to encode %d parameters prior to executing contract method: %s", len(params), methodDescriptor)
 	var args []interface{}
 
