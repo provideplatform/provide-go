@@ -58,7 +58,7 @@ type EthereumJsonRpcResponse struct {
 
 // EthereumWebsocketSubscriptionResponse is a generic handler for ethereum websocket subscription responses
 type EthereumWebsocketSubscriptionResponse struct {
-	ID     uint64                 `json:"id"`
+	ID     interface{}            `json:"id"`
 	Params map[string]interface{} `json:"params"`
 }
 
