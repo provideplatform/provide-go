@@ -189,6 +189,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		if err != nil {
 			Log.Warningf("Failed to encode abi parameter %s in accordance with contract %s; %s", input.Name, methodDescriptor, err.Error())
 		} else {
+			Log.Debugf("OMG!! %s", param)
 			switch reflect.TypeOf(param).Kind() {
 			case reflect.String:
 				param = []byte(param.(string))
@@ -484,6 +485,9 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 			}
 		}
 	case abi.StringTy: // variable arrays are written at the end of the return bytes
+		if val, valOk := v.(string); valOk {
+			return val, nil
+		}
 		return string(v.([]byte)), nil
 	case abi.IntTy, abi.UintTy:
 		switch t.Kind {
