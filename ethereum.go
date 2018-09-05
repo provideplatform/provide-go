@@ -7,7 +7,6 @@ import (
 	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/rand"
-	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -15,7 +14,6 @@ import (
 	"io"
 	"math/big"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -185,22 +183,7 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		}
 		input := method.Inputs[i]
 		Log.Debugf("Attempting to coerce encoding of %v abi parameter; value: %s", input.Type, params[i])
-		param, err := coerceAbiParameter(input.Type, params[i])
-		if err != nil {
-			Log.Warningf("Failed to encode abi parameter %s in accordance with contract %s; %s", input.Name, methodDescriptor, err.Error())
-		} else {
-			Log.Debugf("OMG!! %s", param)
-			switch reflect.TypeOf(param).Kind() {
-			case reflect.String:
-				param = []byte(param.(string))
-			default:
-				// no-op
-				Log.Debugf("Unmodified parameter (type: %s); value: %s", input.Type, param)
-			}
-
-			args = append(args, param)
-			Log.Debugf("Coerced encoding of %v abi parameter; value: %s", input.Type, param)
-		}
+		args = append(args, params[i])
 	}
 
 	encodedArgs, err := method.Inputs.Pack(args...)
@@ -457,243 +440,7 @@ func SignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *b
 	return nil, nil, err
 }
 
-// ABI-related helpers
-
-func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
-	typestr := fmt.Sprintf("%s", t)
-	defer func() {
-		if r := recover(); r != nil {
-			Log.Debugf("Failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
-		}
-	}()
-	switch t.T {
-	case abi.ArrayTy, abi.SliceTy:
-		switch v.(type) {
-		case []byte:
-			return forEachUnpack(t, v.([]byte), 0, len(v.([]interface{}))-1)
-		case string:
-			return forEachUnpack(t, []byte(v.(string)), 0, len(v.(string)))
-		default:
-			// HACK-- this fallback for edge case handling isn't the cleanest
-			if typestr == "uint256[]" {
-				Log.Debugf("Attempting fallback coercion of uint256[] abi parameter")
-				vals := make([]*big.Int, t.Size)
-				for _, val := range v.([]interface{}) {
-					vals = append(vals, big.NewInt(int64(val.(float64))))
-				}
-				return vals, nil
-			}
-		}
-	case abi.StringTy: // variable arrays are written at the end of the return bytes
-		if val, valOk := v.(string); valOk {
-			return val, nil
-		}
-		return string(v.([]byte)), nil
-	case abi.IntTy, abi.UintTy:
-		switch t.Kind {
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			return big.NewInt(int64(v.(int64))), nil
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if val, valOk := v.(string); valOk {
-				intval, err := strconv.Atoi(val)
-				if err != nil {
-					Log.Warningf("Failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
-					return nil, err
-				}
-				return big.NewInt(int64(intval)), nil
-			}
-			return big.NewInt(int64(v.(int64))), nil
-		case reflect.Float64:
-			return big.NewInt(int64(v.(float64))), nil
-		case reflect.Ptr:
-			switch v.(type) {
-			case float64:
-				return big.NewInt(int64(v.(float64))), nil
-			}
-		default:
-			return readInteger(t.Kind, v.([]byte)), nil
-		}
-	case abi.BoolTy:
-		return v.(bool), nil
-	case abi.AddressTy:
-		switch v.(type) {
-		case string:
-			return common.HexToAddress(v.(string)), nil
-		default:
-			return common.BytesToAddress(v.([]byte)), nil
-		}
-	case abi.HashTy:
-		return common.BytesToHash(v.([]byte)), nil
-	case abi.BytesTy:
-		return v, nil
-	case abi.FixedBytesTy:
-		return readFixedBytes(t, []byte(v.(string)))
-	case abi.FunctionTy:
-		return readFunctionType(t, v.([]byte))
-	default:
-		// no-op
-	}
-	return nil, fmt.Errorf("Failed to coerce %s parameter for abi encoding; unhandled type: %v", t.String(), t)
-}
-
-// iteratively unpack elements
-func forEachUnpack(t abi.Type, output []byte, start, size int) (interface{}, error) {
-	if size < 0 {
-		return nil, fmt.Errorf("cannot marshal input to array, size is negative (%d)", size)
-	}
-	if start+32*size > len(output) {
-		return nil, fmt.Errorf("abi: cannot marshal in to go array: offset %d would go over slice boundary (len=%d)", len(output), start+32*size)
-	}
-
-	// this value will become our slice or our array, depending on the type
-	var refSlice reflect.Value
-
-	if t.T == abi.SliceTy {
-		// declare our slice
-		refSlice = reflect.MakeSlice(t.Type, size, size)
-	} else if t.T == abi.ArrayTy {
-		// declare our array
-		refSlice = reflect.New(t.Type).Elem()
-	} else {
-		return nil, fmt.Errorf("abi: invalid type in array/slice unpacking stage")
-	}
-
-	// Arrays have packed elements, resulting in longer unpack steps.
-	// Slices have just 32 bytes per element (pointing to the contents).
-	elemSize := 32
-	if t.T == abi.ArrayTy {
-		elemSize = getFullElemSize(t.Elem)
-	}
-
-	for i, j := start, 0; j < size; i, j = i+elemSize, j+1 {
-		inter, err := coerceAbiParameter(t, output)
-		if err != nil {
-			return nil, err
-		}
-
-		// append the item to our reflect slice
-		refSlice.Index(j).Set(reflect.ValueOf(inter))
-	}
-
-	// return the interface
-	return refSlice.Interface(), nil
-}
-
-// reads the integer based on its kind
-func readInteger(kind reflect.Kind, b []byte) interface{} {
-	switch kind {
-	case reflect.Uint8:
-		return b[len(b)-1]
-	case reflect.Uint16:
-		return binary.BigEndian.Uint16(b[len(b)-2:])
-	case reflect.Uint32:
-		return binary.BigEndian.Uint32(b[len(b)-4:])
-	case reflect.Uint64:
-		return binary.BigEndian.Uint64(b[len(b)-8:])
-	case reflect.Int8:
-		return int8(b[len(b)-1])
-	case reflect.Int16:
-		return int16(binary.BigEndian.Uint16(b[len(b)-2:]))
-	case reflect.Int32:
-		return int32(binary.BigEndian.Uint32(b[len(b)-4:]))
-	case reflect.Int64:
-		return int64(binary.BigEndian.Uint64(b[len(b)-8:]))
-	default:
-		return new(big.Int).SetBytes(b)
-	}
-}
-
-// A function type is simply the address with the function selection signature at the end.
-// This enforces that standard by always presenting it as a 24-array (address + sig = 24 bytes)
-func readFunctionType(t abi.Type, word []byte) (funcTy [24]byte, err error) {
-	if t.T != abi.FunctionTy {
-		return [24]byte{}, fmt.Errorf("abi: invalid type in call to make function type byte array")
-	}
-	if garbage := binary.BigEndian.Uint64(word[24:32]); garbage != 0 {
-		err = fmt.Errorf("abi: got improperly encoded function type, got %v", word)
-	} else {
-		copy(funcTy[:], word[0:24])
-	}
-	return
-}
-
-// through reflection, creates a fixed array to be read from
-func readFixedBytes(t abi.Type, word []byte) (interface{}, error) {
-	if t.T != abi.FixedBytesTy {
-		return nil, fmt.Errorf("abi: invalid type in call to make fixed byte array")
-	}
-
-	Log.Debugf("Attempting to read fixed bytes in accordance with Ethereum contract ABI; type: %v; word: %s", t, word)
-
-	// convert
-	array := reflect.New(t.Type).Elem()
-	reflect.Copy(array, reflect.ValueOf(word))
-	return array.Interface(), nil
-}
-
-func requiresLengthPrefix(t *abi.Type) bool {
-	return t.T == abi.StringTy || t.T == abi.BytesTy || t.T == abi.SliceTy
-}
-
-func getFullElemSize(elem *abi.Type) int {
-	//all other should be counted as 32 (slices have pointers to respective elements)
-	size := 32
-	//arrays wrap it, each element being the same size
-	for elem.T == abi.ArrayTy {
-		size *= elem.Size
-		elem = elem.Elem
-	}
-	return size
-}
-
-func lengthPrefixPointsTo(index int, output []byte) (start int, length int, err error) {
-	bigOffsetEnd := big.NewInt(0).SetBytes(output[index : index+32])
-	bigOffsetEnd.Add(bigOffsetEnd, common.Big32)
-	outputLength := big.NewInt(int64(len(output)))
-
-	if bigOffsetEnd.Cmp(outputLength) > 0 {
-		return 0, 0, fmt.Errorf("abi: cannot marshal in to go slice: offset %v would go over slice boundary (len=%v)", bigOffsetEnd, outputLength)
-	}
-
-	if bigOffsetEnd.BitLen() > 63 {
-		return 0, 0, fmt.Errorf("abi offset larger than int64: %v", bigOffsetEnd)
-	}
-
-	offsetEnd := int(bigOffsetEnd.Uint64())
-	lengthBig := big.NewInt(0).SetBytes(output[offsetEnd-32 : offsetEnd])
-
-	totalSize := big.NewInt(0)
-	totalSize.Add(totalSize, bigOffsetEnd)
-	totalSize.Add(totalSize, lengthBig)
-	if totalSize.BitLen() > 63 {
-		return 0, 0, fmt.Errorf("abi length larger than int64: %v", totalSize)
-	}
-
-	if totalSize.Cmp(outputLength) > 0 {
-		return 0, 0, fmt.Errorf("abi: cannot marshal in to go type: length insufficient %v require %v", outputLength, totalSize)
-	}
-	start = int(bigOffsetEnd.Uint64())
-	length = int(lengthBig.Uint64())
-	return
-}
-
-func readBool(word []byte) (bool, error) {
-	for _, b := range word[:31] {
-		if b != 0 {
-			return false, errors.New("abi: improperly encoded boolean value")
-		}
-	}
-	switch word[31] {
-	case 0:
-		return false, nil
-	case 1:
-		return true, nil
-	default:
-		return false, errors.New("abi: improperly encoded boolean value")
-	}
-}
-
-// More calldata construction related items
+// Calldata construction helpers
 
 func asCallMsg(from string, data, to *string, val *big.Int, gasPrice, gasLimit uint64) ethereum.CallMsg {
 	var _to *common.Address
