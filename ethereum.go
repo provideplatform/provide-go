@@ -189,9 +189,8 @@ func EncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		if err != nil {
 			Log.Warningf("Failed to encode abi parameter %s in accordance with contract %s; %s", input.Name, methodDescriptor, err.Error())
 		} else {
-			Log.Debugf("OMG!! %s", param)
 			switch reflect.TypeOf(param).Kind() {
-			case reflect.String:
+			case reflect.Slice:
 				param = []byte(param.(string))
 			default:
 				// no-op
