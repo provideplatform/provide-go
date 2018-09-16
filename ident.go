@@ -56,6 +56,17 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 	return InitIdent(stringOrNil(token)).get(uri, params)
 }
 
+// CreateApplicationToken creates a new API token for the given application ID.
+func CreateApplicationToken(token, applicationID string, params map[string]interface{}) (int, interface{}, error) {
+	params["application_id"] = applicationID
+	return InitIdent(stringOrNil(token)).post("tokens", params)
+}
+
+// CreateToken creates a new API token.
+func CreateToken(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitIdent(stringOrNil(token)).post("tokens", params)
+}
+
 // ListTokens retrieves a paginated list of API tokens scoped to the given API token
 func ListTokens(token string, params map[string]interface{}) (int, interface{}, error) {
 	return InitIdent(stringOrNil(token)).get("tokens", params)
