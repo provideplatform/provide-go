@@ -513,6 +513,12 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 			return readInteger(t.Kind, v.([]byte)), nil
 		}
 	case abi.BoolTy:
+		if boolstr, ok := v.(string); ok {
+			if strings.ToLower(boolstr) == "true" {
+				return true, nil
+			}
+			return false, nil
+		}
 		return v.(bool), nil
 	case abi.AddressTy:
 		switch v.(type) {
