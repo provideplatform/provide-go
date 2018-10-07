@@ -1,6 +1,7 @@
 package provide
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -18,6 +19,19 @@ type Model struct {
 type Error struct {
 	Message *string `json:"message"`
 	Status  *int    `json:"status"`
+}
+
+// CompiledArtifact represents compiled sourcecode
+type CompiledArtifact struct {
+	Name        string                 `json:"name"`
+	ABI         []interface{}          `json:"abi"`
+	Assembly    map[string]interface{} `json:"assembly"`
+	Bytecode    string                 `json:"bytecode"`
+	Deps        map[string]interface{} `json:"deps"`
+	Opcodes     string                 `json:"opcodes"`
+	Raw         json.RawMessage        `json:"raw"`
+	Source      string                 `json:"source"`
+	Fingerprint string                 `json:"fingerprint"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
