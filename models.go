@@ -11,7 +11,7 @@ import (
 // Model base class
 type Model struct {
 	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
-	CreatedAt time.Time `sql:"not null" json:"created_at"`
+	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at"`
 	Errors    []*Error  `sql:"-" json:"-"`
 }
 
