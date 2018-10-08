@@ -30,8 +30,8 @@ type CompiledArtifact struct {
 	Deps        map[string]interface{} `json:"deps"`
 	Opcodes     string                 `json:"opcodes"`
 	Raw         json.RawMessage        `json:"raw"`
-	Source      string                 `json:"source"`
-	Fingerprint string                 `json:"fingerprint"`
+	Source      *string                `json:"source"`
+	Fingerprint *string                `json:"fingerprint"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
