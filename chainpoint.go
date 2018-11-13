@@ -1,4 +1,4 @@
-package chainpoint
+package provide
 
 import (
 	"bytes"
@@ -68,7 +68,7 @@ type VerifiedProofs []struct {
 func init() {
 	randomNodes, err := GetNodes()
 	if err != nil {
-		log.Fatalf("FAILURE : INIT : failed to retrieve chainpoint nodes from service discovery")
+		Log.ErrorF("Failed to retrieve chainpoint nodes from service discovery")
 	} else {
 		RANDOM_NODES = randomNodes
 	}
@@ -79,14 +79,14 @@ func GetNodes() (NodeList, error) {
 	var randomNodes NodeList
 	res, err := http.Get("http://a.chainpoint.org/nodes/random")
 	if err != nil {
-		log.Fatalf("GET_RANDOM_NODES : FAILURE : %s", err)
+		Log.ErrorF("Failed to make HTTP GET request to fetch a list of random Chainpoint Nodes; %s", err.Error())
 		return nil, err
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatalf("GET_RANDOM_NODES : FAILURE : %s", err)
+		Log.ErrorF("Failed to read GET request to retrieve random Chainpoint Nodes; %s", err.Error())
 		return nil, err
 	}
 	json.Unmarshal(body, &randomNodes)
@@ -141,8 +141,8 @@ func GetProofs(proofHandles []ProofHandle) ([]ProofBody, error) {
 
 	proofHandlesMap, ok := v.(map[string][]ProofHandle)
 	if !ok {
-		log.Printf("GET_PROOFS : FAILURE : GroupBy : not able to group by uri")
-		return nil, errors.New("error create ProofHandles Map")
+		Log.WarningF("Failed to group ProofHandles by uri")
+		return nil, errors.New("Error creating ProofHandles Map")
 	}
 
 	for uri, values := range proofHandlesMap {
@@ -186,7 +186,7 @@ func VerifyProofs(proofs []string) (VerifiedProofs, error) {
 
 	res, err := http.Post(fmt.Sprintf("%s/verify", RANDOM_NODES[0].PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
-		log.Fatalf("FAILURE : VERIFY_PROOFS : %s", err)
+		Log.WarningF("Failed to verify Proofs; %s", err.Error())
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -217,7 +217,7 @@ func getProofsFromNode(queue chan []ProofBody, w *sync.WaitGroup, uri string, ha
 	res, err := client.Do(req)
 	if err != nil {
 		w.Add(-1)
-		log.Printf("FAILURE : GET_PROOFS : GET : URI=%s : %s\n", uri, err)
+		Log.WarningF("Failed to retrieve Proofs from URI=%s; %s\n", uri, err.Error())
 		return
 	}
 	defer res.Body.Close()
@@ -240,7 +240,7 @@ func submitHashesToNode(queue chan SubmitHashesResponse, w *sync.WaitGroup, uri 
 	res, err := http.Post(fmt.Sprintf("%s/hashes", uri.PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		w.Add(-1)
-		log.Printf("SUBMIT_HASHES : FAILURE : POST : URI=%s : %s\n", uri.PublicUri, err)
+		Log.WarningF("Failed to submit hashes to Chainpoint Node URI=%s; %s\n", uri.PublicUri, err.Error())
 		return
 	}
 	defer res.Body.Close()
