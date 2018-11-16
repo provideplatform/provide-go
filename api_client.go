@@ -91,22 +91,26 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	return resp.StatusCode, response, nil
 }
 
-func (c *APIClient) get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+// Get constructs an API GET request
+func (c *APIClient) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("GET", url, params)
 }
 
-func (c *APIClient) post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+// Post constructs an API POST request
+func (c *APIClient) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, params)
 }
 
-func (c *APIClient) put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+// Put constructs an API PUT request
+func (c *APIClient) Put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("PUT", url, params)
 }
 
-func (c *APIClient) delete(uri string) (status int, response interface{}, err error) {
+// Delete constructs an API DELETE request
+func (c *APIClient) Delete(uri string) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("DELETE", url, nil)
 }
