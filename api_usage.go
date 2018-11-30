@@ -36,7 +36,7 @@ type UsageDelegate interface {
 // RunAPIUsageDaemon initializes and starts a new API usage daemon using the given delegate;
 // returns an error if there is already an API usage daemon running as it is currently treated
 // as a singleton
-func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis, sleepIntervalMillis uint, delegate UsageDelegate) error {
+func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis uint, delegate UsageDelegate) error {
 	if daemon != nil {
 		msg := "Attempted to run API usage daemon after singleton instance started"
 		Log.Warningf(msg)
@@ -51,7 +51,6 @@ func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis, sleepIntervalMillis 
 	daemon.flushIntervalMillis = flushIntervalMillis
 	daemon.mutex = &sync.Mutex{}
 	daemon.lastFlushTimestamp = time.Now()
-	daemon.sleepIntervalMillis = sleepIntervalMillis
 	go daemon.run()
 
 	return nil
@@ -59,17 +58,17 @@ func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis, sleepIntervalMillis 
 
 func (d *usageDaemon) run() error {
 	Log.Debugf("Running API usage daemon...")
+	ticker := time.NewTicker(time.Duration(d.flushIntervalMillis) * time.Millisecond)
 	for {
 		select {
-		case <-d.shutdown.Done():
-			Log.Debugf("Flushing API usage daemon on shutdown")
-			return d.flush()
-		default:
-			Log.Debugf("Checking size of buffered channel (%d) containing no more than %d of the latest API calls used", len(d.q), d.bufferSize)
-			if len(d.q) >= cap(d.q) || time.Now().Sub(d.lastFlushTimestamp) >= time.Duration(d.flushIntervalMillis)*time.Millisecond {
+		case <-ticker.C:
+			if len(d.q) > 0 {
 				d.flush()
 			}
-			time.Sleep(time.Duration(d.sleepIntervalMillis) * time.Millisecond)
+		case <-d.shutdown.Done():
+			Log.Debugf("Flushing API usage daemon on shutdown")
+			ticker.Stop()
+			return d.flush()
 		}
 	}
 }
