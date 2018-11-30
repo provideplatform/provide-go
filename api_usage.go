@@ -69,7 +69,7 @@ func (d *usageDaemon) run() error {
 			if len(d.q) >= cap(d.q) || time.Now().Sub(d.lastFlushTimestamp) >= time.Duration(d.flushIntervalMillis)*time.Millisecond {
 				d.flush()
 			}
-			// time.Sleep(time.Duration(d.sleepIntervalMillis) * time.Millisecond)
+			time.Sleep(time.Duration(d.sleepIntervalMillis) * time.Millisecond)
 		}
 	}
 }
@@ -84,6 +84,8 @@ func (d *usageDaemon) flush() error {
 			if ok {
 				Log.Debugf("Attempting to track API call consumed by subject: %s", apiCall.Sub)
 				d.delegate.Track(apiCall)
+			} else {
+				Log.Warningf("Failed to receive message from API usage daemon")
 			}
 		default:
 			if len(d.q) == 0 {
