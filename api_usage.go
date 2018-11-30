@@ -132,7 +132,13 @@ func trackAPICall(c *gin.Context) error {
 		subject = fmt.Sprintf("application:%s", appID)
 	} else {
 		userID := AuthorizedSubjectID(c, "user")
-		subject = fmt.Sprintf("user:%s", userID)
+		if appID != nil {
+			subject = fmt.Sprintf("user:%s", userID)
+		}
+	}
+
+	if subject == "" {
+		return fmt.Errorf("Failed to resolve subject to which API usage could be attributed")
 	}
 
 	Log.Debugf("Attempting to track API call for caller: %s", subject)
