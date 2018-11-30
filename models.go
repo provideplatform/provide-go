@@ -21,6 +21,18 @@ type Error struct {
 	Status  *int    `json:"status"`
 }
 
+// APICall struct
+type APICall struct {
+	Sub           string
+	Method        string
+	Host          string
+	Path          string
+	RemoteAddr    string
+	StatusCode    int
+	ContentLength *uint
+	Timestamp     time.Time
+}
+
 // CompiledArtifact represents compiled sourcecode
 type CompiledArtifact struct {
 	Name        string                 `json:"name"`

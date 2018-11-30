@@ -9,6 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	uuid "github.com/satori/go.uuid"
 )
 
 const defaultResultsPerPage = 25
@@ -29,6 +30,40 @@ func CORSMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+// TrackAPICalls returns gin middleware for tracking API calls
+func TrackAPICalls() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer trackAPICall(c)
+		c.Next()
+	}
+}
+
+// AuthorizedSubjectID returns the requested JWT subject if it matches
+func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
+	var id string
+	keyfn := func(jwtToken *jwt.Token) (interface{}, error) {
+		if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
+			if sub, subok := claims["sub"].(string); subok {
+				subprts := strings.Split(sub, ":")
+				if len(subprts) != 2 {
+					return nil, fmt.Errorf("JWT subject malformed; %s", sub)
+				}
+				if subprts[0] != subject {
+					return nil, fmt.Errorf("JWT claims specified non-%s subject: %s", subject, subprts[0])
+				}
+				id = subprts[1]
+			}
+		}
+		return nil, nil
+	}
+	ParseBearerAuthorizationHeader(c, &keyfn)
+	uuidV4, err := uuid.FromString(id)
+	if err != nil {
+		return nil
+	}
+	return &uuidV4
 }
 
 // Paginate the current request given the page number and results per page;
