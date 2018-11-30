@@ -132,7 +132,7 @@ func trackAPICall(c *gin.Context) error {
 		subject = fmt.Sprintf("application:%s", appID)
 	} else {
 		userID := AuthorizedSubjectID(c, "user")
-		if appID != nil {
+		if userID != nil {
 			subject = fmt.Sprintf("user:%s", userID)
 		}
 	}
