@@ -23,14 +23,14 @@ type Error struct {
 
 // APICall struct
 type APICall struct {
-	Sub           string
-	Method        string
-	Host          string
-	Path          string
-	RemoteAddr    string
-	StatusCode    int
-	ContentLength *uint
-	Timestamp     time.Time
+	Sub           string    `json:"sub"`
+	Method        string    `json:"method"`
+	Host          string    `json:"host"`
+	Path          string    `json:"path"`
+	RemoteAddr    string    `json:"remote_addr"`
+	StatusCode    int       `json:"status_code"`
+	ContentLength *uint     `json:"content_length"`
+	Timestamp     time.Time `json:"timestamp"`
 }
 
 // CompiledArtifact represents compiled sourcecode
