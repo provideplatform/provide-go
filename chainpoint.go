@@ -14,15 +14,17 @@ import (
 	underscore "github.com/ahl5esoft/golang-underscore"
 )
 
+// Node represents a chainpoint node
 type Node struct {
-	PublicUri string `json:"public_uri"`
+	PublicURI string `json:"public_uri"`
 }
 
+// NodeList array of Node pointers
 type NodeList []*Node
 
-var cachedChainpointNodes NodeList
+var cachedChainpointNodes *NodeList
 
-type SubmitHashesResponse struct {
+type submitHashesResponse struct {
 	Meta struct {
 		SubmittedAt     time.Time `json:"submitted_at"`
 		SubmittedTo     string    `json:"submitted_to"`
@@ -37,18 +39,21 @@ type SubmitHashesResponse struct {
 	} `json:"hashes"`
 }
 
+// ProofHandle
 type ProofHandle struct {
 	Hash       string `json:"hash"`
 	HashIDNode string `json:"hashIdNode"`
-	Uri        string `json:"uri"`
+	URI        string `json:"URI"`
 }
 
+// ProofBody
 type ProofBody struct {
 	Anchors    []interface{} `json:"anchors_complete"`
 	HashIDNode string        `json:"hash_id_node"`
 	Proof      interface{}   `json:"proof"`
 }
 
+// VerifiedProofs as returned by chainpoint
 type VerifiedProofs []struct {
 	ProofIndex          int       `json:"proof_index"`
 	Hash                string    `json:"hash"`
@@ -82,9 +87,9 @@ func cacheRandomNodes() {
 	}
 }
 
-// Will retrieve a list of 25 random Chainpoint Nodes.
-func GetNodes() (NodeList, error) {
-	var randomNodes NodeList
+// GetNodes retrieves a list of 25 random Chainpoint Nodes.
+func GetNodes() (*NodeList, error) {
+	var randomNodes *NodeList
 	res, err := http.Get("http://a.chainpoint.org/nodes/random")
 	if err != nil {
 		Log.Errorf("Failed to make HTTP GET request to fetch a list of random Chainpoint Nodes; %s", err.Error())
@@ -102,17 +107,21 @@ func GetNodes() (NodeList, error) {
 	return randomNodes, nil
 }
 
-// The SubmitHashes function will submit a list of hashes to every Chainpoint Node
-// provided to it via the function's first argument `uris` of type `NodeList`.
+// SubmitHashes will submit a list of hashes to every Chainpoint Node
+// provided to it via the function's second argument `nodes` of type `NodeList`.
 // Submitting to multiple Chainpoint Nodes to achieve your required level of redundancy is advised.
 // Only a single Chainpoint Proof is required to attest the existence of your data.
-func SubmitHashes(nodes NodeList, hashes []string) ([]ProofHandle, error) {
-	nodeResponseQueue := make(chan SubmitHashesResponse)
+func SubmitHashes(hashes []byte, nodes *NodeList) ([]ProofHandle, error) {
+	nodeResponseQueue := make(chan submitHashesResponse)
+
+	if nodes == nil {
+		nodes = cachedChainpointNodes
+	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(nodes))
+	wg.Add(len(*nodes))
 
-	for _, node := range nodes {
+	for _, node := range *nodes {
 		go submitHashesToNode(nodeResponseQueue, &wg, *node, hashes)
 	}
 
@@ -123,10 +132,10 @@ func SubmitHashes(nodes NodeList, hashes []string) ([]ProofHandle, error) {
 
 	var proofHandleSlice []ProofHandle
 	for nodeResponse := range nodeResponseQueue {
-		nodeUri := nodeResponse.Meta.SubmittedTo
+		nodeURI := nodeResponse.Meta.SubmittedTo
 
 		for i := 0; i < len(nodeResponse.Hashes); i++ {
-			proofHandleSlice = append(proofHandleSlice, ProofHandle{Uri: nodeUri, HashIDNode: nodeResponse.Hashes[i].HashIDNode, Hash: nodeResponse.Hashes[i].Hash})
+			proofHandleSlice = append(proofHandleSlice, ProofHandle{URI: nodeURI, HashIDNode: nodeResponse.Hashes[i].HashIDNode, Hash: nodeResponse.Hashes[i].Hash})
 		}
 	}
 
@@ -137,30 +146,30 @@ func SubmitHashes(nodes NodeList, hashes []string) ([]ProofHandle, error) {
 	}
 }
 
-// The GetProofs function accepts a list of Proof Handles and will retrieve their corresponding Chainpoint Proofs.
-// This function includes the subtle optimization of grouping Proof Handles by Chainpoint Node PublicUri's and will issue
+// GetProofs function accepts a list of Proof Handles and will retrieve their corresponding Chainpoint Proofs.
+// This function includes the subtle optimization of grouping Proof Handles by Chainpoint Node PublicURI's and will issue
 // one HTTP GET request with an embedded header value consisting of a comma-delimited string of hashIdNode values dictating which
 // Proofs need to be resolved and returned to the requestor.
 func GetProofs(proofHandles []ProofHandle) ([]ProofBody, error) {
 	var wg sync.WaitGroup
 	getProofsResponseQueue := make(chan []ProofBody)
 
-	v := underscore.GroupBy(proofHandles, "uri")
+	v := underscore.GroupBy(proofHandles, "URI")
 
 	proofHandlesMap, ok := v.(map[string][]ProofHandle)
 	if !ok {
-		Log.Warningf("Failed to group ProofHandles by uri")
+		Log.Warningf("Failed to group ProofHandles by URI")
 		return nil, errors.New("Error creating ProofHandles Map")
 	}
 
-	for uri, values := range proofHandlesMap {
+	for URI, values := range proofHandlesMap {
 		wg.Add(1)
-		handlesByUri := underscore.Map(values, func(currVal ProofHandle, _ int) string {
+		handlesByURI := underscore.Map(values, func(currVal ProofHandle, _ int) string {
 			return currVal.HashIDNode
 		})
-		hashIds, _ := handlesByUri.([]string)
+		hashIds, _ := handlesByURI.([]string)
 
-		go getProofsFromNode(getProofsResponseQueue, &wg, uri, hashIds)
+		go getProofsFromNode(getProofsResponseQueue, &wg, URI, hashIds)
 	}
 
 	go func() {
@@ -182,7 +191,7 @@ func GetProofs(proofHandles []ProofHandle) ([]ProofBody, error) {
 	}
 }
 
-// The VerifyProofs function accepts a list of base64 encode strings that will be submitted to any Chainpoint Node for verification.
+// VerifyProofs accepts a list of base64 encode strings that will be submitted to any Chainpoint Node for verification.
 // The verification process will perform the required cryptorgraphic operations for both `cal` and `btc` branches to
 // verify the integrity of the Chainpoint Proof(s) that have been submitted.
 func VerifyProofs(proofs []string) (VerifiedProofs, error) {
@@ -192,7 +201,7 @@ func VerifyProofs(proofs []string) (VerifiedProofs, error) {
 	}
 	bodyBytes, _ := json.Marshal(body)
 
-	res, err := http.Post(fmt.Sprintf("%s/verify", cachedChainpointNodes[0].PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
+	res, err := http.Post(fmt.Sprintf("%s/verify", (*cachedChainpointNodes)[0].PublicURI), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		Log.Warningf("Failed to verify Proofs; %s", err.Error())
 		return nil, err
@@ -204,28 +213,21 @@ func VerifyProofs(proofs []string) (VerifiedProofs, error) {
 	return verifiedProofs, nil
 }
 
-/**
- * Helper functions
- *
- * 1) submitHashesToNode
- * 2) getProofsFromNode
- */
-
-// Will retrieve a list of Proofs from a particular Chainpoint Node. Multiple HashIDNode values
-// are supported and will be transformed into a comma-delimited list that will be included as part of
-// a header for the HTTP GET request to a Node's /proofs endpoint.
-func getProofsFromNode(queue chan []ProofBody, w *sync.WaitGroup, uri string, hashIds []string) {
+// getProofsFromNode retrieves a list of Proofs from a particular Chainpoint Node. Multiple HashIDNode
+// values are supported and will be transformed into a comma-delimited list that will be included as
+// part of a header for the HTTP GET request to a Node's /proofs endpoint.
+func getProofsFromNode(queue chan []ProofBody, w *sync.WaitGroup, URI string, hashIds []string) {
 	defer w.Done()
 	var getProofResponse []ProofBody
 
 	client := &http.Client{}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/proofs", uri), nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("%s/proofs", URI), nil)
 	req.Header.Set("hashids", strings.Join(hashIds, ","))
 
 	res, err := client.Do(req)
 	if err != nil {
 		w.Add(-1)
-		Log.Warningf("Failed to retrieve Proofs from URI=%s; %s\n", uri, err.Error())
+		Log.Warningf("Failed to retrieve Proofs from URI=%s; %s\n", URI, err.Error())
 		return
 	}
 	defer res.Body.Close()
@@ -235,28 +237,34 @@ func getProofsFromNode(queue chan []ProofBody, w *sync.WaitGroup, uri string, ha
 	queue <- getProofResponse
 }
 
-// Will submit a list of hashes to a Chainpoint Node. This function will make a HTTP Post request to the
-// /hashes endpoint of the node and on a 200 response, return an array of ProofHandles.
-func submitHashesToNode(queue chan SubmitHashesResponse, w *sync.WaitGroup, uri Node, hashes []string) {
+// Will submit a list of hashes to a Chainpoint Node. This function will make a HTTP Post request
+// to the /hashes endpoint of the node and on a 200 response, return an array of ProofHandles.
+func submitHashesToNode(queue chan submitHashesResponse, w *sync.WaitGroup, URI Node, hashes []byte) {
 	defer w.Done()
-	var submitHashesResponse SubmitHashesResponse
+	var submitHashesResponse submitHashesResponse
+
+	hashesList := make([]string, len(hashes))
+	for _, hash := range hashes {
+		hashesList = append(hashesList, string(hash))
+	}
+
 	body := map[string][]string{
-		"hashes": hashes,
+		"hashes": hashesList,
 	}
 	bodyBytes, _ := json.Marshal(body)
 
-	res, err := http.Post(fmt.Sprintf("%s/hashes", uri.PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
+	res, err := http.Post(fmt.Sprintf("%s/hashes", URI.PublicURI), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		w.Add(-1)
-		Log.Warningf("Failed to submit hashes to Chainpoint Node URI=%s; %s\n", uri.PublicUri, err.Error())
+		Log.Warningf("Failed to submit hashes to Chainpoint Node URI=%s; %s\n", URI.PublicURI, err.Error())
 		return
 	}
 	defer res.Body.Close()
 
 	json.NewDecoder(res.Body).Decode(&submitHashesResponse)
 
-	// Mutate the submitHashesResponse to include the uri that received the hashes
-	submitHashesResponse.Meta.SubmittedTo = uri.PublicUri
+	// Mutate the submitHashesResponse to include the URI that received the hashes
+	submitHashesResponse.Meta.SubmittedTo = URI.PublicURI
 
 	queue <- submitHashesResponse
 }
