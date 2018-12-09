@@ -18,9 +18,9 @@ type Node struct {
 	PublicUri string `json:"public_uri"`
 }
 
-type NodeList []Node
+type NodeList []*Node
 
-var RANDOM_NODES NodeList
+var cachedChainpointNodes NodeList
 
 type SubmitHashesResponse struct {
 	Meta struct {
@@ -65,11 +65,20 @@ type VerifiedProofs []struct {
 }
 
 func init() {
+	cacheRandomNodes()
+}
+
+// cacheRandomNodes added for readability and for future-state impl
+// when we detect nodes that have gone offline; it may make sense for
+// fault tolerance to create a readlock on cachedChainpointNodes when
+// we have had enough failures out of some % of the cached nodes and
+// simply call cacheRandomNodes to re-up with the latest known-good.
+func cacheRandomNodes() {
 	randomNodes, err := GetNodes()
 	if err != nil {
 		Log.Errorf("Failed to retrieve chainpoint nodes from service discovery")
 	} else {
-		RANDOM_NODES = randomNodes
+		cachedChainpointNodes = randomNodes
 	}
 }
 
@@ -97,14 +106,14 @@ func GetNodes() (NodeList, error) {
 // provided to it via the function's first argument `uris` of type `NodeList`.
 // Submitting to multiple Chainpoint Nodes to achieve your required level of redundancy is advised.
 // Only a single Chainpoint Proof is required to attest the existence of your data.
-func SubmitHashes(uris NodeList, hashes []string) ([]ProofHandle, error) {
+func SubmitHashes(nodes NodeList, hashes []string) ([]ProofHandle, error) {
 	nodeResponseQueue := make(chan SubmitHashesResponse)
 
 	var wg sync.WaitGroup
-	wg.Add(len(uris))
+	wg.Add(len(nodes))
 
-	for _, uri := range uris {
-		go submitHashesToNode(nodeResponseQueue, &wg, uri, hashes)
+	for _, node := range nodes {
+		go submitHashesToNode(nodeResponseQueue, &wg, *node, hashes)
 	}
 
 	go func() {
@@ -183,7 +192,7 @@ func VerifyProofs(proofs []string) (VerifiedProofs, error) {
 	}
 	bodyBytes, _ := json.Marshal(body)
 
-	res, err := http.Post(fmt.Sprintf("%s/verify", RANDOM_NODES[0].PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
+	res, err := http.Post(fmt.Sprintf("%s/verify", cachedChainpointNodes[0].PublicUri), "application/json", bytes.NewBuffer(bodyBytes))
 	if err != nil {
 		Log.Warningf("Failed to verify Proofs; %s", err.Error())
 		return nil, err
