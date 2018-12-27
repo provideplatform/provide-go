@@ -160,7 +160,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 
 	state := "synced"       // FIXME
 	var block uint64        // current block; will be less than height while syncing in progress
-	var height *uint64      // total number of blocks
+	var height *int64       // total number of blocks
 	var lastBlockAt *uint64 // unix timestamp of last block
 	var difficulty *float64
 	chainID := networkID
@@ -196,9 +196,15 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	}
 	lastBlockAt = &_lastBlockAt
 
+	var _height *uint64
+	if height != nil {
+		ht := uint64(*height)
+		_height = &ht
+	}
+
 	return &NetworkStatus{
 		Block:           block,
-		Height:          height,
+		Height:          _height,
 		ChainID:         stringOrNil(chainID),
 		PeerCount:       0,
 		LastBlockAt:     lastBlockAt,
