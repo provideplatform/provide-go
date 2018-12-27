@@ -164,20 +164,22 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	var height *int64       // total number of blocks
 	var lastBlockAt *uint64 // unix timestamp of last block
 	var difficulty *float64
+	var chainInfo *btcjson.GetBlockChainInfoResult
 	chainID := networkID
 	// peers := BcoinGetPeerCount(networkID, rpcURL)
-
-	difficulty, err = BcoinGetDifficulty(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
-	if err != nil {
-		Log.Warningf("Failed to read difficulty for %s using JSON-RPC host; %s", rpcURL, err.Error())
-		return nil, err
-	}
 
 	height, err = BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
 		Log.Warningf("Failed to read chain height for %s using JSON-RPC host; %s", rpcURL, err.Error())
 		return nil, err
 	}
+
+	chainInfo, err = BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to read chain info for %s using JSON-RPC host; %s", rpcURL, err.Error())
+		return nil, err
+	}
+	difficulty = &chainInfo.Difficulty
 
 	resp, err := BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
@@ -186,6 +188,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	}
 
 	meta := map[string]interface{}{
+		"chain_info":        chainInfo,
 		"difficulty":        difficulty,
 		"last_block_header": resp.Header,
 		"last_block_tx":     resp.Transactions,
@@ -201,6 +204,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	if height != nil {
 		ht := uint64(*height)
 		_height = &ht
+		block = ht
 	}
 
 	return &NetworkStatus{
