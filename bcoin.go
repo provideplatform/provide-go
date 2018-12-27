@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -243,6 +244,21 @@ func BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*int64, er
 		return nil, err
 	}
 	return &height, err
+}
+
+// BcoinGetChainInfo retrieves chain info
+func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*btcjson.GetBlockChainInfoResult, error) {
+	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to get chain info; %s", err.Error())
+		return nil, err
+	}
+	chainInfo, err := btcClient.GetBlockChainInfo()
+	if err != nil {
+		Log.Warningf("Failed to get chain info; %s", err.Error())
+		return nil, err
+	}
+	return chainInfo, err
 }
 
 // BcoinGetLatestBlock retrieves the latsest block
