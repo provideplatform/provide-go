@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,11 +34,11 @@ func bcoinClearCachedClients(networkID string) {
 }
 
 // BcoinDialJsonRpc - dials and caches a new JSON-RPC client instance at the JSON-RPC url and caches it using the given network id
-func BcoinDialJsonRpc(networkID, rpcURL string) (*rpcclient.Client, error) {
+func BcoinDialJsonRpc(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclient.Client, error) {
 	var client *rpcclient.Client
 
 	if networkClients, _ := bcoinRpcClients[networkID]; len(networkClients) == 0 {
-		rpcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL)
+		rpcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 		if err != nil {
 			Log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
 			return nil, err
@@ -89,11 +90,23 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, method string, params []interfa
 }
 
 // BcoinResolveJsonRpcClient resolves a cached *ethclient.Client client or dials and caches a new instance
-func BcoinResolveJsonRpcClient(networkID, rpcURL string) (*rpcclient.Client, error) {
+func BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclient.Client, error) {
 	var client *rpcclient.Client
 	if networkClients, _ := bcoinRpcClients[networkID]; len(networkClients) == 0 {
+		host := rpcURL
+		httpIdx := strings.Index(rpcURL, "http://")
+		if httpIdx == 0 {
+			host = rpcURL[7:]
+		} else {
+			httpIdx := strings.Index(rpcURL, "https://")
+			if httpIdx == 0 {
+				host = rpcURL[8:]
+			}
+		}
 		client, err := rpcclient.New(&rpcclient.ConnConfig{
-			Host:         rpcURL,
+			Host:         host,
+			User:         rpcAPIUser,
+			Pass:         rpcAPIKey,
 			HTTPPostMode: true,
 			DisableTLS:   true,
 		}, nil)
@@ -118,8 +131,8 @@ func BcoinResolveJsonRpcClient(networkID, rpcURL string) (*rpcclient.Client, err
 // BcoinGetNetworkStatus retrieves current metadata from the JSON-RPC client;
 // returned struct includes block height, number of connected peers, protocol
 // version, and syncing state.
-func BcoinGetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
-	btcClient, err := BcoinDialJsonRpc(networkID, rpcURL)
+func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*NetworkStatus, error) {
+	btcClient, err := BcoinDialJsonRpc(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil || rpcURL == "" || btcClient == nil {
 		meta := map[string]interface{}{
 			"error": nil,
@@ -152,7 +165,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 	chainID := networkID
 	// peers := BcoinGetPeerCount(networkID, rpcURL)
 
-	resp, err := BcoinGetLatestBlock(networkID, rpcURL)
+	resp, err := BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
 		Log.Warningf("Failed to read latest block for %s using JSON-RPC host; %s", rpcURL, err.Error())
 		return nil, err
@@ -164,7 +177,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 
 	_lastBlockAt := uint64(resp.Header.Timestamp.Unix())
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode block timestamp hex; %s", err.Error())
+		return nil, fmt.Errorf("Unable to decode block timestamp; %s", err.Error())
 	}
 	lastBlockAt = &_lastBlockAt
 
@@ -182,8 +195,8 @@ func BcoinGetNetworkStatus(networkID, rpcURL string) (*NetworkStatus, error) {
 }
 
 // BcoinGetLatestBlock retrieves the latsest block
-func BcoinGetLatestBlock(networkID, rpcURL string) (*wire.MsgBlock, error) {
-	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL)
+func BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*wire.MsgBlock, error) {
+	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
 		Log.Warningf("Failed to get the latest block; %s", err.Error())
 		return nil, err
