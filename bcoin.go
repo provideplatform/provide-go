@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btcd/btcjson"
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -56,7 +55,7 @@ func BcoinDialJsonRpc(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclie
 }
 
 // BcoinInvokeJsonRpcClient - invokes the JSON-RPC client for the given network and url
-func BcoinInvokeJsonRpcClient(networkID, rpcURL, method string, params []interface{}, response interface{}) error {
+func BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, method string, params []interface{}, response interface{}) error {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
@@ -74,7 +73,17 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, method string, params []interfa
 		Log.Warningf("Failed to marshal JSON payload for %s JSON-RPC invocation; %s", method, err.Error())
 		return err
 	}
-	resp, err := client.Post(rpcURL, "application/json", bytes.NewReader(body))
+	host := rpcURL
+	httpIdx := strings.Index(rpcURL, "http://")
+	if httpIdx == 0 {
+		host = strings.Replace(rpcURL, "http://", fmt.Sprintf("http://%s:%s@", rpcAPIUser, rpcAPIKey), 1)
+	} else {
+		httpsIdx := strings.Index(rpcURL, "https://")
+		if httpsIdx == 0 {
+			host = strings.Replace(rpcURL, "https://", fmt.Sprintf("https://%s:%s@", rpcAPIUser, rpcAPIKey), 1)
+		}
+	}
+	resp, err := client.Post(host, "application/json", bytes.NewReader(body))
 	if err != nil {
 		Log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
 		return err
@@ -99,8 +108,8 @@ func BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) 
 		if httpIdx == 0 {
 			host = rpcURL[7:]
 		} else {
-			httpIdx := strings.Index(rpcURL, "https://")
-			if httpIdx == 0 {
+			httpsIdx := strings.Index(rpcURL, "https://")
+			if httpsIdx == 0 {
 				host = rpcURL[8:]
 			}
 		}
@@ -164,7 +173,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	var height *int64       // total number of blocks
 	var lastBlockAt *uint64 // unix timestamp of last block
 	var difficulty *float64
-	var chainInfo *btcjson.GetBlockChainInfoResult
+	var chainInfo map[string]interface{}
 	chainID := networkID
 	// peers := BcoinGetPeerCount(networkID, rpcURL)
 
@@ -174,12 +183,14 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 		return nil, err
 	}
 
-	chainInfo, err = BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	chainInfoResp, err := BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
 		Log.Warningf("Failed to read chain info for %s using JSON-RPC host; %s", rpcURL, err.Error())
 		return nil, err
 	}
-	difficulty = &chainInfo.Difficulty
+	chainInfo = chainInfoResp["result"].(map[string]interface{})
+	// difficulty = &chainInfo.Difficulty
+	Log.Debugf("%s", chainInfo)
 
 	resp, err := BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
@@ -251,18 +262,20 @@ func BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*int64, er
 }
 
 // BcoinGetChainInfo retrieves chain info
-func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*btcjson.GetBlockChainInfoResult, error) {
-	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (map[string]interface{}, error) {
+	// btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	// if err != nil {
+	// 	Log.Warningf("Failed to get chain info; %s", err.Error())
+	// 	return nil, err
+	// }
+	var resp map[string]interface{}
+	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblockchaininfo", make([]interface{}, 0), &resp)
+	// chainInfo, err := btcClient.GetBlockChainInfo()
 	if err != nil {
 		Log.Warningf("Failed to get chain info; %s", err.Error())
 		return nil, err
 	}
-	chainInfo, err := btcClient.GetBlockChainInfo()
-	if err != nil {
-		Log.Warningf("Failed to get chain info; %s", err.Error())
-		return nil, err
-	}
-	return chainInfo, err
+	return resp, err
 }
 
 // BcoinGetLatestBlock retrieves the latsest block
