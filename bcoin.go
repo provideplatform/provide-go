@@ -162,8 +162,21 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	var block uint64        // current block; will be less than height while syncing in progress
 	var height *uint64      // total number of blocks
 	var lastBlockAt *uint64 // unix timestamp of last block
+	var difficulty *float64
 	chainID := networkID
 	// peers := BcoinGetPeerCount(networkID, rpcURL)
+
+	difficulty, err = BcoinGetDifficulty(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to read difficulty for %s using JSON-RPC host; %s", rpcURL, err.Error())
+		return nil, err
+	}
+
+	height, err = BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to read chain height for %s using JSON-RPC host; %s", rpcURL, err.Error())
+		return nil, err
+	}
 
 	resp, err := BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
@@ -172,7 +185,9 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	}
 
 	meta := map[string]interface{}{
+		"difficulty":        difficulty,
 		"last_block_header": resp.Header,
+		"last_block_tx":     resp.Transactions,
 	}
 
 	_lastBlockAt := uint64(resp.Header.Timestamp.Unix())
@@ -192,6 +207,36 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 		Syncing:         false,
 		Meta:            meta,
 	}, nil
+}
+
+// BcoinGetDifficulty retrieves the current difficulty target
+func BcoinGetDifficulty(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*float64, error) {
+	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to get the difficulty target; %s", err.Error())
+		return nil, err
+	}
+	difficulty, err := btcClient.GetDifficulty()
+	if err != nil {
+		Log.Warningf("Failed to get the difficulty target; %s", err.Error())
+		return nil, err
+	}
+	return &difficulty, err
+}
+
+// BcoinGetHeight retrieves the height of the longest chain
+func BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*int64, error) {
+	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+	if err != nil {
+		Log.Warningf("Failed to get the chain height; %s", err.Error())
+		return nil, err
+	}
+	height, err := btcClient.GetBlockCount()
+	if err != nil {
+		Log.Warningf("Failed to get the chain height; %s", err.Error())
+		return nil, err
+	}
+	return &height, err
 }
 
 // BcoinGetLatestBlock retrieves the latsest block
