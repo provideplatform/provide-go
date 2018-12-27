@@ -190,7 +190,6 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	}
 	chainInfo = chainInfoResp["result"].(map[string]interface{})
 	// difficulty = &chainInfo.Difficulty
-	Log.Debugf("%s", chainInfo)
 
 	resp, err := BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
