@@ -265,14 +265,8 @@ func BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*int64, er
 
 // BcoinGetChainInfo retrieves chain info
 func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (map[string]interface{}, error) {
-	// btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
-	// if err != nil {
-	// 	Log.Warningf("Failed to get chain info; %s", err.Error())
-	// 	return nil, err
-	// }
 	var resp map[string]interface{}
 	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblockchaininfo", make([]interface{}, 0), &resp)
-	// chainInfo, err := btcClient.GetBlockChainInfo()
 	if err != nil {
 		Log.Warningf("Failed to get chain info; %s", err.Error())
 		return nil, err
