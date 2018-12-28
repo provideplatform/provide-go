@@ -10,9 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
-	"github.com/btcsuite/btcd/wire"
 )
 
 // The purpose of this class is to expose generic transactional and ABI-related helper
@@ -194,20 +192,21 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	bestBlockHash, _ := chainInfo["bestblockhash"].(string)
 	resp, err := BcoinGetBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey, bestBlockHash)
 	if err != nil {
-		Log.Warningf("Failed to get the latest block for hash: %s; %s", bestBlockHash, err.Error())
+		Log.Warningf("Failed to get the latest block header for hash: %s; %s", bestBlockHash, err.Error())
 		return nil, err
 	}
 
 	// difficulty = &chainInfo.Difficulty
-
+	Log.Debugf("%s", resp)
 	meta := map[string]interface{}{
 		"chain_info":        chainInfo,
 		"difficulty":        difficulty,
-		"last_block_header": resp.Header,
-		"last_block_tx":     resp.Transactions,
+		"last_block_header": resp,
+		"last_block_tx":     resp["transactions"],
 	}
 
-	_lastBlockAt := uint64(resp.Header.Timestamp.Unix())
+	lastBlockTime := resp["time"].(float64)
+	_lastBlockAt := uint64(lastBlockTime)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode block timestamp; %s", err.Error())
 	}
@@ -274,42 +273,26 @@ func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (map[str
 	return resp, err
 }
 
-// BcoinGetLatestBlock retrieves the latsest block
-func BcoinGetLatestBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*wire.MsgBlock, error) {
-	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+// BcoinGetHeader retrieves the latsest block
+func BcoinGetHeader(networkID, rpcURL, rpcAPIUser, rpcAPIKey, hash string) (map[string]interface{}, error) {
+	var resp map[string]interface{}
+	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblockheader", []interface{}{hash}, &resp)
 	if err != nil {
-		Log.Warningf("Failed to get the latest block; %s", err.Error())
+		Log.Warningf("Failed to get block header with hash: %s; %s", hash, err.Error())
 		return nil, err
 	}
-	bestBlockHash, err := btcClient.GetBestBlockHash()
-	if err != nil {
-		Log.Warningf("Failed to get the latest block hash; %s", err.Error())
-		return nil, err
-	}
-	bestBlock, err := btcClient.GetBlock(bestBlockHash)
-	if err != nil {
-		Log.Warningf("Failed to get the latest block for hash: %s; %s", bestBlockHash, err.Error())
-		return nil, err
-	}
-	return bestBlock, err
+	result, _ := resp["result"].(map[string]interface{})
+	return result, err
 }
 
 // BcoinGetBlock retrieves the latsest block
-func BcoinGetBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey, hash string) (*wire.MsgBlock, error) {
-	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
+func BcoinGetBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey, hash string) (map[string]interface{}, error) {
+	var resp map[string]interface{}
+	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblock", []interface{}{hash}, &resp)
 	if err != nil {
-		Log.Warningf("Failed to get the latest block; %s", err.Error())
+		Log.Warningf("Failed to get block with hash: %s; %s", hash, err.Error())
 		return nil, err
 	}
-	blockHash, err := chainhash.NewHashFromStr(hash)
-	if err != nil {
-		Log.Warningf("Failed to parse given block hash: %s; %s", hash, err.Error())
-		return nil, err
-	}
-	block, err := btcClient.GetBlock(blockHash)
-	if err != nil {
-		Log.Warningf("Failed to get a block for hash: %s; %s", hash, err.Error())
-		return nil, err
-	}
-	return block, err
+	result, _ := resp["result"].(map[string]interface{})
+	return result, err
 }
