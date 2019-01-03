@@ -63,7 +63,7 @@ func (d *usageDaemon) run() error {
 		select {
 		case <-ticker.C:
 			if len(d.q) > 0 {
-				d.flush()
+				go d.flush()
 			}
 		case <-d.shutdown.Done():
 			Log.Debugf("Flushing API usage daemon on shutdown")
