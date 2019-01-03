@@ -74,8 +74,8 @@ func (d *usageDaemon) run() error {
 }
 
 func (d *usageDaemon) flush() error {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
+	// d.mutex.Lock()
+	// defer d.mutex.Unlock()
 
 	for {
 		select {
