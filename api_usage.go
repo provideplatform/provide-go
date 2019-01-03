@@ -142,7 +142,8 @@ func trackAPICall(c *gin.Context) error {
 	}
 
 	Log.Debugf("Attempting to track API call for caller: %s", subject)
-	daemon.q <- newAPICall(c, subject)
+	// daemon.q <- newAPICall(c, subject)
+	daemon.delegate.Track(newAPICall(c, subject))
 
 	return nil
 }
