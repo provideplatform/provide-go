@@ -83,7 +83,6 @@ func EVMDialJsonRpc(networkID, rpcURL string) (*ethclient.Client, error) {
 
 	_, err := EVMGetSyncProgress(client)
 	if err != nil {
-		Log.Warningf("Failed to read sync progress for *ethclient.Client instance: %s; %s", client, err.Error())
 		evmClearCachedClients(networkID)
 		return nil, err
 	}
