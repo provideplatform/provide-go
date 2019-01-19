@@ -490,7 +490,15 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 	case abi.IntTy, abi.UintTy:
 		switch t.Kind {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			return big.NewInt(int64(v.(int64))), nil
+			var intval *big.Int
+			if valInt64, valInt64Ok := v.(int64); valInt64Ok {
+				intval = big.NewInt(int64(valInt64))
+			} else if valFloat64, valFloat64Ok := v.(float64); valFloat64Ok {
+				intval = big.NewInt(int64(valFloat64))
+			}
+			if intval != nil {
+				return evmReadInteger(t.Kind, intval.Bytes()), nil
+			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if val, valOk := v.(string); valOk {
 				intval, err := strconv.Atoi(val)
