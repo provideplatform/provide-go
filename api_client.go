@@ -72,12 +72,12 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	req.Header = headers
 
 	resp, err := client.Do(req)
-	Log.Debugf("Received %v response for provide API (%s %s) invocation", resp.StatusCode, method, urlString)
-
 	if err != nil {
 		Log.Warningf("Failed to invoke provide API (%s %s) method: %s; %s", method, urlString, err.Error())
 		return 0, nil, err
 	}
+
+	Log.Debugf("Received %v response for provide API (%s %s) invocation", resp.StatusCode, method, urlString)
 
 	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
