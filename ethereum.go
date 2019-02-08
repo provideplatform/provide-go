@@ -388,7 +388,7 @@ func EVMBroadcastSignedTx(networkID, rpcURL string, signedTx *types.Transaction)
 // EVMSignTx signs a transaction using the given private key and calldata;
 // providing 0 gas results in the tx attempting to use up to the block
 // gas limit for execution
-func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int, gasLimit uint64) (*types.Transaction, *string, error) {
+func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val *big.Int, nonce *uint64, gasLimit uint64) (*types.Transaction, *string, error) {
 	client, err := EVMDialJsonRpc(networkID, rpcURL)
 	if err != nil {
 		return nil, nil, err
@@ -400,9 +400,12 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 		if err != nil {
 			return nil, nil, err
 		}
-		nonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
-		if err != nil {
-			return nil, nil, err
+		if nonce == nil {
+			pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
+			if err != nil {
+				return nil, nil, err
+			}
+			nonce = &pendingNonce
 		}
 		gasPrice, _ := client.SuggestGasPrice(context.TODO())
 		var _data []byte
@@ -423,14 +426,14 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
-			tx = types.NewTransaction(nonce, addr, val, gasLimit, gasPrice, _data)
+			tx = types.NewTransaction(*nonce, addr, val, gasLimit, gasPrice, _data)
 		} else {
 			Log.Debugf("Attempting to deploy contract via tx; network: %s", networkID)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
 			Log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
-			tx = types.NewContractCreation(nonce, val, gasLimit, gasPrice, _data)
+			tx = types.NewContractCreation(*nonce, val, gasLimit, gasPrice, _data)
 		}
 		signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
 		hash := signer.Hash(tx).Bytes()
