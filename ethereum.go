@@ -405,6 +405,18 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 			if err != nil {
 				return nil, nil, err
 			}
+			if pendingNonce == 0 {
+				// check to make sure this isn't parity
+				var jsonRpcResponse = &EthereumJsonRpcResponse{}
+				err := EVMInvokeJsonRpcClient(networkID, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRpcResponse)
+				if err != nil {
+					return nil, nil, err
+				}
+				pendingNonce, err = hexutil.DecodeUint64(jsonRpcResponse.Result.(string))
+				if err != nil {
+					return nil, nil, err
+				}
+			}
 			nonce = &pendingNonce
 		}
 		gasPrice, _ := client.SuggestGasPrice(context.TODO())
