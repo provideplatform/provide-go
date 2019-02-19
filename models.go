@@ -15,6 +15,14 @@ type Model struct {
 	Errors    []*Error  `sql:"-" json:"-"`
 }
 
+// IModel interface for database connected models
+type IModel interface {
+	Create() bool
+	Reload()
+	Update() bool
+	Validate() bool
+}
+
 // Error struct
 type Error struct {
 	Message *string `json:"message"`
