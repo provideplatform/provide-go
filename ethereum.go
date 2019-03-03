@@ -407,15 +407,20 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 			}
 			if pendingNonce == 0 {
 				// check to make sure this isn't parity
-				var jsonRpcResponse = &EthereumJsonRpcResponse{}
-				err := EVMInvokeJsonRpcClient(networkID, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRpcResponse)
-				if err != nil {
-					return nil, nil, err
-				}
-				pendingNonce, err = hexutil.DecodeUint64(jsonRpcResponse.Result.(string))
+				var jsonRPCResponse = &EthereumJsonRpcResponse{}
+				err := EVMInvokeJsonRpcClient(networkID, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
 				if err != nil {
 					Log.Warningf("Failed to retrieve next nonce; %s", err.Error())
 					return nil, nil, err
+				}
+				if jsonRPCResponse.Result != nil {
+					pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
+					if err != nil {
+						Log.Warningf("Failed to decode next nonce; %s", err.Error())
+						return nil, nil, err
+					}
+				} else {
+					Log.Warningf("Failed to retrieve next nonce; JSON-RPC result was nil")
 				}
 			}
 			nonce = &pendingNonce
@@ -762,9 +767,9 @@ func parseContractABI(contractAbi interface{}) (*abi.ABI, error) {
 
 // EVMEthCall invokes eth_call manually via JSON-RPC
 func EVMEthCall(networkID, rpcURL string, params []interface{}) (*EthereumJsonRpcResponse, error) {
-	var jsonRpcResponse = &EthereumJsonRpcResponse{}
-	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_call", params, &jsonRpcResponse)
-	return jsonRpcResponse, err
+	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_call", params, &jsonRPCResponse)
+	return jsonRPCResponse, err
 }
 
 // EVMGetBlockNumber retrieves the latest block known to the JSON-RPC client
@@ -837,9 +842,9 @@ func EVMGetGasPrice(networkID, rpcURL string) *string {
 
 // EVMGetLatestBlock retrieves the latsest block
 func EVMGetLatestBlock(networkID, rpcURL string) (*EthereumJsonRpcResponse, error) {
-	var jsonRpcResponse = &EthereumJsonRpcResponse{}
-	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRpcResponse)
-	return jsonRpcResponse, err
+	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRPCResponse)
+	return jsonRPCResponse, err
 }
 
 // EVMGetLatestBlockNumber retrieves the latest block number
@@ -878,16 +883,16 @@ func EVMGetBlockGasLimit(networkID, rpcURL string) (uint64, error) {
 
 // EVMGetBlockByNumber retrieves a given block by number
 func EVMGetBlockByNumber(networkID, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
-	var jsonRpcResponse = &EthereumJsonRpcResponse{}
-	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRpcResponse)
-	return jsonRpcResponse, err
+	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getBlockByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRPCResponse)
+	return jsonRPCResponse, err
 }
 
 // EVMGetHeaderByNumber retrieves a given block header by number
 func EVMGetHeaderByNumber(networkID, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
-	var jsonRpcResponse = &EthereumJsonRpcResponse{}
-	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getHeaderByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRpcResponse)
-	return jsonRpcResponse, err
+	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+	err := EVMInvokeJsonRpcClient(networkID, rpcURL, "eth_getHeaderByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRPCResponse)
+	return jsonRPCResponse, err
 }
 
 // EVMGetNativeBalance retrieves a wallet's native currency balance
