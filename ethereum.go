@@ -414,6 +414,7 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 				}
 				pendingNonce, err = hexutil.DecodeUint64(jsonRpcResponse.Result.(string))
 				if err != nil {
+					Log.Warningf("Failed to retrieve next nonce; %s", err.Error())
 					return nil, nil, err
 				}
 			}
@@ -430,6 +431,7 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 		if gasLimit == 0 {
 			callMsg := asEVMCallMsg(from, data, to, val, gasPrice.Uint64(), gasLimit)
 			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+			Log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
 		}
 
 		if to != nil {
