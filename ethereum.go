@@ -425,7 +425,11 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 			}
 			nonce = &pendingNonce
 		}
-		gasPrice, _ := client.SuggestGasPrice(context.TODO())
+		gasPrice, err := client.SuggestGasPrice(context.TODO())
+		if err != nil {
+			Log.Warningf("Failed to suggest gas price; %s", err.Error())
+			return nil, nil, err
+		}
 		var _data []byte
 		if data != nil {
 			_data = common.FromHex(*data)
@@ -434,7 +438,11 @@ func EVMSignTx(networkID, rpcURL, from, privateKey string, to, data *string, val
 		var tx *types.Transaction
 
 		if gasLimit == 0 {
-			callMsg := asEVMCallMsg(from, data, to, val, gasPrice.Uint64(), gasLimit)
+			var _gasPrice uint64
+			if gasPrice != nil {
+				_gasPrice = gasPrice.Uint64()
+			}
+			callMsg := asEVMCallMsg(from, data, to, val, _gasPrice, gasLimit)
 			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
 			Log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
 		}
