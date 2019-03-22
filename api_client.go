@@ -11,7 +11,12 @@ import (
 	"time"
 )
 
-// APIClient is the base class for calling a provide microservice
+// APIClient is a generic base class for calling a REST API; when a token is configured on an
+// APIClient instance it will be provided as a bearer authorization header; when a username and
+// password are configured on an APIClient instance, they will be used for HTTP basic authorization
+// but will be passed as the Authorization header instead of as part of the URL itself. When a token
+// is confgiured on an APIClient instance, the username and password supplied for basic auth are
+// currently discarded.
 type APIClient struct {
 	Host     string
 	Path     string
@@ -32,7 +37,7 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
-		Log.Warningf("Failed to parse URL for provide API (%s %s) invocation; %s", method, urlString, err.Error())
+		Log.Warningf("Failed to parse URL for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
 		return -1, nil, err
 	}
 
@@ -63,7 +68,7 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	if mthd == "POST" || mthd == "PUT" {
 		payload, err := json.Marshal(params)
 		if err != nil {
-			Log.Warningf("Failed to marshal JSON payload for provide API (%s %s) invocation; %s", method, urlString, err.Error())
+			Log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; invocation; %s", method, urlString, err.Error())
 			return -1, nil, err
 		}
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
@@ -78,44 +83,46 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 	req.Header = headers
 
 	resp, err := client.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
-		Log.Warningf("Failed to invoke provide API (%s %s) method: %s; %s", method, urlString, err.Error())
+		Log.Warningf("Failed to invoke HTTP %s request; URL: %s; %s", method, urlString, err.Error())
 		return 0, nil, err
 	}
 
-	Log.Debugf("Received %v response for provide API (%s %s) invocation", resp.StatusCode, method, urlString)
+	Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, urlString)
 
-	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	err = json.Unmarshal(buf.Bytes(), &response)
 	if err != nil {
-		return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal provide API (%s %s) response: %s; %s", method, urlString, buf.Bytes(), err.Error())
+		return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
 	}
 
-	Log.Debugf("Invocation of provide API (%s %s) succeeded (%v-byte response)", method, urlString, buf.Len())
+	Log.Debugf("Invocation of HTTP %s request succeeded (%v-byte response received); URL: %s", method, buf.Len(), urlString)
 	return resp.StatusCode, response, nil
 }
 
-// Get constructs an API GET request
+// Get constructs and synchronously sends an HTTP GET request
 func (c *APIClient) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("GET", url, params)
 }
 
-// Post constructs an API POST request
+// Post constructs and synchronously sends an HTTP POST request
 func (c *APIClient) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, params)
 }
 
-// Put constructs an API PUT request
+// Put constructs and synchronously sends an HTTP PUT request
 func (c *APIClient) Put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("PUT", url, params)
 }
 
-// Delete constructs an API DELETE request
+// Delete constructs and synchronously sends an HTTP DELETE request
 func (c *APIClient) Delete(uri string) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("DELETE", url, nil)
