@@ -2,6 +2,7 @@ package provide
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,10 +13,12 @@ import (
 
 // APIClient is the base class for calling a provide microservice
 type APIClient struct {
-	Host   string
-	Path   string
-	Scheme string
-	Token  *string
+	Host     string
+	Path     string
+	Scheme   string
+	Token    *string
+	Username *string
+	Password *string
 }
 
 func (c *APIClient) sendRequest(method, urlString string, params map[string]interface{}) (status int, response interface{}, err error) {
@@ -48,8 +51,11 @@ func (c *APIClient) sendRequest(method, urlString string, params map[string]inte
 		"Accept-Language": {"en-us"},
 		"Accept":          {"application/json"},
 	}
+
 	if c.Token != nil {
 		headers["Authorization"] = []string{fmt.Sprintf("bearer %s", *c.Token)}
+	} else if c.Username != nil && c.Password != nil {
+		headers["Authorization"] = []string{buildBasicAuthorizationHeader(*c.Username, *c.Password)}
 	}
 
 	var req *http.Request
@@ -117,4 +123,9 @@ func (c *APIClient) Delete(uri string) (status int, response interface{}, err er
 
 func (c *APIClient) buildURL(uri string) string {
 	return fmt.Sprintf("%s://%s/%s/%s", c.Scheme, c.Host, c.Path, uri)
+}
+
+func buildBasicAuthorizationHeader(username, password string) string {
+	auth := fmt.Sprintf("%s:%s", username, password)
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
