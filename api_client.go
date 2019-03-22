@@ -2,9 +2,11 @@ package provide
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -109,8 +111,17 @@ func (c *APIClient) sendRequest(method, urlString, contentType string, params ma
 
 	Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, urlString)
 
+	var reader io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err = gzip.NewReader(resp.Body)
+		defer reader.Close()
+	default:
+		reader = resp.Body
+	}
+
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
+	buf.ReadFrom(reader)
 	err = json.Unmarshal(buf.Bytes(), &response)
 	if err != nil {
 		return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
