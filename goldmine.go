@@ -54,7 +54,7 @@ func GetConnectorDetails(token, connectorID string, params map[string]interface{
 // DeleteConnector
 func DeleteConnector(token, connectorID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("connectors/%s", connectorID)
-	return InitIdent(stringOrNil(token)).Delete(uri)
+	return InitGoldmine(stringOrNil(token)).Delete(uri)
 }
 
 // CreateContract
@@ -87,7 +87,7 @@ func CreateNetwork(token string, params map[string]interface{}) (int, interface{
 // UpdateNetwork updates an existing network
 func UpdateNetwork(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("networks/%s", networkID)
-	return InitIdent(stringOrNil(token)).Put(uri, params)
+	return InitGoldmine(stringOrNil(token)).Put(uri, params)
 }
 
 // ListNetworks
@@ -194,7 +194,7 @@ func GetNetworkNodeLogs(token, networkID, nodeID string, params map[string]inter
 // DeleteNetworkNode
 func DeleteNetworkNode(token, networkID, nodeID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("networks/%s/nodes/%s", networkID, nodeID)
-	return InitIdent(stringOrNil(token)).Delete(uri)
+	return InitGoldmine(stringOrNil(token)).Delete(uri)
 }
 
 // CreateOracle
