@@ -3,6 +3,7 @@ package provide
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -31,9 +32,18 @@ type APIClient struct {
 }
 
 func (c *APIClient) sendRequest(method, urlString, contentType string, params map[string]interface{}) (status int, response interface{}, err error) {
+	return c.sendRequestWithTLSClientConfig(method, urlString, contentType, params,
+		&tls.Config{
+			InsecureSkipVerify: false,
+		},
+	)
+}
+
+func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentType string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
+			TLSClientConfig:   tlsClientConfig,
 		},
 		Timeout: time.Second * 30,
 	}
@@ -137,10 +147,22 @@ func (c *APIClient) Get(uri string, params map[string]interface{}) (status int, 
 	return c.sendRequest("GET", url, defaultContentType, params)
 }
 
+// GetWithTLSClientConfig constructs and synchronously sends an API GET request
+func (c *APIClient) GetWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("GET", url, defaultContentType, params, tlsClientConfig)
+}
+
 // Post constructs and synchronously sends an API POST request
 func (c *APIClient) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, defaultContentType, params)
+}
+
+// PostWithTLSClientConfig constructs and synchronously sends an API POST request
+func (c *APIClient) PostWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("POST", url, defaultContentType, params, tlsClientConfig)
 }
 
 // PostWWWFormURLEncoded constructs and synchronously sends an API POST request using application/x-www-form-urlencoded as the content-type
@@ -149,16 +171,34 @@ func (c *APIClient) PostWWWFormURLEncoded(uri string, params map[string]interfac
 	return c.sendRequest("POST", url, "application/x-www-form-urlencoded", params)
 }
 
+// PostWWWFormURLEncodedWithTLSClientConfig constructs and synchronously sends an API POST request using application/x-www-form-urlencoded as the content-type
+func (c *APIClient) PostWWWFormURLEncodedWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("POST", url, "application/x-www-form-urlencoded", params, tlsClientConfig)
+}
+
 // Put constructs and synchronously sends an API PUT request
 func (c *APIClient) Put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("PUT", url, defaultContentType, params)
 }
 
+// PutWithTLSClientConfig constructs and synchronously sends an API PUT request
+func (c *APIClient) PutWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("PUT", url, defaultContentType, params, tlsClientConfig)
+}
+
 // Delete constructs and synchronously sends an API DELETE request
 func (c *APIClient) Delete(uri string) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("DELETE", url, defaultContentType, nil)
+}
+
+// DeleteWithTLSClientConfig constructs and synchronously sends an API DELETE request
+func (c *APIClient) DeleteWithTLSClientConfig(uri string, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("DELETE", url, defaultContentType, nil, tlsClientConfig)
 }
 
 func (c *APIClient) buildURL(uri string) string {
