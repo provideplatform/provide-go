@@ -117,6 +117,12 @@ func CreateKYCApplication(token string, params map[string]interface{}) (int, int
 	return InitIdent(stringOrNil(token)).Post("kyc_applications", params)
 }
 
+// UpdateKYCApplication updates an existing KYC application
+func UpdateKYCApplication(token, kycApplicationID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("kyc_applications/%s", kycApplicationID)
+	return InitIdent(stringOrNil(token)).Put(uri, params)
+}
+
 // GetKYCApplicationDetails retrieves details for the given user id
 func GetKYCApplicationDetails(token, kycApplicationID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("kyc_applications/%s", kycApplicationID)
