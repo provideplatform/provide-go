@@ -105,3 +105,25 @@ func UpdateUser(token, userID string, params map[string]interface{}) (int, inter
 	uri := fmt.Sprintf("users/%s", userID)
 	return InitIdent(stringOrNil(token)).Put(uri, params)
 }
+
+// ListUserKYCApplications retrieves a paginated list of KYC applications by user, scoped to the given API token
+func ListUserKYCApplications(token, userID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("users/%s/kyc_applications", userID)
+	return InitIdent(stringOrNil(token)).Get(uri, params)
+}
+
+// CreateKYCApplication creates a new KYC application
+func CreateKYCApplication(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitIdent(stringOrNil(token)).Post("kyc_applications", params)
+}
+
+// GetKYCApplicationDetails retrieves details for the given user id
+func GetKYCApplicationDetails(token, kycApplicationID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("kyc_applications/%s", kycApplicationID)
+	return InitIdent(stringOrNil(token)).Get(uri, params)
+}
+
+// ListKYCApplications retrieves a paginated list of KYC applications scoped to the given API token
+func ListKYCApplications(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitIdent(stringOrNil(token)).Get("kyc_applications", params)
+}
