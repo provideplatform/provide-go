@@ -8,10 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/vincent-petithory/dataurl"
 )
 
 const defaultContentType = "application/json"
@@ -97,6 +100,32 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				}
 			}
 			payload = []byte(urlEncodedForm.Encode())
+		} else if contentType == "multipart/form-data" {
+			body := new(bytes.Buffer)
+			writer := multipart.NewWriter(body)
+			for key, val := range params {
+				if valStr, valStrOk := val.(string); valStrOk {
+					dURL, err := dataurl.DecodeString(valStr)
+					if err == nil {
+						Log.Debugf("Parsed data url parameter: %s", key)
+						part, err := writer.CreateFormFile(key, key)
+						if err != nil {
+							return 0, nil, err
+						}
+						part.Write(dURL.Data)
+					} else {
+						_ = writer.WriteField(key, valStr)
+					}
+				} else {
+					Log.Warningf("Skipping non-string value when constructing multipart/form-data request: %s", key)
+				}
+			}
+			err = writer.Close()
+			if err != nil {
+				return 0, nil, err
+			}
+
+			payload = []byte(body.Bytes())
 		}
 
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
@@ -175,6 +204,18 @@ func (c *APIClient) PostWWWFormURLEncoded(uri string, params map[string]interfac
 func (c *APIClient) PostWWWFormURLEncodedWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("POST", url, "application/x-www-form-urlencoded", params, tlsClientConfig)
+}
+
+// PostMultipartFormData constructs and synchronously sends an API POST request using multipart/form-data as the content-type
+func (c *APIClient) PostMultipartFormData(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequest("POST", url, "multipart/form-data", params)
+}
+
+// PostMultipartFormDataWithTLSClientConfig constructs and synchronously sends an API POST request using multipart/form-data as the content-type
+func (c *APIClient) PostMultipartFormDataWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	return c.sendRequestWithTLSClientConfig("POST", url, "multipart/form-data", params, tlsClientConfig)
 }
 
 // Put constructs and synchronously sends an API PUT request
