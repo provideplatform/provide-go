@@ -74,9 +74,6 @@ func (d *usageDaemon) run() error {
 }
 
 func (d *usageDaemon) flush() error {
-	// d.mutex.Lock()
-	// defer d.mutex.Unlock()
-
 	for {
 		select {
 		case apiCall, ok := <-d.q:
@@ -108,12 +105,20 @@ func newAPICall(c *gin.Context, sub string) *APICall {
 		}
 	}
 
+	var remoteAddr string
+	xForwardedForHeader := c.GetHeader("x-forwarded-for")
+	if xForwardedForHeader != "" {
+		remoteAddr = xForwardedForHeader
+	} else {
+		remoteAddr = c.Request.RemoteAddr
+	}
+
 	return &APICall{
 		Sub:           sub,
 		Method:        c.Request.Method,
 		Host:          c.Request.Host,
 		Path:          c.Request.URL.Path,
-		RemoteAddr:    c.Request.RemoteAddr,
+		RemoteAddr:    remoteAddr,
 		StatusCode:    c.Writer.Status(),
 		ContentLength: contentLength,
 		Timestamp:     time.Now(),
