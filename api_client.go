@@ -148,7 +148,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		return 0, nil, err
 	}
 
-	Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, urlString)
+	Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, resp.ContentLength, urlString)
 
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
