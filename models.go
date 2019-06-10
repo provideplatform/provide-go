@@ -83,11 +83,18 @@ type EthereumTxTraceResponse struct {
 	} `json:"result"`
 }
 
+// EthereumJsonRpcResponseError is a generic error representation for ethereum JSON-RPC responses
+type EthereumJsonRpcResponseError struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 // EthereumJsonRpcResponse is a generic handler for ethereum JSON-RPC responses
 type EthereumJsonRpcResponse struct {
-	ID     uint64      `json:"id"`
-	Result interface{} `json:"result"`
-	Error  interface{} `json:"error"`
+	ID     uint64                        `json:"id"`
+	Result interface{}                   `json:"result"`
+	Error  *EthereumJsonRpcResponseError `json:"error,omitempty"`
 }
 
 // EthereumWebsocketSubscriptionResponse is a generic handler for ethereum websocket subscription responses
