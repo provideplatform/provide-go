@@ -1,6 +1,13 @@
 package provide
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
+
+const defaultIdentHost = "ident.provide.services"
+const defaultIdentPath = "api/v1"
+const defaultIdentScheme = "https"
 
 // Ident client
 type Ident struct {
@@ -9,11 +16,26 @@ type Ident struct {
 
 // InitIdent convenience method
 func InitIdent(token *string) *Ident {
+	host := defaultIdentHost
+	if os.Getenv("IDENT_API_HOST") != "" {
+		host = os.Getenv("IDENT_API_HOST")
+	}
+
+	path := defaultIdentPath
+	if os.Getenv("IDENT_API_PATH") != "" {
+		host = os.Getenv("IDENT_API_PATH")
+	}
+
+	scheme := defaultIdentScheme
+	if os.Getenv("IDENT_API_SCHEME") != "" {
+		scheme = os.Getenv("IDENT_API_SCHEME")
+	}
+
 	return &Ident{
 		APIClient{
-			Host:   "ident.provide.services",
-			Path:   "api/v1",
-			Scheme: "https",
+			Host:   host,
+			Path:   path,
+			Scheme: scheme,
 			Token:  token,
 		},
 	}

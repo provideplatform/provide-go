@@ -1,6 +1,13 @@
 package provide
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
+
+const defaultGoldmineHost = "goldmine.provide.services"
+const defaultGoldminePath = "api/v1"
+const defaultGoldmineScheme = "https"
 
 // Goldmine client
 type Goldmine struct {
@@ -9,11 +16,26 @@ type Goldmine struct {
 
 // InitGoldmine convenience method
 func InitGoldmine(token string) *Goldmine {
+	host := defaultGoldmineHost
+	if os.Getenv("GOLDMINE_API_HOST") != "" {
+		host = os.Getenv("GOLDMINE_API_HOST")
+	}
+
+	path := defaultGoldminePath
+	if os.Getenv("GOLDMINE_API_PATH") != "" {
+		host = os.Getenv("GOLDMINE_API_PATH")
+	}
+
+	scheme := defaultGoldmineScheme
+	if os.Getenv("GOLDMINE_API_SCHEME") != "" {
+		scheme = os.Getenv("GOLDMINE_API_SCHEME")
+	}
+
 	return &Goldmine{
 		APIClient{
-			Host:   "goldmine.provide.services",
-			Path:   "api/v1",
-			Scheme: "https",
+			Host:   host,
+			Path:   path,
+			Scheme: scheme,
 			Token:  stringOrNil(token),
 		},
 	}
