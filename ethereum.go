@@ -1056,12 +1056,12 @@ func EVMGetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
 	progress, err := client.SyncProgress(ctx)
 	if err != nil {
-		Log.Warningf("Failed to read sync progress for *ethclient.Client instance: %s; %s", client, err.Error())
+		Log.Warningf("Failed to read sync progress for *ethclient.Client instance; %s", err.Error())
 		cancel()
 		return nil, err
 	}
 	if progress != nil {
-		Log.Debugf("Latest synced block reported by *ethclient.Client instance: %v [of %v]", client, progress.CurrentBlock, progress.HighestBlock)
+		Log.Debugf("Latest synced block reported by *ethclient.Client instance [%v of %v]", progress.CurrentBlock, progress.HighestBlock)
 	}
 	cancel()
 	return progress, nil
