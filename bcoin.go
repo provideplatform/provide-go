@@ -2,6 +2,9 @@ package provide
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,6 +14,9 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcutil/base58"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"golang.org/x/crypto/ripemd160"
 )
 
 // The purpose of this class is to expose generic transactional and ABI-related helper
@@ -19,35 +25,110 @@ import (
 // It also caches JSON-RPC client instances in a few flavors (*ethclient.Client and *ethrpc.Client)
 // and maps them to an arbitrary `networkID` after successfully dialing the given RPC URL.
 
-var bcoinRpcClients = map[string][]*rpcclient.Client{} // mapping of network ids to *ethrpc.Client instances
+var bcoinRPCClients = map[string][]*rpcclient.Client{} // mapping of network ids to *ethrpc.Client instances
 var bcoinMutex = &sync.Mutex{}
+var bcoinaddrjs *string
+
+// func init() {
+// 	bcoinaddr, err := ioutil.ReadFile("./bcoinaddr.js")
+// 	if err != nil {
+// 		Log.Panicf("Failed to read bcoinaddr.js")
+// 	}
+// 	bcoinaddrjs = stringOrNil(string(bcoinaddr))
+// }
 
 func bcoinClearCachedClients(networkID string) {
 	bcoinMutex.Lock()
-	for i := range bcoinRpcClients[networkID] {
-		bcoinRpcClients[networkID][i].Shutdown()
+	for i := range bcoinRPCClients[networkID] {
+		bcoinRPCClients[networkID][i].Shutdown()
 	}
 
-	bcoinRpcClients[networkID] = make([]*rpcclient.Client, 0)
+	bcoinRPCClients[networkID] = make([]*rpcclient.Client, 0)
 	bcoinMutex.Unlock()
+}
+
+// BcoinGenerateKeyPair generates a bitcoin address using the given hex representation
+// of a secp256k1 private key; see http://bcoin.io/guides/generate-address.html; returns
+// the address and private key, or an error
+func BcoinGenerateKeyPair(version byte) (address *string, privateKey *ecdsa.PrivateKey, err error) {
+	// Generate a secp256k1 keypair
+	privateKey, err = ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
+	if err != nil {
+		Log.Warningf("Failed to generate bcoin keypair; %s", err.Error())
+		return nil, nil, err
+	}
+
+	// Take the corresponding public key generated with it (65 bytes, 1 byte 0x04, 32 bytes corresponding to X coordinate, 32 bytes corresponding to Y coordinate)
+	buf := &bytes.Buffer{}
+	buf.WriteByte(0x04)
+	buf.Write(privateKey.Public().(*ecdsa.PublicKey).X.Bytes())
+	buf.Write(privateKey.Public().(*ecdsa.PublicKey).Y.Bytes())
+
+	publicKey := buf.Bytes()
+	var hashedPublicKey []byte
+
+	// Perform SHA-256 hashing on the public key
+	s256digest := sha256.New()
+	s256digest.Write(publicKey)
+	hashedPublicKey = s256digest.Sum(nil)
+
+	// Perform RIPEMD-160 hashing on the result of SHA-256
+	ripemd160Digest := ripemd160.New()
+	ripemd160Digest.Write(hashedPublicKey)
+	hashedPublicKey = ripemd160Digest.Sum(nil)
+
+	// Add version byte in front of RIPEMD-160 hash (0x00 for Main Network)
+	extendedBuf := &bytes.Buffer{}
+	extendedBuf.WriteByte(version)
+	extendedBuf.Write(hashedPublicKey)
+	addr := extendedBuf.Bytes()
+
+	// Perform SHA-256 hash on the extended RIPEMD-160 result
+	s256digest = sha256.New()
+	s256digest.Write(addr)
+	hashedPublicKey = s256digest.Sum(nil)
+
+	// Perform SHA-256 hash on the result of the previous SHA-256 hash
+	s256digest = sha256.New()
+	s256digest.Write(hashedPublicKey)
+	hashedPublicKey = s256digest.Sum(nil)
+
+	// Take the first 4 bytes of the second SHA-256 hash. This is the address checksum
+	checksumBuf := &bytes.Buffer{}
+	checksumBuf.WriteByte(hashedPublicKey[0])
+	checksumBuf.WriteByte(hashedPublicKey[1])
+	checksumBuf.WriteByte(hashedPublicKey[2])
+	checksumBuf.WriteByte(hashedPublicKey[3])
+	checksum := checksumBuf.Bytes()
+
+	// Add the 4 checksum bytes from stage 7 at the end of extended RIPEMD-160 hash from stage 4. This is the 25-byte binary Bitcoin Address.
+	binaryAddrBuf := &bytes.Buffer{}
+	binaryAddrBuf.Write(checksum)
+	binaryAddrBuf.Write(addr)
+	addr = binaryAddrBuf.Bytes()
+
+	// Convert the result from a byte string into a base58 string using Base58Check encoding. This is the most commonly used Bitcoin Address format
+	address = stringOrNil(base58.Encode(addr))
+
+	return address, privateKey, err
 }
 
 // BcoinDialJsonRpc - dials and caches a new JSON-RPC client instance at the JSON-RPC url and caches it using the given network id
 func BcoinDialJsonRpc(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclient.Client, error) {
 	var client *rpcclient.Client
 
-	if networkClients, _ := bcoinRpcClients[networkID]; len(networkClients) == 0 {
+	if networkClients, _ := bcoinRPCClients[networkID]; len(networkClients) == 0 {
 		rpcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 		if err != nil {
 			Log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		bcoinMutex.Lock()
-		bcoinRpcClients[networkID] = append(bcoinRpcClients[networkID], rpcClient)
+		bcoinRPCClients[networkID] = append(bcoinRPCClients[networkID], rpcClient)
 		bcoinMutex.Unlock()
 		Log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
-		client = bcoinRpcClients[networkID][0]
+		client = bcoinRPCClients[networkID][0]
 	}
 
 	return client, nil
@@ -101,7 +182,7 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, method s
 // BcoinResolveJsonRpcClient resolves a cached *ethclient.Client client or dials and caches a new instance
 func BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclient.Client, error) {
 	var client *rpcclient.Client
-	if networkClients, _ := bcoinRpcClients[networkID]; len(networkClients) == 0 {
+	if networkClients, _ := bcoinRPCClients[networkID]; len(networkClients) == 0 {
 		host := rpcURL
 		httpIdx := strings.Index(rpcURL, "http://")
 		if httpIdx == 0 {
@@ -127,11 +208,11 @@ func BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) 
 			return nil, err
 		}
 		bcoinMutex.Lock()
-		bcoinRpcClients[networkID] = append(networkClients, client)
+		bcoinRPCClients[networkID] = append(networkClients, client)
 		bcoinMutex.Unlock()
 		Log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
-		client = bcoinRpcClients[networkID][0]
+		client = bcoinRPCClients[networkID][0]
 		Log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
 	}
 	return client, nil
