@@ -817,7 +817,7 @@ func EVMGetChainConfig(networkID, rpcURL string) *params.ChainConfig {
 func EVMGetChainID(networkID, rpcURL string) *big.Int {
 	ethClient, err := EVMDialJsonRpc(networkID, rpcURL)
 	if err != nil {
-		Log.Warningf("Failed to read network id for *ethclient.Client instance: %s; %s", ethClient, err.Error())
+		Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if ethClient == nil {
@@ -826,11 +826,11 @@ func EVMGetChainID(networkID, rpcURL string) *big.Int {
 	}
 	chainID, err := ethClient.NetworkID(context.TODO())
 	if err != nil {
-		Log.Warningf("Failed to read network id for *ethclient.Client instance: %s; %s", ethClient, err.Error())
+		Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if chainID != nil {
-		Log.Debugf("Received chain id from *ethclient.Client instance: %s", ethClient, chainID)
+		Log.Debugf("Received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
 	}
 	return chainID
 }
