@@ -3,6 +3,7 @@ package provide
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"golang.org/x/crypto/ripemd160"
 )
 
@@ -52,7 +52,7 @@ func bcoinClearCachedClients(networkID string) {
 // the address and private key, or an error
 func BcoinGenerateKeyPair(version byte) (address *string, privateKey *ecdsa.PrivateKey, err error) {
 	// Generate a secp256k1 keypair
-	privateKey, err = ecdsa.GenerateKey(secp256k1.S256(), rand.Reader)
+	privateKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		Log.Warningf("Failed to generate bcoin keypair; %s", err.Error())
 		return nil, nil, err
