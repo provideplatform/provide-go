@@ -1090,7 +1090,9 @@ func EVMGetTokenBalance(networkID, rpcURL, tokenAddr, addr string, contractABI i
 		method.Outputs.Unpack(&balance, result)
 		if balance != nil {
 			symbol, _ := EVMGetTokenSymbol(networkID, rpcURL, addr, tokenAddr, contractABI)
-			Log.Debugf("Read %s token balance (%v) from token contract address: %s", symbol, balance, addr)
+			if symbol != nil {
+				Log.Debugf("Read %s token balance (%v) from token contract address: %s", *symbol, balance, addr)
+			}
 		}
 	} else {
 		Log.Warningf("Unable to read balance of unsupported token contract address: %s", tokenAddr)
