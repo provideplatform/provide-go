@@ -1,0 +1,32 @@
+package: github.com/provideservices/provide-go
+import:
+- package: github.com/btcsuite/btcd
+  subpackages:
+  - rpcclient
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.2.0
+- package: github.com/ethereum/go-ethereum
+  version: 428eabe28
+  subpackages:
+  - accounts/abi
+  - common
+  - common/hexutil
+  - core/types
+  - crypto
+  - ethclient
+  - params
+  - rlp
+  - rpc
+- package: github.com/gin-gonic/gin
+  version: ^1.4.0
+- package: github.com/jinzhu/gorm
+  version: ^1.9.10
+- package: github.com/kthomas/go-logger
+- package: github.com/kthomas/go.uuid
+  version: ^1.2.0
+- package: github.com/satori/go.uuid
+  version: ^1.2.0
+- package: github.com/vincent-petithory/dataurl
+- package: golang.org/x/crypto
+  subpackages:
+  - scrypt
