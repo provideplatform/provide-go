@@ -184,8 +184,8 @@ func GetNetworkTransactionDetails(token, networkID, txID string, params map[stri
 }
 
 // GetNetworkStatusMeta
-func GetNetworkStatusMeta(token, networkID, txID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/status", networkID, txID)
+func GetNetworkStatusMeta(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("networks/%s/status", networkID)
 	return InitGoldmine(token).Get(uri, params)
 }
 
