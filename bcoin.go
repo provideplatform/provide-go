@@ -103,8 +103,8 @@ func BcoinGenerateKeyPair(version byte) (address *string, privateKey *ecdsa.Priv
 
 	// Add the 4 checksum bytes from stage 7 at the end of extended RIPEMD-160 hash from stage 4. This is the 25-byte binary Bitcoin Address.
 	binaryAddrBuf := &bytes.Buffer{}
-	binaryAddrBuf.Write(checksum)
 	binaryAddrBuf.Write(addr)
+	binaryAddrBuf.Write(checksum)
 	addr = binaryAddrBuf.Bytes()
 
 	// Convert the result from a byte string into a base58 string using Base58Check encoding. This is the most commonly used Bitcoin Address format
