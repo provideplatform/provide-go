@@ -92,7 +92,7 @@ type EthereumJsonRpcResponseError struct {
 
 // EthereumJsonRpcResponse is a generic handler for ethereum JSON-RPC responses
 type EthereumJsonRpcResponse struct {
-	ID     uint64                        `json:"id"`
+	ID     interface{}                   `json:"id"`
 	Result interface{}                   `json:"result"`
 	Error  *EthereumJsonRpcResponseError `json:"error,omitempty"`
 }
