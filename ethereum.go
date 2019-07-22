@@ -29,6 +29,7 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/scrypt"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -41,9 +42,9 @@ import (
 // It also caches JSON-RPC client instances in a few flavors (*ethclient.Client and *ethrpc.Client)
 // and maps them to an arbitrary `rpcClientKey` after successfully dialing the given RPC URL.
 
-var chainConfigs = map[string]*params.ChainConfig{}        // mapping of network ids to *params.ChainConfig
-var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of network ids to *ethclient.Client instances
-var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of network ids to *ethrpc.Client instances
+var chainConfigs = map[string]*params.ChainConfig{}        // mapping of rpc client keys to *params.ChainConfig
+var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of rpc client keys to *ethclient.Client instances
+var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of rpc client keys to *ethrpc.Client instances
 
 var evmMutex = &sync.Mutex{}
 
@@ -98,10 +99,11 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		},
 		Timeout: time.Second * 60,
 	}
+	id := uuid.NewV4()
 	payload := map[string]interface{}{
 		"method":  method,
 		"params":  params,
-		"id":      EVMGetChainID(rpcClientKey, rpcURL),
+		"id":      id.String(),
 		"jsonrpc": "2.0",
 	}
 	body, err := json.Marshal(payload)
