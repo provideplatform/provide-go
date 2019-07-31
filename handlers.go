@@ -42,25 +42,29 @@ func TrackAPICalls() gin.HandlerFunc {
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
-	var id string
-	keyfn := func(jwtToken *jwt.Token) (interface{}, error) {
-		if claims, ok := jwtToken.Claims.(jwt.MapClaims); ok {
-			if sub, subok := claims["sub"].(string); subok {
-				subprts := strings.Split(sub, ":")
-				if len(subprts) != 2 {
-					return nil, fmt.Errorf("JWT subject malformed; %s", sub)
-				}
-				if subprts[0] != subject {
-					return nil, fmt.Errorf("JWT claims specified non-%s subject: %s", subject, subprts[0])
-				}
-				id = subprts[1]
-			}
-		}
-		return nil, nil
+	token, err := ParseBearerAuthorizationHeader(c, nil)
+	if err != nil {
+		log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		return nil
 	}
-	ParseBearerAuthorizationHeader(c, &keyfn)
+	var id string
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if sub, subok := claims["sub"].(string); subok {
+			subprts := strings.Split(sub, ":")
+			if len(subprts) != 2 {
+				log.Warningf("Failed to parse %s subject from bearer authorization header; JWT subject malformed: %s", subject, sub)
+				return nil
+			}
+			if subprts[0] != subject {
+				log.Warningf("Failed to parse %s subject from bearer authorization header; JWT claims specified non-%s subject: %s", subject, subject, sub)
+				return nil
+			}
+			id = subprts[1]
+		}
+	}
 	uuidV4, err := uuid.FromString(id)
 	if err != nil {
+		log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
 		return nil
 	}
 	return &uuidV4
