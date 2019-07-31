@@ -14,6 +14,7 @@ import (
 	uuid "github.com/kthomas/go.uuid"
 )
 
+const authorizationHeader = "authorization"
 const defaultResponseContentType = "application/json; charset=UTF-8"
 const defaultResultsPerPage = 25
 
@@ -90,7 +91,7 @@ func Paginate(c *gin.Context, db *gorm.DB, model interface{}) *gorm.DB {
 // ParseBearerAuthorizationHeader parses a bearer authorization header
 // expecting to find a valid JWT token; returns the token if present
 func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt.Token) (interface{}, error)) (*jwt.Token, error) {
-	authorization := c.GetHeader("authorization")
+	authorization := c.GetHeader(authorizationHeader)
 	if authorization == "" {
 		return nil, errors.New("No authentication header provided")
 	}

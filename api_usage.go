@@ -131,6 +131,11 @@ func trackAPICall(c *gin.Context) error {
 		return fmt.Errorf("Failed to track API call; singleton usage daemon not initialized")
 	}
 
+	if c.GetHeader(authorizationHeader) == "" {
+		// no-op
+		return fmt.Errorf("Failed to track API call; no authorization header provided")
+	}
+
 	var subject string
 	appID := AuthorizedSubjectID(c, "application")
 	if appID != nil {
