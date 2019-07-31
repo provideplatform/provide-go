@@ -1,44 +1,21 @@
 package provide
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/kthomas/go.uuid"
 )
 
+const defaultResponseContentType = "application/json; charset=UTF-8"
 const defaultResultsPerPage = 25
-
-// CORSMiddleware is a working middlware for using CORS with gin
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Accept-Encoding, Authorization, Cache-Control, Content-Length, Content-Type, Origin, User-Agent, X-CSRF-Token, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "X-Total-Results-Count")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
-}
-
-// TrackAPICalls returns gin middleware for tracking API calls
-func TrackAPICalls() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		defer trackAPICall(c)
-		c.Next()
-	}
-}
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
@@ -68,6 +45,24 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 		return nil
 	}
 	return &uuidV4
+}
+
+// CORSMiddleware is a working middlware for using CORS with gin
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Accept-Encoding, Authorization, Cache-Control, Content-Length, Content-Type, Origin, User-Agent, X-CSRF-Token, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "X-Total-Results-Count")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
 }
 
 // Paginate the current request given the page number and results per page;
@@ -119,4 +114,47 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 		return nil, fmt.Errorf("Failed to parse bearer authentication header as valid JWT; %s", err.Error())
 	}
 	return jwtToken, err
+}
+
+func Render(obj interface{}, status int, c *gin.Context) {
+	c.Header("content-type", defaultResponseContentType)
+	c.Writer.WriteHeader(status)
+	if &obj != nil && status != http.StatusNoContent {
+		encoder := json.NewEncoder(c.Writer)
+		encoder.SetIndent("", "    ")
+		if err := encoder.Encode(obj); err != nil {
+			panic(err)
+		}
+	} else {
+		c.Header("content-length", "0")
+	}
+}
+
+func RenderError(message string, status int, c *gin.Context) {
+	err := map[string]*string{}
+	err["message"] = &message
+	Render(err, status, c)
+}
+
+func RequireParams(requiredParams []string, c *gin.Context) error {
+	var errs []string
+	for _, param := range requiredParams {
+		if c.Query(param) == "" {
+			errs = append(errs, param)
+		}
+	}
+	if len(errs) > 0 {
+		msg := strings.Trim(fmt.Sprintf("missing required parameters: %s", strings.Join(errs, ", ")), " ")
+		RenderError(msg, 400, c)
+		return errors.New(msg)
+	}
+	return nil
+}
+
+// TrackAPICalls returns gin middleware for tracking API calls
+func TrackAPICalls() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer trackAPICall(c)
+		c.Next()
+	}
 }
