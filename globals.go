@@ -3,6 +3,7 @@ package provide
 import (
 	"crypto/rsa"
 	"os"
+	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/kthomas/go-logger"
@@ -17,7 +18,7 @@ var (
 )
 
 func init() {
-	jwtPublicKeyPEM = os.Getenv("JWT_SIGNER_PUBLIC_KEY")
+	jwtPublicKeyPEM = strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
 	if jwtPublicKeyPEM != "" {
 		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
 		if err != nil {

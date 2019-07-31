@@ -99,11 +99,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		},
 		Timeout: time.Second * 60,
 	}
-	id, err := uuid.NewV4()
-	if err != nil {
-		log.Warningf("Failed to generate UUID for JSON-RPC request; %s", err.Error())
-		return err
-	}
+	id := uuid.NewV4()
 	payload := map[string]interface{}{
 		"method":  method,
 		"params":  params,

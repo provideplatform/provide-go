@@ -1,5 +1,5 @@
 hash: 88fcd9c63e95b3509a96bb82541f2ee1a576ce2c1d93fd92ca913b7f1d44b99b
-updated: 2019-07-07T17:19:03.4644-04:00
+updated: 2019-07-31T06:00:52.476018-04:00
 imports:
 - name: github.com/allegro/bigcache
   version: bbf64ae21fc5555f4e9752825ee9ffe13b1e5fa0
