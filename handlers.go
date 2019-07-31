@@ -33,7 +33,6 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 				return nil
 			}
 			if subprts[0] != subject {
-				log.Warningf("Failed to parse %s subject from bearer authorization header; JWT claims specified non-%s subject: %s", subject, subject, sub)
 				return nil
 			}
 			id = subprts[1]
