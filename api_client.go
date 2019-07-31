@@ -54,7 +54,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
-		Log.Warningf("Failed to parse URL for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		log.Warningf("Failed to parse URL for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
 		return -1, nil, err
 	}
 
@@ -87,7 +87,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		if contentType == "application/json" {
 			payload, err = json.Marshal(params)
 			if err != nil {
-				Log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; invocation; %s", method, urlString, err.Error())
+				log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; invocation; %s", method, urlString, err.Error())
 				return -1, nil, err
 			}
 		} else if contentType == "application/x-www-form-urlencoded" {
@@ -96,7 +96,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				if valStr, valOk := val.(string); valOk {
 					urlEncodedForm.Add(key, valStr)
 				} else {
-					Log.Warningf("Failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
+					log.Warningf("Failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
 				}
 			}
 			payload = []byte(urlEncodedForm.Encode())
@@ -107,7 +107,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				if valStr, valStrOk := val.(string); valStrOk {
 					dURL, err := dataurl.DecodeString(valStr)
 					if err == nil {
-						Log.Debugf("Parsed data url parameter: %s", key)
+						log.Debugf("Parsed data url parameter: %s", key)
 						part, err := writer.CreateFormFile(key, key)
 						if err != nil {
 							return 0, nil, err
@@ -117,7 +117,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 						_ = writer.WriteField(key, valStr)
 					}
 				} else {
-					Log.Warningf("Skipping non-string value when constructing multipart/form-data request: %s", key)
+					log.Warningf("Skipping non-string value when constructing multipart/form-data request: %s", key)
 				}
 			}
 			err = writer.Close()
@@ -144,11 +144,11 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		Log.Warningf("Failed to invoke HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		log.Warningf("Failed to invoke HTTP %s request; URL: %s; %s", method, urlString, err.Error())
 		return 0, nil, err
 	}
 
-	Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, resp.ContentLength, urlString)
+	log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, resp.ContentLength, urlString)
 
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
@@ -166,7 +166,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
 	}
 
-	Log.Debugf("Invocation of HTTP %s request succeeded (%v-byte response received); URL: %s", method, buf.Len(), urlString)
+	log.Debugf("Invocation of HTTP %s request succeeded (%v-byte response received); URL: %s", method, buf.Len(), urlString)
 	return resp.StatusCode, response, nil
 }
 

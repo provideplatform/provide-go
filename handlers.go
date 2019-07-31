@@ -106,6 +106,9 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 			fn := *keyfunc
 			return fn(_jwtToken)
 		}
+		if jwtPublicKey != nil {
+			return jwtPublicKey, nil
+		}
 		return nil, nil
 	})
 	if err != nil {

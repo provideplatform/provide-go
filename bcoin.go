@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -32,7 +31,7 @@ var bcoinaddrjs *string
 // func init() {
 // 	bcoinaddr, err := ioutil.ReadFile("./bcoinaddr.js")
 // 	if err != nil {
-// 		Log.Panicf("Failed to read bcoinaddr.js")
+// 		log.Panicf("Failed to read bcoinaddr.js")
 // 	}
 // 	bcoinaddrjs = stringOrNil(string(bcoinaddr))
 // }
@@ -54,7 +53,7 @@ func BcoinGenerateKeyPair(version byte) (address *string, privateKey *ecdsa.Priv
 	// Generate a secp256k1 keypair
 	privateKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		Log.Warningf("Failed to generate bcoin keypair; %s", err.Error())
+		log.Warningf("Failed to generate bcoin keypair; %s", err.Error())
 		return nil, nil, err
 	}
 
@@ -120,13 +119,13 @@ func BcoinDialJsonRpc(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*rpcclie
 	if networkClients, _ := bcoinRPCClients[networkID]; len(networkClients) == 0 {
 		rpcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 		if err != nil {
-			Log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
+			log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		bcoinMutex.Lock()
 		bcoinRPCClients[networkID] = append(bcoinRPCClients[networkID], rpcClient)
 		bcoinMutex.Unlock()
-		Log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
+		log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
 		client = bcoinRPCClients[networkID][0]
 	}
@@ -150,7 +149,7 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, method s
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		Log.Warningf("Failed to marshal JSON payload for %s JSON-RPC invocation; %s", method, err.Error())
+		log.Warningf("Failed to marshal JSON payload for %s JSON-RPC invocation; %s", method, err.Error())
 		return err
 	}
 	host := rpcURL
@@ -165,7 +164,7 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, method s
 	}
 	resp, err := client.Post(host, "application/json", bytes.NewReader(body))
 	if err != nil {
-		Log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
+		log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -175,7 +174,7 @@ func BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, method s
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshal %s JSON-RPC response: %s; %s", method, buf.Bytes(), err.Error())
 	}
-	Log.Debugf("Invocation of JSON-RPC method %s succeeded (%v-byte response)", method, buf.Len())
+	log.Debugf("Invocation of JSON-RPC method %s succeeded (%v-byte response)", method, buf.Len())
 	return nil
 }
 
@@ -201,19 +200,16 @@ func BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) 
 			DisableTLS:   true,
 		}, nil)
 		if err != nil {
-			log.Fatal(err)
-		}
-		if err != nil {
-			Log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
+			log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		bcoinMutex.Lock()
 		bcoinRPCClients[networkID] = append(networkClients, client)
 		bcoinMutex.Unlock()
-		Log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
+		log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
 		client = bcoinRPCClients[networkID][0]
-		Log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
+		log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
 	}
 	return client, nil
 }
@@ -228,7 +224,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 			"error": nil,
 		}
 		if err != nil {
-			Log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
+			log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
 			meta["error"] = err.Error()
 		} else if rpcURL == "" {
 			meta["error"] = "No 'full-node' JSON-RPC URL configured or resolvable"
@@ -243,7 +239,7 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 
 	defer func() {
 		if r := recover(); r != nil {
-			Log.Debugf("Recovered from failed attempt to retrieve network sync progress from JSON-RPC host: %s", rpcURL)
+			log.Debugf("Recovered from failed attempt to retrieve network sync progress from JSON-RPC host: %s", rpcURL)
 			bcoinClearCachedClients(networkID)
 		}
 	}()
@@ -259,13 +255,13 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 
 	height, err = BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
-		Log.Warningf("Failed to read chain height for %s using JSON-RPC host; %s", rpcURL, err.Error())
+		log.Warningf("Failed to read chain height for %s using JSON-RPC host; %s", rpcURL, err.Error())
 		return nil, err
 	}
 
 	chainInfoResp, err := BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
-		Log.Warningf("Failed to read chain info for %s using JSON-RPC host; %s", rpcURL, err.Error())
+		log.Warningf("Failed to read chain info for %s using JSON-RPC host; %s", rpcURL, err.Error())
 		return nil, err
 	}
 	chainInfo = chainInfoResp["result"].(map[string]interface{})
@@ -273,12 +269,12 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 	bestBlockHash, _ := chainInfo["bestblockhash"].(string)
 	resp, err := BcoinGetBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey, bestBlockHash)
 	if err != nil {
-		Log.Warningf("Failed to get the latest block header for hash: %s; %s", bestBlockHash, err.Error())
+		log.Warningf("Failed to get the latest block header for hash: %s; %s", bestBlockHash, err.Error())
 		return nil, err
 	}
 
 	// difficulty = &chainInfo.Difficulty
-	Log.Debugf("%s", resp)
+	log.Debugf("%s", resp)
 	meta := map[string]interface{}{
 		"chain_info":        chainInfo,
 		"difficulty":        difficulty,
@@ -317,12 +313,12 @@ func BcoinGetNetworkStatus(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*Ne
 func BcoinGetDifficulty(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*float64, error) {
 	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
-		Log.Warningf("Failed to get the difficulty target; %s", err.Error())
+		log.Warningf("Failed to get the difficulty target; %s", err.Error())
 		return nil, err
 	}
 	difficulty, err := btcClient.GetDifficulty()
 	if err != nil {
-		Log.Warningf("Failed to get the difficulty target; %s", err.Error())
+		log.Warningf("Failed to get the difficulty target; %s", err.Error())
 		return nil, err
 	}
 	return &difficulty, err
@@ -332,12 +328,12 @@ func BcoinGetDifficulty(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*float
 func BcoinGetHeight(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (*int64, error) {
 	btcClient, err := BcoinResolveJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey)
 	if err != nil {
-		Log.Warningf("Failed to get the chain height; %s", err.Error())
+		log.Warningf("Failed to get the chain height; %s", err.Error())
 		return nil, err
 	}
 	height, err := btcClient.GetBlockCount()
 	if err != nil {
-		Log.Warningf("Failed to get the chain height; %s", err.Error())
+		log.Warningf("Failed to get the chain height; %s", err.Error())
 		return nil, err
 	}
 	return &height, err
@@ -348,7 +344,7 @@ func BcoinGetChainInfo(networkID, rpcURL, rpcAPIUser, rpcAPIKey string) (map[str
 	var resp map[string]interface{}
 	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblockchaininfo", make([]interface{}, 0), &resp)
 	if err != nil {
-		Log.Warningf("Failed to get chain info; %s", err.Error())
+		log.Warningf("Failed to get chain info; %s", err.Error())
 		return nil, err
 	}
 	return resp, err
@@ -359,7 +355,7 @@ func BcoinGetHeader(networkID, rpcURL, rpcAPIUser, rpcAPIKey, hash string) (map[
 	var resp map[string]interface{}
 	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblockheader", []interface{}{hash}, &resp)
 	if err != nil {
-		Log.Warningf("Failed to get block header with hash: %s; %s", hash, err.Error())
+		log.Warningf("Failed to get block header with hash: %s; %s", hash, err.Error())
 		return nil, err
 	}
 	result, _ := resp["result"].(map[string]interface{})
@@ -371,7 +367,7 @@ func BcoinGetBlock(networkID, rpcURL, rpcAPIUser, rpcAPIKey, hash string) (map[s
 	var resp map[string]interface{}
 	err := BcoinInvokeJsonRpcClient(networkID, rpcURL, rpcAPIUser, rpcAPIKey, "getblock", []interface{}{hash}, &resp)
 	if err != nil {
-		Log.Warningf("Failed to get block with hash: %s; %s", hash, err.Error())
+		log.Warningf("Failed to get block with hash: %s; %s", hash, err.Error())
 		return nil, err
 	}
 	result, _ := resp["result"].(map[string]interface{})

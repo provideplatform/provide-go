@@ -39,7 +39,7 @@ type UsageDelegate interface {
 func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis uint, delegate UsageDelegate) error {
 	if daemon != nil {
 		msg := "Attempted to run API usage daemon after singleton instance started"
-		Log.Warningf(msg)
+		log.Warningf(msg)
 		return fmt.Errorf(msg)
 	}
 
@@ -57,7 +57,7 @@ func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis uint, delegate UsageD
 }
 
 func (d *usageDaemon) run() error {
-	Log.Debugf("Running API usage daemon...")
+	log.Debugf("Running API usage daemon...")
 	ticker := time.NewTicker(time.Duration(d.flushIntervalMillis) * time.Millisecond)
 	for {
 		select {
@@ -66,7 +66,7 @@ func (d *usageDaemon) run() error {
 				d.flush()
 			}
 		case <-d.shutdown.Done():
-			Log.Debugf("Flushing API usage daemon on shutdown")
+			log.Debugf("Flushing API usage daemon on shutdown")
 			ticker.Stop()
 			return d.flush()
 		}
@@ -78,14 +78,14 @@ func (d *usageDaemon) flush() error {
 		select {
 		case apiCall, ok := <-d.q:
 			if ok {
-				Log.Debugf("Attempting to track API call consumed by subject: %s", apiCall.Sub)
+				log.Debugf("Attempting to track API call consumed by subject: %s", apiCall.Sub)
 				d.delegate.Track(apiCall)
 			} else {
-				Log.Warningf("Failed to receive message from API usage daemon")
+				log.Warningf("Failed to receive message from API usage daemon")
 			}
 		default:
 			if len(d.q) == 0 {
-				Log.Debugf("API usage daemon buffered channel flushed")
+				log.Debugf("API usage daemon buffered channel flushed")
 				return nil
 			}
 		}
@@ -146,7 +146,7 @@ func trackAPICall(c *gin.Context) error {
 		return fmt.Errorf("Failed to resolve subject to which API usage could be attributed")
 	}
 
-	Log.Debugf("Attempting to track API call for caller: %s", subject)
+	log.Debugf("Attempting to track API call for caller: %s", subject)
 	daemon.q <- newAPICall(c, subject)
 
 	return nil
