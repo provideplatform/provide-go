@@ -1,5 +1,5 @@
-hash: 88fcd9c63e95b3509a96bb82541f2ee1a576ce2c1d93fd92ca913b7f1d44b99b
-updated: 2019-07-31T06:00:52.476018-04:00
+hash: f7c370b6c86de5da6910ec7a3356b6aea627b6e74be01a3995db3357541a5a94
+updated: 2019-07-31T06:08:24.020486-04:00
 imports:
 - name: github.com/allegro/bigcache
   version: bbf64ae21fc5555f4e9752825ee9ffe13b1e5fa0
@@ -83,7 +83,7 @@ imports:
 - name: github.com/kthomas/go-logger
   version: 01c36065851341304751234b081327cf58728dba
 - name: github.com/kthomas/go.uuid
-  version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
+  version: 28d1fa77e9a4efcba826a2a6c8f5a9ff6cea44a6
 - name: github.com/mattn/go-isatty
   version: 1311e847b0cb909da63b5fecfb5370aa66236465
 - name: github.com/modern-go/concurrent
@@ -92,8 +92,6 @@ imports:
   version: 94122c33edd36123c84d5368cfb2b69df93a0ec8
 - name: github.com/rs/cors
   version: 33ffc0734c60052d8b609f1e2d8ebbadc6cd80d8
-- name: github.com/satori/go.uuid
-  version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/syndtr/goleveldb
   version: 02440ea7a28525b3079783ad9c27083994a42366
   subpackages:

@@ -23,9 +23,7 @@ import:
   version: ^1.9.10
 - package: github.com/kthomas/go-logger
 - package: github.com/kthomas/go.uuid
-  version: ^1.2.0
-- package: github.com/satori/go.uuid
-  version: ^1.2.0
+  version: master
 - package: github.com/vincent-petithory/dataurl
 - package: golang.org/x/crypto
   subpackages:
