@@ -105,6 +105,9 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 			fn := *keyfunc
 			return fn(_jwtToken)
 		}
+		if _, ok := _jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("Failed to parse bearer authentication header; unexpected JWT signing alg: %s", _jwtToken.Method.Alg())
+		}
 		if jwtPublicKey != nil {
 			return jwtPublicKey, nil
 		}
