@@ -213,7 +213,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 	}
 
 	log.Debugf("Encoded %v abi params prior to executing contract method: %s; abi-encoded arguments %v bytes packed", len(params), methodDescriptor, len(encodedArgs))
-	return append(method.Id(), encodedArgs...), nil
+	return append(method.ID(), encodedArgs...), nil
 }
 
 // EVMGenerateKeyPair - creates and returns an ECDSA keypair;

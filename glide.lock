@@ -1,16 +1,16 @@
-hash: f7c370b6c86de5da6910ec7a3356b6aea627b6e74be01a3995db3357541a5a94
-updated: 2019-07-31T06:08:24.020486-04:00
+hash: 7e5aa022f81f20a956b320d82d69b70d5584efa86ef2a16e05385535cc1f4933
+updated: 2019-08-21T01:40:34.41727-04:00
 imports:
 - name: github.com/allegro/bigcache
-  version: bbf64ae21fc5555f4e9752825ee9ffe13b1e5fa0
+  version: baaa21686666424b386f282d68fc1d23594ab38d
   subpackages:
   - queue
 - name: github.com/aristanetworks/goarista
-  version: f44d68189fd70d5ee96bf3ccd56a53224febfc50
+  version: ed1100a1c0154be237da0078e86b19c523c8c661
   subpackages:
   - monotime
 - name: github.com/btcsuite/btcd
-  version: c26ffa870fd817666a857af1bf6498fabba1ffe3
+  version: 4063feeff79a0da1b08cc857e89d4602e91a294c
   subpackages:
   - btcec
   - btcjson
@@ -35,8 +35,12 @@ imports:
   version: 699df6a3acf6867538e50931511e9dc403da108a
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
+- name: github.com/elastic/gosigar
+  version: cd0724355811a9fbc473732c9218496c4a27abe9
+  subpackages:
+  - sys/windows
 - name: github.com/ethereum/go-ethereum
-  version: 428eabe28d1077356b16f25828d78d8693a766bb
+  version: 039a9c36226eafaf07942ecfb6082a90945ea86a
   subpackages:
   - accounts/abi
   - common
@@ -67,13 +71,13 @@ imports:
 - name: github.com/go-stack/stack
   version: 2fee6af1a9795aafbe0253a0cfbdf668e1fb8a9a
 - name: github.com/golang/protobuf
-  version: 6c65a5562fc06764971b7c5d05c76c75e84bdbf7
+  version: 4c88cc3f1a34ffade77b79abc53335d1e511f25b
   subpackages:
   - proto
-- name: github.com/golang/snappy
-  version: 2a8bb927dd31d8daada140a5d09578521ce5c36a
 - name: github.com/google/logger
   version: 03bdf7bcb2c4d98c8fdbf62f1473fb1303ca1c1d
+- name: github.com/gorilla/websocket
+  version: 66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d
 - name: github.com/jinzhu/gorm
   version: 836fb2c19d84dac7b0272958dfb9af7cf0d0ade4
 - name: github.com/jinzhu/inflection
@@ -85,30 +89,21 @@ imports:
 - name: github.com/kthomas/go.uuid
   version: 28d1fa77e9a4efcba826a2a6c8f5a9ff6cea44a6
 - name: github.com/mattn/go-isatty
-  version: 1311e847b0cb909da63b5fecfb5370aa66236465
+  version: da60ac76bf7019a8b005f8dd1ad9d1a0e6434155
 - name: github.com/modern-go/concurrent
   version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
 - name: github.com/modern-go/reflect2
   version: 94122c33edd36123c84d5368cfb2b69df93a0ec8
+- name: github.com/pkg/errors
+  version: 27936f6d90f9c8e1145f11ed52ffffbfdb9e0af7
 - name: github.com/rs/cors
-  version: 33ffc0734c60052d8b609f1e2d8ebbadc6cd80d8
-- name: github.com/syndtr/goleveldb
-  version: 02440ea7a28525b3079783ad9c27083994a42366
-  subpackages:
-  - leveldb
-  - leveldb/cache
-  - leveldb/comparer
-  - leveldb/errors
-  - leveldb/filter
-  - leveldb/iterator
-  - leveldb/journal
-  - leveldb/memdb
-  - leveldb/opt
-  - leveldb/storage
-  - leveldb/table
-  - leveldb/util
+  version: db0fe48135e83b5812a5a31be0eea66984b1b521
+- name: github.com/steakknife/bloomfilter
+  version: 6819c0d2a57025e1700378ee59b7382d71987f14
+- name: github.com/steakknife/hamming
+  version: c99c65617cd3d686aea8365fe563d6542f01d940
 - name: github.com/ugorji/go
-  version: 02994ffebd8e7ef482130d13b570c8be0968b790
+  version: e118e2d506a6b252f6b85f2e2f2ac1bfed82f1b8
   subpackages:
   - codec
 - name: github.com/vincent-petithory/dataurl
@@ -120,10 +115,6 @@ imports:
   - ripemd160
   - scrypt
   - sha3
-- name: golang.org/x/net
-  version: da137c7871d730100384dbcf36e6f8fa493aef5b
-  subpackages:
-  - websocket
 - name: golang.org/x/sys
   version: 04f50cda93cbb67f2afa353c52f342100e80e625
   subpackages:
