@@ -8,7 +8,7 @@ import (
 	"github.com/kthomas/go.uuid"
 )
 
-// Model base class
+// Model base class with uuid v4 primary key id
 type Model struct {
 	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
 	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at"`
@@ -26,7 +26,7 @@ type IModel interface {
 // Error struct
 type Error struct {
 	Message *string `json:"message"`
-	Status  *int    `json:"status"`
+	Status  *int    `json:"status,omitempty"`
 }
 
 // APICall struct
@@ -105,15 +105,15 @@ type EthereumWebsocketSubscriptionResponse struct {
 
 // NetworkStatus provides network-agnostic status
 type NetworkStatus struct {
-	Block           uint64                 `json:"block"`            // current block
-	ChainID         *string                `json:"chain_id"`         // the chain id
-	Height          *uint64                `json:"height"`           // total height of the blockchain; null after syncing completed
-	LastBlockAt     *uint64                `json:"last_block_at"`    // unix timestamp of the last block; i.e., when the last block was collated
-	PeerCount       uint64                 `json:"peer_count"`       // number of peers connected to the JSON-RPC client
-	ProtocolVersion *string                `json:"protocol_version"` // protocol version
-	State           *string                `json:"state"`            // i.e., syncing, synced, etc
-	Syncing         bool                   `json:"syncing"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
-	Meta            map[string]interface{} `json:"meta"`             // network-specific metadata
+	Block           uint64                 `json:"block,omitempty"`            // current block
+	ChainID         *string                `json:"chain_id,omitempty"`         // the chain id
+	Height          *uint64                `json:"height,omitempty"`           // total height of the blockchain; null after syncing completed
+	LastBlockAt     *uint64                `json:"last_block_at,omitempty"`    // unix timestamp of the last block; i.e., when the last block was collated
+	PeerCount       uint64                 `json:"peer_count,omitempty"`       // number of peers connected to the JSON-RPC client
+	ProtocolVersion *string                `json:"protocol_version,omitempty"` // protocol version
+	State           *string                `json:"state,omitempty"`            // i.e., syncing, synced, etc
+	Syncing         bool                   `json:"syncing,omitempty"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
+	Meta            map[string]interface{} `json:"meta,omitempty"`             // network-specific metadata
 }
 
 // Paginate the given query given the page number and results per page;
