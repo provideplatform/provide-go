@@ -119,6 +119,7 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 	return jwtToken, err
 }
 
+// Render an object and status using the given gin context
 func Render(obj interface{}, status int, c *gin.Context) {
 	c.Header("content-type", defaultResponseContentType)
 	c.Writer.WriteHeader(status)
@@ -133,12 +134,14 @@ func Render(obj interface{}, status int, c *gin.Context) {
 	}
 }
 
+// RenderError writes an error message and status using the given gin context
 func RenderError(message string, status int, c *gin.Context) {
 	err := map[string]*string{}
 	err["message"] = &message
 	Render(err, status, c)
 }
 
+// RequireParams renders an error if any of the given parameters are not present in the given gin context
 func RequireParams(requiredParams []string, c *gin.Context) error {
 	var errs []string
 	for _, param := range requiredParams {
