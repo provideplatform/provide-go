@@ -153,6 +153,9 @@ func trackAPICall(c *gin.Context) error {
 
 	log.Debugf("Attempting to track API call for caller: %s", subject)
 	daemon.q <- newAPICall(c, subject)
+	if len(daemon.q) == daemon.bufferSize {
+		go daemon.flush()
+	}
 
 	return nil
 }
