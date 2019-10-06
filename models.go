@@ -54,7 +54,7 @@ type CompiledArtifact struct {
 	ABI         []interface{}          `json:"abi"`
 	Assembly    map[string]interface{} `json:"assembly"`
 	Bytecode    string                 `json:"bytecode"`
-	Deps        map[string]interface{} `json:"deps"`
+	Deps        []interface{}          `json:"deps"`
 	Opcodes     string                 `json:"opcodes"`
 	Raw         json.RawMessage        `json:"raw"`
 	Source      *string                `json:"source"`
