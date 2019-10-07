@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -352,6 +353,20 @@ func generateEVMKeyUUID() (string, error) {
 func EVMHashFunctionSelector(sel string) string {
 	hash := Keccak256(sel)
 	return common.Bytes2Hex(hash[0:4])
+}
+
+// FromECDSA exports a private key into a binary dump.
+func FromECDSA(priv *ecdsa.PrivateKey) []byte {
+	if priv == nil {
+		return nil
+	}
+	return math.PaddedBigBytes(priv.D, priv.Params().BitSize/8)
+}
+
+// HexToAddress returns Address with byte values of s.
+// If s is larger than len(h), s will be cropped from the left.
+func HexToAddress(s string) common.Address {
+	return common.BytesToAddress(common.FromHex(s))
 }
 
 // Keccak256 hash the given string
