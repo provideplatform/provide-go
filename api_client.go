@@ -18,6 +18,7 @@ import (
 )
 
 const defaultContentType = "application/json"
+const defaultRequestTimeout = time.Second * 10
 
 // APIClient is a generic base class for calling a REST API; when a token is configured on an
 // APIClient instance it will be provided as a bearer authorization header; when a username and
@@ -48,7 +49,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 			DisableKeepAlives: true,
 			TLSClientConfig:   tlsClientConfig,
 		},
-		Timeout: time.Second * 30,
+		Timeout: defaultRequestTimeout,
 	}
 
 	mthd := strings.ToUpper(method)
@@ -82,15 +83,17 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 
 	var req *http.Request
 
-	if mthd == "POST" || mthd == "PUT" {
+	if mthd == "POST" || mthd == "PUT" || mthd == "PATCH" {
 		var payload []byte
-		if contentType == "application/json" {
+		switch contentType {
+		case "application/json":
 			payload, err = json.Marshal(params)
 			if err != nil {
-				log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; invocation; %s", method, urlString, err.Error())
+				log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
 				return -1, nil, err
 			}
-		} else if contentType == "application/x-www-form-urlencoded" {
+
+		case "application/x-www-form-urlencoded":
 			urlEncodedForm := url.Values{}
 			for key, val := range params {
 				if valStr, valOk := val.(string); valOk {
@@ -100,7 +103,8 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				}
 			}
 			payload = []byte(urlEncodedForm.Encode())
-		} else if contentType == "multipart/form-data" {
+
+		case "multipart/form-data":
 			body := new(bytes.Buffer)
 			writer := multipart.NewWriter(body)
 			for key, val := range params {
@@ -124,8 +128,10 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 			if err != nil {
 				return 0, nil, err
 			}
-
 			payload = []byte(body.Bytes())
+
+		default:
+			log.Warningf("Attempted HTTP %s request with unsupported content type: %s; unable to marshal request body", mthd, contentType)
 		}
 
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
@@ -148,25 +154,34 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		return 0, nil, err
 	}
 
-	log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, resp.ContentLength, urlString)
-
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
 		reader, err = gzip.NewReader(resp.Body)
-		defer reader.Close()
 	default:
 		reader = resp.Body
 	}
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(reader)
-	err = json.Unmarshal(buf.Bytes(), &response)
-	if err != nil {
-		return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
+	if reader != nil {
+		defer reader.Close()
+		buf.ReadFrom(reader)
 	}
 
-	log.Debugf("Invocation of HTTP %s request succeeded (%v-byte response received); URL: %s", method, buf.Len(), urlString)
+	if resp.ContentLength > 0 {
+		contentTypeParts := strings.Split(resp.Header.Get("Content-Type"), ";")
+		switch strings.ToLower(contentTypeParts[0]) {
+		case "application/json":
+			err = json.Unmarshal(buf.Bytes(), &response)
+			if err != nil {
+				return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
+			}
+		default:
+			// no-op
+		}
+	}
+
+	log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, buf.Len(), urlString)
 	return resp.StatusCode, response, nil
 }
 
