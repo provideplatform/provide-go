@@ -168,7 +168,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		buf.ReadFrom(reader)
 	}
 
-	if resp.ContentLength > 0 {
+	if buf.Len() > 0 {
 		contentTypeParts := strings.Split(resp.Header.Get("Content-Type"), ";")
 		switch strings.ToLower(contentTypeParts[0]) {
 		case "application/json":
