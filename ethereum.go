@@ -588,9 +588,19 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 	case abi.HashTy:
 		return common.BytesToHash(v.([]byte)), nil
 	case abi.BytesTy:
-		return v, nil
+		switch v.(type) {
+		case string:
+			return []byte(v.(string)), nil
+		default:
+			return v.([]byte), nil
+		}
 	case abi.FixedBytesTy:
-		return evmReadFixedBytes(t, []byte(v.(string)))
+		switch v.(type) {
+		case string:
+			return evmReadFixedBytes(t, []byte(v.(string)))
+		default:
+			return evmReadFixedBytes(t, v.([]byte))
+		}
 	case abi.FunctionTy:
 		return evmReadFunctionType(t, v.([]byte))
 	default:
