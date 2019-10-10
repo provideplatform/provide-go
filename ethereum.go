@@ -190,22 +190,21 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 			break
 		}
 		input := method.Inputs[i]
-		log.Debugf("Attempting to coerce encoding of %v abi parameter; value: %s", input.Type, params[i])
-		param, err := coerceAbiParameter(input.Type, params[i])
-		if err != nil {
-			log.Warningf("Failed to encode abi parameter %s in accordance with contract %s; %s", input.Name, methodDescriptor, err.Error())
-		} else {
-			switch reflect.TypeOf(param).Kind() {
-			case reflect.Slice:
-				param = []byte(param.(string))
-			default:
-				// no-op
-				log.Debugf("Unmodified parameter (type: %s); value: %s", input.Type, param)
-			}
+		param := params[i]
+		paramType := reflect.TypeOf(param).Kind()
 
-			args = append(args, param)
-			log.Debugf("Coerced encoding of %v abi parameter; value: %s", input.Type, param)
+		log.Debugf("Attempting to coerce encoding of %v abi parameter; value (%s): %s", input.Type, paramType, param)
+		switch paramType {
+		case reflect.Slice:
+			if input.Type.Kind == reflect.String {
+				param = []byte(param.(string))
+			}
+		default:
+			param, _ = coerceAbiParameter(input.Type, params[i])
 		}
+
+		args = append(args, param)
+		log.Debugf("Coerced encoding of %v abi parameter; value: %s", input.Type, param)
 	}
 
 	encodedArgs, err := method.Inputs.Pack(args...)
