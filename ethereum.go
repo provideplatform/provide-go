@@ -204,7 +204,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		}
 
 		args = append(args, param)
-		log.Debugf("Coerced encoding of %v abi parameter; value: %s", input.Type, param)
+		log.Debugf("Coerced encoding of %s abi parameter; value: %s", input.Type.String(), param)
 	}
 
 	encodedArgs, err := method.Inputs.Pack(args...)
