@@ -19,6 +19,8 @@ import:
   - rpc
 - package: github.com/gin-gonic/gin
   version: ^1.4.0
+- package: github.com/ipfs/go-ipfs-api
+  version: ^0.0.2
 - package: github.com/jinzhu/gorm
   version: ^1.9.10
 - package: github.com/kthomas/go-logger
