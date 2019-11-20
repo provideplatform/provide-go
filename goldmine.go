@@ -41,6 +41,28 @@ func InitGoldmine(token string) *Goldmine {
 	}
 }
 
+// CreateAccount
+func CreateAccount(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitGoldmine(token).Post("accounts", params)
+}
+
+// ListAccounts
+func ListAccounts(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitGoldmine(token).Get("accounts", params)
+}
+
+// GetAccountDetails
+func GetAccountDetails(token, accountID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("accounts/%s", accountID)
+	return InitGoldmine(token).Get(uri, params)
+}
+
+// GetAccountBalance
+func GetAccountBalance(token, accountID, tokenID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("accounts/%s/balances/%s", accountID, tokenID)
+	return InitGoldmine(token).Get(uri, params)
+}
+
 // CreateBridge
 func CreateBridge(token string, params map[string]interface{}) (int, interface{}, error) {
 	return InitGoldmine(token).Post("bridges", params)
@@ -280,11 +302,5 @@ func ListWallets(token string, params map[string]interface{}) (int, interface{},
 // GetWalletDetails
 func GetWalletDetails(token, walletID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("wallets/%s", walletID)
-	return InitGoldmine(token).Get(uri, params)
-}
-
-// GetWalletBalance
-func GetWalletBalance(token, walletID, tokenID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("wallets/%s/balances/%s", walletID, tokenID)
 	return InitGoldmine(token).Get(uri, params)
 }
