@@ -30,11 +30,11 @@ type MessageBus struct {
 	contractID *uuid.UUID
 
 	token         string
-	walletAddress string
+	accountAddress string
 }
 
 // NewMessageBus initializes a new message bus client configured using the given API token
-func NewMessageBus(token, walletAddress string) (*MessageBus, error) {
+func NewMessageBus(token, accountAddress string) (*MessageBus, error) {
 	jwtToken, err := jwt.Parse(token, func(_jwtToken *jwt.Token) (interface{}, error) {
 		// no need to verify client-side
 		return nil, nil
@@ -66,14 +66,14 @@ func NewMessageBus(token, walletAddress string) (*MessageBus, error) {
 		return nil, fmt.Errorf("failed to initialize message bus; no application id resolved in otherwise-valid jwt claims; token: %s", token)
 	}
 
-	if walletAddress == "" {
-		return nil, fmt.Errorf("failed to initialize message bus; invalid wallet address provided for message bus id: %s", applicationID)
+	if accountAddress == "" {
+		return nil, fmt.Errorf("failed to initialize message bus; invalid account address provided for message bus id: %s", applicationID)
 	}
 
 	mb := &MessageBus{
 		applicationID: applicationID,
 		token:         token,
-		walletAddress: walletAddress,
+		accountAddress: accountAddress,
 	}
 
 	err = mb.resolveApplication()
@@ -199,7 +199,7 @@ func (m *MessageBus) ListMessages() ([]interface{}, error) {
 		"method":         "listMessages",
 		"params":         []int{1, defaultMessagesPerPage},
 		"value":          0,
-		"wallet_address": m.walletAddress,
+		"account_address": m.accountAddress,
 	})
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (m *MessageBus) Publish(subject string, msg []byte) error {
 		"method":         publishContractMethod,
 		"params":         []interface{}{subject, hash},
 		"value":          0,
-		"wallet_address": m.walletAddress,
+		"account_address": m.accountAddress,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to execute publish method on message bus application registry contract with id: %s; %s", m.contractID, err.Error())
