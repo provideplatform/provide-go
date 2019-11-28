@@ -3,6 +3,7 @@ module github.com/provideservices/provide-go
 go 1.13
 
 require (
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20190712234253-ed1100a1c015 // indirect
 	github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
@@ -11,12 +12,13 @@ require (
 	github.com/deckarep/golang-set v1.7.2-0.20180927150649-699df6a3acf6 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
-	github.com/elastic/gosigar v0.10.5-0.20190807135729-cd0724355811 // indirect
+	github.com/elastic/gosigar v0.2.1 // indirect
 	github.com/ethereum/go-ethereum v1.9.7-0.20191017083913-a28093ced4e8
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.4.0
+	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/protobuf v1.3.1-0.20191006172112-69adf3ecd52d // indirect
 	github.com/golang/protobuf v1.3.3-0.20190805180045-4c88cc3f1a34 // indirect
 	github.com/google/logger v1.0.2-0.20190605125422-03bdf7bcb2c4 // indirect
@@ -50,7 +52,7 @@ require (
 	github.com/steakknife/hamming v0.0.0-20180906055917-c99c65617cd3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	github.com/ugorji/go v1.1.7 // indirect
+	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/vincent-petithory/dataurl v0.0.0-20160330182126-9a301d65acbb
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	go.opencensus.io v0.22.2-0.20191001044506-fa651b05963c // indirect
