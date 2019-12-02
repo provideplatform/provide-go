@@ -72,12 +72,12 @@ func Paginate(c *gin.Context, db *gorm.DB, model interface{}) *gorm.DB {
 	page := int64(1)
 	rpp := int64(defaultResultsPerPage)
 	if c.Query("page") != "" {
-		if _page, err := strconv.ParseInt(c.Query("page"), 10, 8); err == nil {
+		if _page, err := strconv.ParseInt(c.Query("page"), 10, 64); err == nil {
 			page = _page
 		}
 	}
 	if c.Query("rpp") != "" {
-		if _rpp, err := strconv.ParseInt(c.Query("rpp"), 10, 8); err == nil {
+		if _rpp, err := strconv.ParseInt(c.Query("rpp"), 10, 64); err == nil {
 			rpp = _rpp
 		}
 	}
