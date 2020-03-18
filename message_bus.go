@@ -29,7 +29,7 @@ type MessageBus struct {
 	contract   map[string]interface{}
 	contractID *uuid.UUID
 
-	token         string
+	token          string
 	accountAddress string
 }
 
@@ -71,8 +71,8 @@ func NewMessageBus(token, accountAddress string) (*MessageBus, error) {
 	}
 
 	mb := &MessageBus{
-		applicationID: applicationID,
-		token:         token,
+		applicationID:  applicationID,
+		token:          token,
 		accountAddress: accountAddress,
 	}
 
@@ -196,9 +196,9 @@ func (m *MessageBus) Ls(hash string) ([]*shell.LsLink, error) {
 // ListMessages returns a list of messages from the on-chain registry
 func (m *MessageBus) ListMessages() ([]interface{}, error) {
 	status, resp, err := ExecuteContract(m.token, m.contractID.String(), map[string]interface{}{
-		"method":         "listMessages",
-		"params":         []int{1, defaultMessagesPerPage},
-		"value":          0,
+		"method":          "listMessages",
+		"params":          []int{1, defaultMessagesPerPage},
+		"value":           0,
 		"account_address": m.accountAddress,
 	})
 	if err != nil {
@@ -271,14 +271,10 @@ func (m *MessageBus) resolveContract() error {
 		status, resp, _ := GetContractDetails(m.token, cntractID, map[string]interface{}{})
 		if status == 200 && resp != nil {
 			contract := resp.(map[string]interface{})
-			if params, paramsOk := contract["params"].(map[string]interface{}); paramsOk {
-				if params["type"] == contractTypeRegistry {
-					m.contract = contract
-					contractID, _ := uuid.FromString(cntractID)
-					m.contractID = &contractID
-					break
-				}
-			}
+			m.contract = contract
+			contractID, _ := uuid.FromString(cntractID)
+			m.contractID = &contractID
+			break
 		}
 	}
 
@@ -300,9 +296,9 @@ func (m *MessageBus) Publish(subject string, msg []byte) error {
 	log.Debugf("published %d-byte message to IPFS; hash: %s", len(msg), hash)
 
 	status, _, err := ExecuteContract(m.token, m.contractID.String(), map[string]interface{}{
-		"method":         publishContractMethod,
-		"params":         []interface{}{subject, hash},
-		"value":          0,
+		"method":          publishContractMethod,
+		"params":          []interface{}{subject, hash},
+		"value":           0,
 		"account_address": m.accountAddress,
 	})
 	if err != nil {
