@@ -57,6 +57,8 @@ require (
 	github.com/wsddn/go-ecdh v0.0.0-20161211032359-48726bab9208 // indirect
 	go.opencensus.io v0.22.2-0.20191001044506-fa651b05963c // indirect
 	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
+	gopkg.in/dedis/crypto.v0 v0.0.0-20170824083343-8f53a63e87fd // indirect
+	gopkg.in/dedis/kyber.v0 v0.0.0-20170824083343-8f53a63e87fd
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20190709231704-1e4459ed25ff // indirect
 	gopkg.in/urfave/cli.v1 v1.20.0 // indirect
