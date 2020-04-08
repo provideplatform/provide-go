@@ -52,10 +52,10 @@ type APICall struct {
 type CompiledArtifact struct {
 	Name        string                 `json:"name"`
 	ABI         []interface{}          `json:"abi"`
-	Assembly    map[string]interface{} `json:"assembly"`
+	Assembly    map[string]interface{} `json:"assembly,omitempty"`
 	Bytecode    string                 `json:"bytecode"`
-	Deps        []interface{}          `json:"deps"`
-	Opcodes     string                 `json:"opcodes"`
+	Deps        []interface{}          `json:"deps,omitempty"`
+	Opcodes     string                 `json:"opcodes,omitempty"`
 	Raw         json.RawMessage        `json:"raw"`
 	Source      *string                `json:"source"`
 	Fingerprint *string                `json:"fingerprint"`
