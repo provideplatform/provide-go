@@ -50,15 +50,15 @@ type APICall struct {
 
 // CompiledArtifact represents compiled sourcecode
 type CompiledArtifact struct {
-	Name        string                 `json:"name"`
-	ABI         []interface{}          `json:"abi"`
-	Assembly    map[string]interface{} `json:"assembly,omitempty"`
-	Bytecode    string                 `json:"bytecode"`
-	Deps        []interface{}          `json:"deps,omitempty"`
-	Opcodes     string                 `json:"opcodes,omitempty"`
-	Raw         json.RawMessage        `json:"raw"`
-	Source      *string                `json:"source"`
-	Fingerprint *string                `json:"fingerprint"`
+	Name        string          `json:"name"`
+	ABI         []interface{}   `json:"abi"`
+	Assembly    interface{}     `json:"assembly,omitempty"`
+	Bytecode    string          `json:"bytecode"`
+	Deps        []interface{}   `json:"deps,omitempty"`
+	Opcodes     string          `json:"opcodes,omitempty"`
+	Raw         json.RawMessage `json:"raw"`
+	Source      *string         `json:"source"`
+	Fingerprint *string         `json:"fingerprint"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
