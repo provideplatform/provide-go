@@ -78,7 +78,6 @@ func EVMDialJsonRpc(rpcClientKey, rpcURL string) (*ethclient.Client, error) {
 		ethrpcClients[rpcClientKey] = append(ethrpcClients[rpcClientKey], rpcClient)
 		ethclientRpcClients[rpcClientKey] = append(networkClients, client)
 		evmMutex.Unlock()
-		log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
 		client = ethclientRpcClients[rpcClientKey][0]
 	}
@@ -144,7 +143,6 @@ func EVMResolveEthClient(rpcClientKey, rpcURL string) (*ethclient.Client, error)
 		evmMutex.Lock()
 		ethclientRpcClients[rpcClientKey] = append(networkClients, client)
 		evmMutex.Unlock()
-		log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
 		client = ethclientRpcClients[rpcClientKey][0]
 		log.Debugf("Resolved cached *ethclient.Client instance for JSON-RPC host @ %s", rpcURL)
@@ -165,7 +163,6 @@ func EVMResolveJsonRpcClient(rpcClientKey, rpcURL string) (*ethrpc.Client, error
 		evmMutex.Lock()
 		ethrpcClients[rpcClientKey] = append(networkClients, client)
 		evmMutex.Unlock()
-		log.Debugf("Dialed JSON-RPC host @ %s", rpcURL)
 	} else {
 		client = ethrpcClients[rpcClientKey][0]
 		log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
@@ -849,9 +846,11 @@ func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
 	}
 	cfg := params.MainnetChainConfig
 	chainID, err := strconv.ParseUint(rpcClientKey, 10, 0)
-	if err != nil {
+	if err == nil {
 		cfg.ChainID = big.NewInt(int64(chainID))
 		chainConfigs[rpcClientKey] = cfg
+	} else {
+		cfg.ChainID = EVMGetChainID(rpcClientKey, rpcURL)
 	}
 	return cfg
 }
