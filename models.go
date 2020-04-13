@@ -2,8 +2,10 @@ package provide
 
 import (
 	"encoding/json"
+	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
 	uuid "github.com/kthomas/go.uuid"
 )
@@ -59,6 +61,50 @@ type CompiledArtifact struct {
 	Raw         json.RawMessage `json:"raw"`
 	Source      *string         `json:"source"`
 	Fingerprint *string         `json:"fingerprint"`
+}
+
+// TxReceipt is generalized transaction receipt model
+type TxReceipt struct {
+	TxHash            common.Hash    `json:"hash"`
+	ContractAddress   common.Address `json:"contract_address"`
+	GasUsed           uint64         `json:"gas_used"`
+	BlockHash         common.Hash    `json:"block_hash,omitempty"`
+	BlockNumber       *big.Int       `json:"block,omitempty"`
+	TransactionIndex  uint           `json:"transaction_index"`
+	PostState         []byte         `json:"root"`
+	Status            uint64         `json:"status"`
+	CumulativeGasUsed uint64         `json:"cumulative_gas_used"`
+	Bloom             interface{}    `json:"logs_bloom"`
+	Logs              []interface{}  `json:"logs"`
+}
+
+// TxTrace is generalized transaction trace model
+type TxTrace struct {
+	Result []struct {
+		Action struct {
+			CallType *string `json:"callType"`
+			From     *string `json:"from"`
+			Gas      *string `json:"gas"`
+			Init     *string `json:"init"`
+			Input    *string `json:"input"`
+			To       *string `json:"to"`
+			Value    *string `json:"value"`
+		} `json:"action"`
+		BlockHash   *string `json:"blockHash"`
+		BlockNumber int     `json:"blockNumber"`
+		Result      struct {
+			Address *string `json:"address"`
+			Code    *string `json:"code"`
+			GasUsed *string `json:"gasUsed"`
+			Output  *string `json:"output"`
+		} `json:"result"`
+		Error               *string       `json:"error"`
+		Subtraces           int           `json:"subtraces"`
+		TraceAddress        []interface{} `json:"traceAddress"`
+		TransactionHash     *string       `json:"transactionHash"`
+		TransactionPosition int           `json:"transactionPosition"`
+		Type                *string       `json:"type"`
+	} `json:"result"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
