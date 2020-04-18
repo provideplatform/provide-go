@@ -1,50 +1,138 @@
 package provide
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 
-	"gopkg.in/dedis/kyber.v0/edwards"
+	abstractcrypto "gopkg.in/dedis/crypto.v0/abstract"
 	"gopkg.in/dedis/kyber.v0/random"
-	// "gopkg.in/dedis/kyber.v0/nist"
 )
 
 // TECGenerateKeyPair - creates and returns an Twisted Edwards Curve (TEC) keypair;
 func TECGenerateKeyPair() (publicKey, privateKey []byte, err error) {
-	curve := new(edwards.ExtendedCurve)
-	curve.Init(ZKPBabyJubJub(), false)
+	curve := babyJubJubCurveSuite()
 
-	privkey := curve.Scalar().Pick(random.Stream)
+	privkey := curve.NewKey(nil)
 	pubkey := curve.Point().Mul(nil, privkey)
 
 	if privkey != nil && pubkey != nil {
-		privateKey = []byte(privkey.String())
-		publicKey = []byte(pubkey.String())
+		privkeyBin, privKeyErr := privkey.MarshalBinary()
+		if privKeyErr != nil {
+			return nil, nil, fmt.Errorf("failed to marshal private key to binary encoding; %s", privKeyErr.Error())
+		}
+
+		pubkeyBin, pubKeyErr := pubkey.MarshalBinary()
+		if pubKeyErr != nil {
+			return nil, nil, fmt.Errorf("failed to marshal public key to binary encoding; %s", pubKeyErr.Error())
+		}
+
+		privateKey = []byte(hex.EncodeToString(privkeyBin))
+		publicKey = []byte(hex.EncodeToString(pubkeyBin))
 	}
 
 	if privateKey == nil || publicKey == nil {
 		return nil, nil, fmt.Errorf("failed to generate key pair on twisted edwards curve")
 	}
 
+	log.Debugf("generated twisted edwards keypair with public key: %s", string(publicKey))
 	return publicKey, privateKey, nil
 }
 
-// ZKPBabyJubJub describes the twisted Edwards curve, babyJubJub, required for zero-knowledge proofs
-func ZKPBabyJubJub() *edwards.Param {
-	var p edwards.Param
+// TECSign signs the given message using the given private key, which is assumed to be hex-encoded
+// TODO: see crypto/anon/sig.go to add anonymous sigs
+func TECSign(privateKey, message []byte) ([]byte, error) {
+	suite := babyJubJubCurveSuite()
 
-	p.Name = "babyJubJub"
-	p.P.SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
-	p.Q.SetString("2736030358979909402780800718157159386076813972158567259200215660948447373041", 10)
-	p.R = 8
+	privkeyBin, err := hex.DecodeString(string(privateKey))
+	if err != nil {
+		log.Warningf("failed to decode private key from hex; %s", err.Error())
+		return nil, err
+	}
 
-	p.A.SetInt64(168700)
-	p.D.SetInt64(168696)
+	privkey := suite.Scalar()
+	err = privkey.UnmarshalBinary(privkeyBin)
+	if err != nil {
+		log.Warningf("failed to unmarshal binary private key; %s", err.Error())
+		return nil, err
+	}
 
-	p.FBX.SetString("17777552123799933955779906779655732241715742912184938656739573121738514868268", 10)
-	p.FBY.SetString("2626589144620713026669568689430873010625803728049924121243784502389097019475", 10)
+	rand := random.Stream
 
-	p.PBX.SetString("16540640123574156134436876038791482806971768689494387082833631921987005038935", 10)
-	p.PBY.SetString("20819045374670962167435360035096875258406992893633759881276124905556507972311", 10)
+	v := suite.Scalar().Pick(rand)
+	T := suite.Point().Mul(nil, v)
 
-	return &p
+	// Create challenge c based on message and T
+	c := tecHash(message, T)
+
+	// Compute response r = v - x*c
+	r := suite.Scalar()
+	r.Mul(privkey, c).Sub(v, r)
+
+	// Return verifiable signature {c, r}
+	// Verifier will be able to compute v = r + x*c
+	// And check that hashElgamal for T and the message == c
+	buf := bytes.Buffer{}
+	sig := basicSig{c, r}
+	err = suite.Write(&buf, &sig)
+	if err != nil {
+		log.Warningf("failed to sign %d-byte message; %s", len(message), err.Error())
+		return nil, err
+	}
+
+	signature := buf.Bytes()
+
+	log.Debugf("signed %d-byte message; signature:\n%s", len(message), hex.Dump(signature))
+	return signature, nil
+}
+
+// TECVerify verifies a signature for the given message and public key; the public key is assumed to be hex-encoded
+func TECVerify(publicKey, message []byte, signature []byte) error {
+	suite := babyJubJubCurveSuite()
+
+	pubkeyBin, err := hex.DecodeString(string(publicKey))
+	if err != nil {
+		log.Warningf("failed to decode public key from hex; %s", err.Error())
+		return err
+	}
+
+	pubkey := suite.Point()
+	err = pubkey.UnmarshalBinary(pubkeyBin)
+	if err != nil {
+		log.Warningf("failed to unmarshal public key; %s", err.Error())
+		return err
+	}
+
+	log.Debugf("attempting to verify %d-byte message using public key: %s", len(message), string(publicKey))
+
+	buf := bytes.NewBuffer(signature)
+	sig := basicSig{}
+	if err := suite.Read(buf, &sig); err != nil {
+		return err
+	}
+	r := sig.R
+	c := sig.C
+
+	// Compute base**(r + x*c) == T
+	var P, T abstractcrypto.Point
+	P = suite.Point()
+	T = suite.Point()
+	T.Add(T.Mul(nil, r), P.Mul(pubkey, c))
+
+	// verify that the hash based on the message and T matches the challange c from the signature
+	c = tecHash(message, T)
+	if !c.Equal(sig.C) {
+		return fmt.Errorf("failed to verifiy %d-byte message using public key: %s", len(message), string(publicKey))
+	}
+
+	return nil
+}
+
+// tecHash returns a secret that depends on on a message and a point
+func tecHash(message []byte, p abstractcrypto.Point) abstractcrypto.Scalar {
+	suite := babyJubJubCurveSuite()
+	pb, _ := p.MarshalBinary()
+	c := suite.Cipher(pb)
+	c.Message(nil, nil, message)
+	return suite.Scalar().Pick(c)
 }
