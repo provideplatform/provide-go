@@ -17,41 +17,35 @@ func TECGenerateKeyPair() (publicKey, privateKey []byte, err error) {
 	pubkey := curve.Point().Mul(nil, privkey)
 
 	if privkey != nil && pubkey != nil {
-		privkeyBin, privKeyErr := privkey.MarshalBinary()
+		privateKeyBin, privKeyErr := privkey.MarshalBinary()
 		if privKeyErr != nil {
 			return nil, nil, fmt.Errorf("failed to marshal private key to binary encoding; %s", privKeyErr.Error())
 		}
 
-		pubkeyBin, pubKeyErr := pubkey.MarshalBinary()
+		publicKeyBin, pubKeyErr := pubkey.MarshalBinary()
 		if pubKeyErr != nil {
 			return nil, nil, fmt.Errorf("failed to marshal public key to binary encoding; %s", pubKeyErr.Error())
 		}
 
-		privateKey = []byte(hex.EncodeToString(privkeyBin))
-		publicKey = []byte(hex.EncodeToString(pubkeyBin))
+		privateKey = privateKeyBin
+		publicKey = publicKeyBin
 	}
 
 	if privateKey == nil || publicKey == nil {
 		return nil, nil, fmt.Errorf("failed to generate key pair on twisted edwards curve")
 	}
 
-	log.Debugf("generated twisted edwards keypair with public key: %s", string(publicKey))
+	log.Debugf("generated twisted edwards keypair with public key: %s", hex.EncodeToString(publicKey))
 	return publicKey, privateKey, nil
 }
 
-// TECSign signs the given message using the given private key, which is assumed to be hex-encoded
+// TECSign signs the given message using the given private key
 // TODO: see crypto/anon/sig.go to add anonymous sigs
 func TECSign(privateKey, message []byte) ([]byte, error) {
 	suite := babyJubJubCurveSuite()
 
-	privkeyBin, err := hex.DecodeString(string(privateKey))
-	if err != nil {
-		log.Warningf("failed to decode private key from hex; %s", err.Error())
-		return nil, err
-	}
-
 	privkey := suite.Scalar()
-	err = privkey.UnmarshalBinary(privkeyBin)
+	err := privkey.UnmarshalBinary(privateKey)
 	if err != nil {
 		log.Warningf("failed to unmarshal binary private key; %s", err.Error())
 		return nil, err
@@ -86,18 +80,12 @@ func TECSign(privateKey, message []byte) ([]byte, error) {
 	return signature, nil
 }
 
-// TECVerify verifies a signature for the given message and public key; the public key is assumed to be hex-encoded
+// TECVerify verifies a signature for the given message and public key
 func TECVerify(publicKey, message []byte, signature []byte) error {
 	suite := babyJubJubCurveSuite()
 
-	pubkeyBin, err := hex.DecodeString(string(publicKey))
-	if err != nil {
-		log.Warningf("failed to decode public key from hex; %s", err.Error())
-		return err
-	}
-
 	pubkey := suite.Point()
-	err = pubkey.UnmarshalBinary(pubkeyBin)
+	err := pubkey.UnmarshalBinary(publicKey)
 	if err != nil {
 		log.Warningf("failed to unmarshal public key; %s", err.Error())
 		return err
