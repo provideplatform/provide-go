@@ -15,8 +15,8 @@ type point struct {
 
 // C25519ComputeSecret - computes the shared secret given a private key and peer's public key
 func C25519ComputeSecret(privateKey, peerPublicKey []byte) []byte {
-	var privkeyBytes [32]byte
-	var pubkeyBytes [32]byte
+	privkeyBytes := [32]byte{}
+	pubkeyBytes := [32]byte{}
 
 	copy(privkeyBytes[:], privateKey)
 	copy(pubkeyBytes[:], peerPublicKey)
