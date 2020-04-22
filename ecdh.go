@@ -36,9 +36,10 @@ func C25519GenerateKeyPair() (publicKey, privateKey []byte, err error) {
 	}
 
 	privkeyBytes := privkey.([32]byte)
+	pubkeyBytes := pubkey.([32]byte)
 
 	privateKey = privkeyBytes[:]
-	publicKey = pubkey.([]byte)
+	publicKey = pubkeyBytes[:]
 
 	if privateKey == nil || publicKey == nil {
 		return nil, nil, fmt.Errorf("failed to generate c25519 key pair")
