@@ -304,3 +304,9 @@ func GetWalletDetails(token, walletID string, params map[string]interface{}) (in
 	uri := fmt.Sprintf("wallets/%s", walletID)
 	return InitGoldmine(token).Get(uri, params)
 }
+
+// ListWalletAccounts
+func ListWalletAccounts(token, walletID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("wallets/%s/accounts", walletID)
+	return InitGoldmine(token).Get(uri, params)
+}
