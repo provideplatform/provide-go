@@ -14,3 +14,17 @@ type ContainerParams struct {
 	environment       map[string]interface{}
 	security          map[string]interface{}
 }
+
+// TargetCredentials struct has all credentials to access AWS and Azure in one place
+type TargetCredentials struct {
+        AWSAccessKeyID  *string
+        AWSSecretAccessKey *string
+        AzureSubscriptionID *string
+        AzureTenantID *string
+        AzureClientID *string
+        AzureClientSecret *string
+}
+
+func (t *TargetCredentials) IsValidAWSCredentials() bool {
+        return t.AWSAccessKeyID != nil && t.AWSSecretAccessKey != nil
+}
