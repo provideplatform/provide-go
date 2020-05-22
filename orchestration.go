@@ -6,7 +6,7 @@ type ContainerParams struct {
 	ResourceGroupName string
 	Image             *string
 	VirtualNetworkID  *string
-	Cpu               *int64
+	CPU               *int64
 	Memory            *int64
 	Entrypoint        []*string
 	SecurityGroupIds  []string
@@ -31,6 +31,7 @@ type TargetCredentials struct {
 	AzureClientSecret   *string
 }
 
+// IsValidAWSCredentials returns `true` if the `TargetCredentials` struct has both `AWSAccessKeyID` and `AWSSecretAccessKey`
 func (t *TargetCredentials) IsValidAWSCredentials() bool {
 	return t.AWSAccessKeyID != nil && t.AWSSecretAccessKey != nil
 }
