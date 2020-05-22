@@ -15,16 +15,22 @@ type ContainerParams struct {
 	Security          map[string]interface{}
 }
 
+// ContainerCreateResult is a struct representing the response from container creation function.
+type ContainerCreateResult struct {
+	containerIds []string
+	err          error
+}
+
 // TargetCredentials struct has all credentials to access AWS and Azure in one place
 type TargetCredentials struct {
-        AWSAccessKeyID  *string
-        AWSSecretAccessKey *string
-        AzureSubscriptionID *string
-        AzureTenantID *string
-        AzureClientID *string
-        AzureClientSecret *string
+	AWSAccessKeyID      *string
+	AWSSecretAccessKey  *string
+	AzureSubscriptionID *string
+	AzureTenantID       *string
+	AzureClientID       *string
+	AzureClientSecret   *string
 }
 
 func (t *TargetCredentials) IsValidAWSCredentials() bool {
-        return t.AWSAccessKeyID != nil && t.AWSSecretAccessKey != nil
+	return t.AWSAccessKeyID != nil && t.AWSSecretAccessKey != nil
 }
