@@ -17,8 +17,8 @@ type ContainerParams struct {
 
 // ContainerCreateResult is a struct representing the response from container creation function.
 type ContainerCreateResult struct {
-	containerIds []string
-	err          error
+	ContainerIds []string
+	Err          error
 }
 
 // TargetCredentials struct has all credentials to access AWS and Azure in one place
