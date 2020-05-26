@@ -51,19 +51,19 @@ func ListVaults(token string, params map[string]interface{}) (int, interface{}, 
 	return InitVault(stringOrNil(token)).Get("vaults", params)
 }
 
-// ListVaultKeys retrieves a paginated list of vault API keys
+// ListVaultKeys retrieves a paginated list of vault keys
 func ListVaultKeys(token, vaultID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys", vaultID)
 	return InitVault(stringOrNil(token)).Get(uri, params)
 }
 
-// CreateVaultKey creates a new API token for the given vault ID.
+// CreateVaultKey creates a new vault key
 func CreateVaultKey(token, vaultID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys", vaultID)
 	return InitVault(stringOrNil(token)).Post(uri, params)
 }
 
-// DeleteVaultKey creates a new API token for the given vault ID.
+// DeleteVaultKey deletes a key
 func DeleteVaultKey(token, vaultID, keyID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s", vaultID, keyID)
 	return InitVault(stringOrNil(token)).Delete(uri)
@@ -86,19 +86,19 @@ func VerifySignature(token, vaultID, keyID, msg, sig string) (int, interface{}, 
 	})
 }
 
-// ListVaultSecrets retrieves a paginated list of vault API secrets
+// ListVaultSecrets retrieves a paginated list of secrets in the vault
 func ListVaultSecrets(token, vaultID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
 	return InitVault(stringOrNil(token)).Get(uri, params)
 }
 
-// CreateVaultSecret creates a new API token for the given vault ID.
+// CreateVaultSecret stores a new secret in the vault
 func CreateVaultSecret(token, vaultID string, params map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
 	return InitVault(stringOrNil(token)).Post(uri, params)
 }
 
-// DeleteVaultSecret creates a new API token for the given vault ID.
+// DeleteVaultSecret deletes a secret from the vault
 func DeleteVaultSecret(token, vaultID, secretID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
 	return InitVault(stringOrNil(token)).Delete(uri)
