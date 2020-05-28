@@ -15,10 +15,19 @@ type ContainerParams struct {
 	Security          map[string]interface{}
 }
 
+// NetworkInterface represents a common network interface
+type NetworkInterface struct {
+	Host        *string
+	IPv4        *string
+	IPv6        *string
+	PrivateIPv4 *string
+	PrivateIPv6 *string
+}
+
 // ContainerCreateResult is a struct representing the response from container creation function.
 type ContainerCreateResult struct {
-	ContainerIds []string
-	Err          error
+	ContainerIds        []string
+	ContainerInterfaces []*NetworkInterface
 }
 
 // TargetCredentials struct has all credentials to access AWS and Azure in one place
