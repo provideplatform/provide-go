@@ -31,7 +31,7 @@ require (
 	github.com/jinzhu/gorm v1.9.11
 	github.com/json-iterator/go v1.1.7 // indirect
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/kthomas/go-logger v0.0.0-20200602041232-5c46e0cab608
+	github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531
 	github.com/kthomas/go.uuid v1.2.1-0.20190324131420-28d1fa77e9a4
 	github.com/libp2p/go-flow-metrics v0.0.2-0.20190411201115-b1aae8c25b48 // indirect
 	github.com/libp2p/go-libp2p-core v0.2.4-0.20190930170843-2f75277a8d7b // indirect
