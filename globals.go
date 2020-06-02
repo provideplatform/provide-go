@@ -14,7 +14,7 @@ var (
 	jwtPublicKey    *rsa.PublicKey
 	jwtPublicKeyPEM string
 
-	log = logger.NewLogger("provide-go", getLogLevel(), true)
+	log *logger.Logger
 )
 
 func init() {
@@ -26,6 +26,8 @@ func init() {
 		}
 		jwtPublicKey = publicKey
 	}
+
+	log = logger.NewLogger("provide-go", getLogLevel(), getSyslogEndpoint())
 }
 
 func getLogLevel() string {
@@ -34,6 +36,14 @@ func getLogLevel() string {
 		lvl = "debug"
 	}
 	return lvl
+}
+
+func getSyslogEndpoint() *string {
+	var endpoint *string
+	if os.Getenv("SYSLOG_ENDPOINT") != "" {
+		endpoint = stringOrNil(os.Getenv("SYSLOG_ENDPOINT"))
+	}
+	return endpoint
 }
 
 func stringOrNil(str string) *string {
