@@ -2,17 +2,19 @@ package provide
 
 // ContainerParams is a structure of params common to AWS and Azure containers
 type ContainerParams struct {
-	Region            string
-	ResourceGroupName string
-	Image             *string
-	VirtualNetworkID  *string
-	CPU               *int64
-	Memory            *int64
-	Entrypoint        []*string
-	SecurityGroupIds  []string
-	SubnetIds         []string
-	Environment       map[string]interface{}
-	Security          map[string]interface{}
+	Region             string
+	ResourceGroupName  string
+	Image              *string
+	VirtualNetworkID   *string
+	ContainerGroupName *string
+	ContainerName      *string
+	CPU                *int64
+	Memory             *int64
+	Entrypoint         []*string
+	SecurityGroupIds   []string
+	SubnetIds          []string
+	Environment        map[string]interface{}
+	Security           map[string]interface{}
 }
 
 // NetworkInterface represents a common network interface
