@@ -22,7 +22,6 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/protobuf v1.3.1-0.20191006172112-69adf3ecd52d // indirect
 	github.com/golang/protobuf v1.3.3-0.20190805180045-4c88cc3f1a34 // indirect
-	github.com/google/logger v1.0.2-0.20190605125422-03bdf7bcb2c4 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/ipfs/go-ipfs-api v0.0.2
