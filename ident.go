@@ -106,6 +106,11 @@ func DeleteToken(token, tokenID string) (int, interface{}, error) {
 	return InitIdent(stringOrNil(token)).Delete(uri)
 }
 
+// CreateOrganization creates a new organization
+func CreateOrganization(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitIdent(stringOrNil(token)).Post("organizations", params)
+}
+
 // CreateUser creates a new user for which API tokens and managed signing identities can be authorized
 func CreateUser(token string, params map[string]interface{}) (int, interface{}, error) {
 	return InitIdent(stringOrNil(token)).Post("users", params)
