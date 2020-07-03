@@ -98,8 +98,26 @@ func CreateVaultSecret(token, vaultID string, params map[string]interface{}) (in
 	return InitVault(stringOrNil(token)).Post(uri, params)
 }
 
+// RetrieveVaultSecret stores a new secret in the vault
+func RetrieveVaultSecret(token, vaultID, secretID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
+	return InitVault(stringOrNil(token)).Get(uri, params)
+}
+
 // DeleteVaultSecret deletes a secret from the vault
 func DeleteVaultSecret(token, vaultID, secretID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
 	return InitVault(stringOrNil(token)).Delete(uri)
+}
+
+// Encrypt encrypts provided data with a key from the vault
+func Encrypt(token, vaultID, keyID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
+	return InitVault(stringOrNil(token)).Post(uri, params)
+}
+
+// Decrypt decrypts provided encrypted data with a key from the vault
+func Decrypt(token, vaultID, keyID string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/decrypt", vaultID, keyID)
+	return InitVault(stringOrNil(token)).Post(uri, params)
 }
