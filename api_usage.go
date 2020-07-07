@@ -151,7 +151,7 @@ func trackAPICall(c *gin.Context) error {
 		return fmt.Errorf("Failed to resolve subject to which API usage could be attributed")
 	}
 
-	log.Debugf("Attempting to track API call for caller: %s", subject)
+	log.Tracef("Attempting to track API call for caller: %s", subject)
 	daemon.q <- newAPICall(c, subject)
 	if len(daemon.q) == daemon.bufferSize {
 		go daemon.flush()
