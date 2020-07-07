@@ -93,9 +93,14 @@ func ListVaultSecrets(token, vaultID string, params map[string]interface{}) (int
 }
 
 // CreateVaultSecret stores a new secret in the vault
-func CreateVaultSecret(token, vaultID string, params map[string]interface{}) (int, interface{}, error) {
+func CreateVaultSecret(token, vaultID, secret, name, description, secretType string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
-	return InitVault(stringOrNil(token)).Post(uri, params)
+	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
+		"secret":      secret,
+		"name":        name,
+		"description": description,
+		"type":        secretType,
+	})
 }
 
 // RetrieveVaultSecret stores a new secret in the vault
@@ -110,10 +115,21 @@ func DeleteVaultSecret(token, vaultID, secretID string) (int, interface{}, error
 	return InitVault(stringOrNil(token)).Delete(uri)
 }
 
-// Encrypt encrypts provided data with a key from the vault
-func Encrypt(token, vaultID, keyID string, params map[string]interface{}) (int, interface{}, error) {
+// EncryptWithNonce encrypts provided data with a key from the vault and provided nonce
+func EncryptWithNonce(token, vaultID, keyID, data, nonce string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
-	return InitVault(stringOrNil(token)).Post(uri, params)
+	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
+		"data":  data,
+		"nonce": nonce,
+	})
+}
+
+// EncryptWithoutNonce encryptes provided data with a key from the vault and random nonce
+func EncryptWithoutNonce(token, vaultID, keyID, data string) (int, interface{}, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
+	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
+		"data": data,
+	})
 }
 
 // Decrypt decrypts provided encrypted data with a key from the vault
