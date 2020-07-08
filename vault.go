@@ -124,8 +124,8 @@ func EncryptWithNonce(token, vaultID, keyID, data, nonce string) (int, interface
 	})
 }
 
-// EncryptWithoutNonce encryptes provided data with a key from the vault and random nonce
-func EncryptWithoutNonce(token, vaultID, keyID, data string) (int, interface{}, error) {
+// Encrypt encrypts provided data with a key from the vault and a randomly generated nonce
+func Encrypt(token, vaultID, keyID, data string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
 	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
 		"data": data,
