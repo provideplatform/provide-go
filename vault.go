@@ -70,7 +70,7 @@ func DeleteVaultKey(token, vaultID, keyID string) (int, interface{}, error) {
 }
 
 // SignMessage signs a message with the given key
-func SignMessage(token, vaultID, keyID, msg string, opts interface{}) (int, interface{}, error) {
+func SignMessage(token, vaultID, keyID, msg string, opts map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/sign", vaultID, keyID)
 	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
 		"message": msg,
@@ -79,7 +79,7 @@ func SignMessage(token, vaultID, keyID, msg string, opts interface{}) (int, inte
 }
 
 // VerifySignature verifies a signature
-func VerifySignature(token, vaultID, keyID, msg, sig string, opts interface{}) (int, interface{}, error) {
+func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]interface{}) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/verify", vaultID, keyID)
 	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
 		"message":   msg,
