@@ -46,7 +46,7 @@ require (
 	github.com/spaolacci/murmur3 v1.1.1-0.20190317074736-539464a789e9 // indirect
 	github.com/status-im/keycard-go v0.0.0-20191119114148-6dd40a46baa0 // indirect
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	github.com/ugorji/go/codec v1.1.7 // indirect
+	github.com/ugorji/go v1.1.7 // indirect
 	github.com/vincent-petithory/dataurl v0.0.0-20160330182126-9a301d65acbb
 	go.opencensus.io v0.22.2-0.20191001044506-fa651b05963c // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
