@@ -193,7 +193,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		log.Debugf("Attempting to coerce encoding of %v abi parameter; value (%s): %s", input.Type, paramType, param)
 		switch paramType {
 		case reflect.Slice:
-			if input.Type.Kind == reflect.String {
+			if input.Type.GetType().Kind() == reflect.String {
 				param = []byte(param.(string))
 			}
 		default:
@@ -210,7 +210,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 	}
 
 	log.Debugf("Encoded %v abi params prior to executing contract method: %s; abi-encoded arguments %v bytes packed", len(params), methodDescriptor, len(encodedArgs))
-	return append(method.ID(), encodedArgs...), nil
+	return append(method.ID, encodedArgs...), nil
 }
 
 // EVMGenerateKeyPair - creates and returns an ECDSA keypair;
@@ -548,7 +548,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 		}
 		return string(v.([]byte)), nil
 	case abi.IntTy, abi.UintTy:
-		switch t.Kind {
+		switch t.GetType().Kind() {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			var intval *big.Int
 			if valInt64, valInt64Ok := v.(int64); valInt64Ok {
@@ -557,7 +557,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				intval = big.NewInt(int64(valFloat64))
 			}
 			if intval != nil {
-				return evmReadInteger(t.Kind, intval.Bytes()), nil
+				return evmReadInteger(t.GetType().Kind(), intval.Bytes()), nil
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if val, valOk := v.(string); valOk {
@@ -577,7 +577,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				return big.NewInt(int64(v.(float64))), nil
 			}
 		default:
-			return evmReadInteger(t.Kind, v.([]byte)), nil
+			return evmReadInteger(t.GetType().Kind(), v.([]byte)), nil
 		}
 	case abi.BoolTy:
 		if boolstr, ok := v.(string); ok {
@@ -632,10 +632,10 @@ func evmForEachUnpack(t abi.Type, output []byte, start, size int) (interface{}, 
 
 	if t.T == abi.SliceTy {
 		// declare our slice
-		refSlice = reflect.MakeSlice(t.Type, size, size)
+		refSlice = reflect.MakeSlice(t.GetType(), size, size)
 	} else if t.T == abi.ArrayTy {
 		// declare our array
-		refSlice = reflect.New(t.Type).Elem()
+		refSlice = reflect.New(t.GetType()).Elem()
 	} else {
 		return nil, fmt.Errorf("abi: invalid type in array/slice unpacking stage")
 	}
@@ -708,7 +708,7 @@ func evmReadFixedBytes(t abi.Type, word []byte) (interface{}, error) {
 	log.Debugf("Attempting to read fixed bytes in accordance with Ethereum contract ABI; type: %v; word: %s", t, word)
 
 	// convert
-	array := reflect.New(t.Type).Elem()
+	array := reflect.New(t.GetType()).Elem()
 	reflect.Copy(array, reflect.ValueOf(word))
 	return array.Interface(), nil
 }
