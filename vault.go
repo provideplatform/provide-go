@@ -139,3 +139,15 @@ func Decrypt(token, vaultID, keyID string, params map[string]interface{}) (int, 
 	uri := fmt.Sprintf("vaults/%s/keys/%s/decrypt", vaultID, keyID)
 	return InitVault(stringOrNil(token)).Post(uri, params)
 }
+
+// UnsealVault unseals the vault to enable decryption of vault, key and secret material
+func UnsealVault(token string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("unseal")
+	return InitVault(stringOrNil(token)).Post(uri, params)
+}
+
+// GenerateSeal returns a valid unsealing key used to encrypt vault master keys
+func GenerateSeal(token string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("unseal")
+	return InitVault(stringOrNil(token)).Get(uri, params)
+}
