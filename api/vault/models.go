@@ -37,18 +37,10 @@ type Secret struct {
 	Value       *string    `json:"value,omitempty"`
 }
 
-// EncryptRequest contains the data to be encrypted and an optional nonce
-type EncryptRequest struct {
+// EncryptDecryptRequestResponse contains the data (i.e., encrypted or decrypted) and an optional nonce
+type EncryptDecryptRequestResponse struct {
 	Data  string  `json:"data"`
 	Nonce *string `json:"nonce,omitempty`
-}
-
-// EncryptResponse contains the response from the encrypt API request
-type EncryptResponse struct {
-}
-
-// DecryptResponse contains the response from the decrypt API request
-type DecryptResponse struct {
 }
 
 // SignRequest contains a message to be signed
