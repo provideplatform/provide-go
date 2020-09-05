@@ -1,54 +1,11 @@
-package provide
+package nchain
 
 import (
 	"encoding/json"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jinzhu/gorm"
-	uuid "github.com/kthomas/go.uuid"
 )
-
-// AutoIncrementingModel base class with int primary key
-type AutoIncrementingModel struct {
-	ID        uint      `gorm:"primary_key;column:id;default:nextval('accounts_id_seq'::regclass)" json:"id"`
-	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at"`
-	Errors    []*Error  `sql:"-" json:"-"`
-}
-
-// Model base class with uuid v4 primary key id
-type Model struct {
-	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
-	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at"`
-	Errors    []*Error  `sql:"-" json:"-"`
-}
-
-// IModel interface for database connected models
-type IModel interface {
-	Create() bool
-	Reload()
-	Update() bool
-	Validate() bool
-}
-
-// Error struct
-type Error struct {
-	Message *string `json:"message"`
-	Status  *int    `json:"status,omitempty"`
-}
-
-// APICall struct
-type APICall struct {
-	Sub           string    `json:"sub"`
-	Method        string    `json:"method"`
-	Host          string    `json:"host"`
-	Path          string    `json:"path"`
-	RemoteAddr    string    `json:"remote_addr"`
-	StatusCode    int       `json:"status_code"`
-	ContentLength *uint     `json:"content_length"`
-	Timestamp     time.Time `json:"timestamp"`
-}
 
 // CompiledArtifact represents compiled sourcecode
 type CompiledArtifact struct {
@@ -167,12 +124,4 @@ type NetworkStatus struct {
 	State           *string                `json:"state,omitempty"`            // i.e., syncing, synced, etc
 	Syncing         bool                   `json:"syncing,omitempty"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
 	Meta            map[string]interface{} `json:"meta,omitempty"`             // network-specific metadata
-}
-
-// Paginate the given query given the page number and results per page;
-// returns the update query and total results
-func paginate(db *gorm.DB, model interface{}, page, rpp int64) (query *gorm.DB, totalResults *uint64) {
-	db.Model(model).Count(&totalResults)
-	query = db.Limit(rpp).Offset((page - 1) * rpp)
-	return query, totalResults
 }

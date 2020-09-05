@@ -1,4 +1,4 @@
-package provide
+package common
 
 import (
 	"encoding/json"
@@ -14,7 +14,12 @@ import (
 	uuid "github.com/kthomas/go.uuid"
 )
 
-const authorizationHeader = "authorization"
+const authorizationHeader = "Authorization"
+const defaultCorsAccessControlAllowOrigin = "*"
+const defaultCorsAccessControlAllowCredentials = "true"
+const defaultCorsAccessControlAllowHeaders = "Accept, Accept-Encoding, Authorization, Cache-Control, Content-Length, Content-Type, Origin, User-Agent, X-CSRF-Token, X-Requested-With"
+const defaultCorsAccessControlAllowMethods = "GET, POST, PUT, DELETE, OPTIONS"
+const defaultCorsAccessControlExposeHeaders = "X-Total-Results-Count"
 const defaultResponseContentType = "application/json; charset=UTF-8"
 const defaultResultsPerPage = 25
 
@@ -22,7 +27,7 @@ const defaultResultsPerPage = 25
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 	token, err := ParseBearerAuthorizationHeader(c, nil)
 	if err != nil {
-		log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
 		return nil
 	}
 	var id string
@@ -30,7 +35,7 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 		if sub, subok := claims["sub"].(string); subok {
 			subprts := strings.Split(sub, ":")
 			if len(subprts) != 2 {
-				log.Warningf("Failed to parse %s subject from bearer authorization header; JWT subject malformed: %s", subject, sub)
+				Log.Warningf("Failed to parse %s subject from bearer authorization header; JWT subject malformed: %s", subject, sub)
 				return nil
 			}
 			if subprts[0] != subject {
@@ -41,7 +46,7 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 	}
 	uuidV4, err := uuid.FromString(id)
 	if err != nil {
-		log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
 		return nil
 	}
 	return &uuidV4
@@ -50,11 +55,11 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 // CORSMiddleware is a working middlware for using CORS with gin
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Accept-Encoding, Authorization, Cache-Control, Content-Length, Content-Type, Origin, User-Agent, X-CSRF-Token, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "X-Total-Results-Count")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", defaultCorsAccessControlAllowOrigin)
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", defaultCorsAccessControlAllowCredentials)
+		c.Writer.Header().Set("Access-Control-Allow-Headers", defaultCorsAccessControlAllowHeaders)
+		c.Writer.Header().Set("Access-Control-Allow-Methods", defaultCorsAccessControlAllowMethods)
+		c.Writer.Header().Set("Access-Control-Expose-Headers", defaultCorsAccessControlExposeHeaders)
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -86,6 +91,14 @@ func Paginate(c *gin.Context, db *gorm.DB, model interface{}) *gorm.DB {
 		c.Header("x-total-results-count", fmt.Sprintf("%d", *totalResults))
 	}
 	return query
+}
+
+// Paginate the given query given the page number and results per page;
+// returns the update query and total results
+func paginate(db *gorm.DB, model interface{}, page, rpp int64) (query *gorm.DB, totalResults *uint64) {
+	db.Model(model).Count(&totalResults)
+	query = db.Limit(rpp).Offset((page - 1) * rpp)
+	return query, totalResults
 }
 
 // ParseBearerAuthorizationHeader parses a bearer authorization header

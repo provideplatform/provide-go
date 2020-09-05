@@ -1,8 +1,11 @@
-package provide
+package nchain
 
 import (
 	"fmt"
 	"os"
+
+	"github.com/provideservices/provide-go/api"
+	"github.com/provideservices/provide-go/common"
 )
 
 const defaultNChainHost = "nchain.provide.services"
@@ -11,7 +14,7 @@ const defaultNChainScheme = "https"
 
 // NChain client
 type NChain struct {
-	APIClient
+	api.Client
 }
 
 // InitNChain convenience method
@@ -32,11 +35,11 @@ func InitNChain(token string) *NChain {
 	}
 
 	return &NChain{
-		APIClient{
+		api.Client{
 			Host:   host,
 			Path:   path,
 			Scheme: scheme,
-			Token:  stringOrNil(token),
+			Token:  common.StringOrNil(token),
 		},
 	}
 }

@@ -1,4 +1,4 @@
-package provide
+package crypto
 
 import (
 	"encoding/hex"

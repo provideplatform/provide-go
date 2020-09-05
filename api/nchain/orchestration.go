@@ -1,4 +1,4 @@
-package provide
+package nchain
 
 // ContainerParams is a structure of params common to AWS and Azure containers
 type ContainerParams struct {
@@ -34,8 +34,9 @@ type ContainerCreateResult struct {
 
 // TargetCredentials struct has all credentials to access AWS and Azure in one place
 type TargetCredentials struct {
-	AWSAccessKeyID      *string
-	AWSSecretAccessKey  *string
+	AWSAccessKeyID     *string
+	AWSSecretAccessKey *string
+
 	AzureSubscriptionID *string
 	AzureTenantID       *string
 	AzureClientID       *string
@@ -45,4 +46,9 @@ type TargetCredentials struct {
 // IsValidAWSCredentials returns `true` if the `TargetCredentials` struct has both `AWSAccessKeyID` and `AWSSecretAccessKey`
 func (t *TargetCredentials) IsValidAWSCredentials() bool {
 	return t.AWSAccessKeyID != nil && t.AWSSecretAccessKey != nil
+}
+
+// IsValidAzureCredentials returns `true` if the `TargetCredentials` struct has `AzureSubscriptionID`, `AzureTenantID`, `AzureClientID` and `AzureClientSecret`
+func (t *TargetCredentials) IsValidAzureCredentials() bool {
+	return t.AzureSubscriptionID != nil && t.AzureTenantID != nil && t.AzureClientID != nil && t.AzureClientSecret != nil
 }

@@ -1,4 +1,4 @@
-package provide
+package crypto
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 
 	abstractcrypto "gopkg.in/dedis/crypto.v0/abstract"
 	"gopkg.in/dedis/kyber.v0/random"
+
+	"github.com/provideservices/provide-go/common"
 )
 
 // TECGenerateKeyPair - creates and returns an Twisted Edwards Curve (TEC) keypair;
@@ -35,7 +37,7 @@ func TECGenerateKeyPair() (publicKey, privateKey []byte, err error) {
 		return nil, nil, fmt.Errorf("failed to generate key pair on twisted edwards curve")
 	}
 
-	log.Debugf("generated twisted edwards keypair with public key: %s", hex.EncodeToString(publicKey))
+	common.Log.Debugf("generated twisted edwards keypair with public key: %s", hex.EncodeToString(publicKey))
 	return publicKey, privateKey, nil
 }
 
@@ -47,7 +49,7 @@ func TECSign(privateKey, message []byte) ([]byte, error) {
 	privkey := suite.Scalar()
 	err := privkey.UnmarshalBinary(privateKey)
 	if err != nil {
-		log.Warningf("failed to unmarshal binary private key; %s", err.Error())
+		common.Log.Warningf("failed to unmarshal binary private key; %s", err.Error())
 		return nil, err
 	}
 
@@ -70,13 +72,13 @@ func TECSign(privateKey, message []byte) ([]byte, error) {
 	sig := basicSig{c, r}
 	err = suite.Write(&buf, &sig)
 	if err != nil {
-		log.Warningf("failed to sign %d-byte message; %s", len(message), err.Error())
+		common.Log.Warningf("failed to sign %d-byte message; %s", len(message), err.Error())
 		return nil, err
 	}
 
 	signature := buf.Bytes()
 
-	log.Debugf("signed %d-byte message; signature:\n%s", len(message), hex.Dump(signature))
+	common.Log.Debugf("signed %d-byte message; signature:\n%s", len(message), hex.Dump(signature))
 	return signature, nil
 }
 
@@ -87,11 +89,11 @@ func TECVerify(publicKey, message []byte, signature []byte) error {
 	pubkey := suite.Point()
 	err := pubkey.UnmarshalBinary(publicKey)
 	if err != nil {
-		log.Warningf("failed to unmarshal public key; %s", err.Error())
+		common.Log.Warningf("failed to unmarshal public key; %s", err.Error())
 		return err
 	}
 
-	log.Debugf("attempting to verify %d-byte message using public key: %s", len(message), string(publicKey))
+	common.Log.Debugf("attempting to verify %d-byte message using public key: %s", len(message), string(publicKey))
 
 	buf := bytes.NewBuffer(signature)
 	sig := basicSig{}
