@@ -12,13 +12,13 @@ const defaultIdentHost = "ident.provide.services"
 const defaultIdentPath = "api/v1"
 const defaultIdentScheme = "https"
 
-// Ident client
-type Ident struct {
+// Service for the ident api
+type Service struct {
 	api.Client
 }
 
-// InitIdent convenience method
-func InitIdent(token *string) *Ident {
+// InitIdent convenience method to initialize an `ident.Service` instance
+func InitIdent(token *string) *Service {
 	host := defaultIdentHost
 	if os.Getenv("IDENT_API_HOST") != "" {
 		host = os.Getenv("IDENT_API_HOST")
@@ -34,7 +34,7 @@ func InitIdent(token *string) *Ident {
 		scheme = os.Getenv("IDENT_API_SCHEME")
 	}
 
-	return &Ident{
+	return &Service{
 		api.Client{
 			Host:   host,
 			Path:   path,

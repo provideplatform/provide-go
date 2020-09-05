@@ -12,13 +12,13 @@ const defaultVaultHost = "vault.provide.services"
 const defaultVaultPath = "api/v1"
 const defaultVaultScheme = "https"
 
-// Vault client
-type Vault struct {
+// Service for the vault api
+type Service struct {
 	api.Client
 }
 
-// InitVault convenience method
-func InitVault(token *string) *Vault {
+// InitVault convenience method to initialize an `vault.Service` instance
+func InitVault(token *string) *Service {
 	host := defaultVaultHost
 	if os.Getenv("VAULT_API_HOST") != "" {
 		host = os.Getenv("VAULT_API_HOST")
@@ -34,7 +34,7 @@ func InitVault(token *string) *Vault {
 		scheme = os.Getenv("VAULT_API_SCHEME")
 	}
 
-	return &Vault{
+	return &Service{
 		api.Client{
 			Host:   host,
 			Path:   path,
@@ -120,20 +120,20 @@ func DeleteVaultSecret(token, vaultID, secretID string) (int, interface{}, error
 	return InitVault(common.StringOrNil(token)).Delete(uri)
 }
 
+// Encrypt encrypts provided data with a key from the vault and a randomly generated nonce
+func Encrypt(token, vaultID, keyID, data string) (int, interface{}, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
+	return InitVault(common.StringOrNil(token)).Post(uri, map[string]interface{}{
+		"data": data,
+	})
+}
+
 // EncryptWithNonce encrypts provided data with a key from the vault and provided nonce
 func EncryptWithNonce(token, vaultID, keyID, data, nonce string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
 	return InitVault(common.StringOrNil(token)).Post(uri, map[string]interface{}{
 		"data":  data,
 		"nonce": nonce,
-	})
-}
-
-// Encrypt encrypts provided data with a key from the vault and a randomly generated nonce
-func Encrypt(token, vaultID, keyID, data string) (int, interface{}, error) {
-	uri := fmt.Sprintf("vaults/%s/keys/%s/encrypt", vaultID, keyID)
-	return InitVault(common.StringOrNil(token)).Post(uri, map[string]interface{}{
-		"data": data,
 	})
 }
 

@@ -12,13 +12,13 @@ const defaultNChainHost = "nchain.provide.services"
 const defaultNChainPath = "api/v1"
 const defaultNChainScheme = "https"
 
-// NChain client
-type NChain struct {
+// Service for the nchain api
+type Service struct {
 	api.Client
 }
 
-// InitNChain convenience method
-func InitNChain(token string) *NChain {
+// InitNChain convenience method to initialize an `nchain.Service` instance
+func InitNChain(token string) *Service {
 	host := defaultNChainHost
 	if os.Getenv("NCHAIN_API_HOST") != "" {
 		host = os.Getenv("NCHAIN_API_HOST")
@@ -34,7 +34,7 @@ func InitNChain(token string) *NChain {
 		scheme = os.Getenv("NCHAIN_API_SCHEME")
 	}
 
-	return &NChain{
+	return &Service{
 		api.Client{
 			Host:   host,
 			Path:   path,

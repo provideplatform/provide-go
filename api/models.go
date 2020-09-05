@@ -10,14 +10,14 @@ import (
 type AutoIncrementingModel struct {
 	ID        uint      `gorm:"primary_key;column:id;default:nextval('accounts_id_seq'::regclass)" json:"id"`
 	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at,omitempty"`
-	Errors    []*Error  `sql:"-" json:"-"`
+	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
 // Model base class with uuid v4 primary key id
 type Model struct {
 	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
 	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at,omitempty"`
-	Errors    []*Error  `sql:"-" json:"-"`
+	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
 // IModel interface
