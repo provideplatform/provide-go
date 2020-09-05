@@ -95,13 +95,13 @@ func ListVaultSecrets(token, vaultID string, params map[string]interface{}) (int
 }
 
 // CreateVaultSecret stores a new secret in the vault
-func CreateVaultSecret(token, vaultID, secret, name, description, secretType string) (int, interface{}, error) {
+func CreateVaultSecret(token, vaultID, value, name, description, secretType string) (int, interface{}, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
 	return InitVault(stringOrNil(token)).Post(uri, map[string]interface{}{
-		"secret":      secret,
 		"name":        name,
 		"description": description,
 		"type":        secretType,
+		"value":       value,
 	})
 }
 
