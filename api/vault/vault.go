@@ -52,11 +52,16 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 		return nil, err
 	}
 
-	if vlt, vltOk := resp.(*Vault); vltOk {
-		return vlt, nil
+	// HACK
+	vlt := &Vault{}
+	vltraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(vltraw, &vlt)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create vault; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to create vault; status: %v", status)
+	return vlt, nil
 }
 
 // ListVaults retrieves a paginated list of vaults scoped to the given API token
