@@ -36,3 +36,38 @@ type Secret struct {
 	Description *string    `json:"description"`
 	Value       *string    `json:"value,omitempty"`
 }
+
+// EncryptRequest contains the data to be encrypted and an optional nonce
+type EncryptRequest struct {
+	Data  string  `json:"data"`
+	Nonce *string `json:"nonce,omitempty`
+}
+
+// EncryptResponse contains the response from the encrypt API request
+type EncryptResponse struct {
+}
+
+// DecryptResponse contains the response from the decrypt API request
+type DecryptResponse struct {
+}
+
+// SignRequest contains a message to be signed
+type SignRequest struct {
+	Message string `json:"message"`
+}
+
+// SignResponse contains the signature for the message
+type SignResponse struct {
+	Signature string `json:"signature"`
+}
+
+// VerifyRequest contains the message and signature for verification
+type VerifyRequest struct {
+	Message   string `json:"message"`
+	Signature string `json:"signature"`
+}
+
+// VerifyResponse contains a flag indicating if the signature was verified
+type VerifyResponse struct {
+	Verified bool `json:"verified"`
+}
