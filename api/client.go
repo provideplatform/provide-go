@@ -56,7 +56,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
-		common.Log.Warningf("Failed to parse URL for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		common.Log.Warningf("failed to parse URL for HTTP %s request: %s; %s", method, urlString, err.Error())
 		return -1, nil, err
 	}
 
@@ -90,7 +90,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 		case "application/json":
 			payload, err = json.Marshal(params)
 			if err != nil {
-				common.Log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+				common.Log.Warningf("failed to marshal JSON payload for HTTP %s request: %s; %s", method, urlString, err.Error())
 				return -1, nil, err
 			}
 
@@ -100,7 +100,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 				if valStr, valOk := val.(string); valOk {
 					urlEncodedForm.Add(key, valStr)
 				} else {
-					common.Log.Warningf("Failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
+					common.Log.Warningf("failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
 				}
 			}
 			payload = []byte(urlEncodedForm.Encode())
@@ -112,7 +112,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 				if valStr, valStrOk := val.(string); valStrOk {
 					dURL, err := dataurl.DecodeString(valStr)
 					if err == nil {
-						common.Log.Debugf("Parsed data url parameter: %s", key)
+						common.Log.Debugf("parsed data url parameter: %s", key)
 						part, err := writer.CreateFormFile(key, key)
 						if err != nil {
 							return 0, nil, err
@@ -122,7 +122,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 						_ = writer.WriteField(key, valStr)
 					}
 				} else {
-					common.Log.Warningf("Skipping non-string value when constructing multipart/form-data request: %s", key)
+					common.Log.Warningf("skipping non-string value when constructing multipart/form-data request: %s", key)
 				}
 			}
 			err = writer.Close()
@@ -132,7 +132,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 			payload = []byte(body.Bytes())
 
 		default:
-			common.Log.Warningf("Attempted HTTP %s request with unsupported content type: %s; unable to marshal request body", mthd, contentType)
+			common.Log.Warningf("attempted HTTP %s request with unsupported content type: %s; unable to marshal request body", mthd, contentType)
 		}
 
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
@@ -151,7 +151,7 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		common.Log.Warningf("Failed to invoke HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		common.Log.Warningf("failed to invoke HTTP %s request: %s; %s", method, urlString, err.Error())
 		return 0, nil, err
 	}
 
@@ -175,14 +175,14 @@ func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType s
 		case "application/json":
 			err = json.Unmarshal(buf.Bytes(), &response)
 			if err != nil {
-				return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
+				return resp.StatusCode, nil, fmt.Errorf("failed to unmarshal %v-byte HTTP %s response from %s; %s", len(buf.Bytes()), method, urlString, err.Error())
 			}
 		default:
 			// no-op
 		}
 	}
 
-	common.Log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, buf.Len(), urlString)
+	common.Log.Debugf("received %v (%v-byte) response for HTTP %s request: %s", resp.StatusCode, buf.Len(), method, urlString)
 	return resp.StatusCode, response, nil
 }
 
