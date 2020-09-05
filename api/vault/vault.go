@@ -52,7 +52,7 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 		return nil, err
 	}
 
-	// HACK
+	// FIXME...
 	vlt := &Vault{}
 	vltraw, _ := json.Marshal(resp)
 	err = json.Unmarshal(vltraw, &vlt)
@@ -117,11 +117,16 @@ func CreateVaultKey(token, vaultID string, params map[string]interface{}) (*Key,
 		return nil, err
 	}
 
-	if key, keyOk := resp.(*Key); keyOk {
-		return key, nil
+	// FIXME...
+	key := &Key{}
+	keyraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(keyraw, &key)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create key; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to create key; status: %v", status)
+	return key, nil
 }
 
 // DeleteVaultKey deletes a key
@@ -150,11 +155,16 @@ func SignMessage(token, vaultID, keyID, msg string, opts map[string]interface{})
 		return nil, err
 	}
 
-	if r, rOk := resp.(*SignResponse); rOk {
-		return r, nil
+	// FIXME...
+	r := &SignResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &r)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign message; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to sign message; status: %v", status)
+	return r, nil
 }
 
 // VerifySignature verifies a signature
@@ -169,11 +179,16 @@ func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]int
 		return nil, err
 	}
 
-	if r, rOk := resp.(*VerifyResponse); rOk {
-		return r, nil
+	// FIXME...
+	r := &VerifyResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &r)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify message signature; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to verify message signature; status: %v", status)
+	return r, nil
 }
 
 // ListVaultSecrets retrieves a paginated list of secrets in the vault
@@ -212,11 +227,16 @@ func CreateVaultSecret(token, vaultID, value, name, description, secretType stri
 		return nil, err
 	}
 
-	if secret, secretOk := resp.(*Secret); secretOk {
-		return secret, nil
+	// FIXME...
+	secret := &Secret{}
+	secretraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(secretraw, &secret)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secret; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to create secret; status: %v", status)
+	return secret, nil
 }
 
 // RetrieveVaultSecret stores a new secret in the vault
@@ -227,11 +247,16 @@ func RetrieveVaultSecret(token, vaultID, secretID string, params map[string]inte
 		return nil, err
 	}
 
-	if secret, secretOk := resp.(*Secret); secretOk {
-		return secret, nil
+	// FIXME...
+	secret := &Secret{}
+	secretraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(secretraw, &secret)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to fetch secret; status: %v", status)
+	return secret, nil
 }
 
 // DeleteVaultSecret deletes a secret from the vault
@@ -259,11 +284,16 @@ func Encrypt(token, vaultID, keyID, data string) (*EncryptDecryptRequestResponse
 		return nil, err
 	}
 
-	if r, rOk := resp.(*EncryptDecryptRequestResponse); rOk {
-		return r, nil
+	// FIXME...
+	r := &EncryptDecryptRequestResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &r)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to encrypt payload; status: %v", status)
+	return r, nil
 }
 
 // EncryptWithNonce encrypts provided data with a key from the vault and provided nonce
@@ -277,11 +307,16 @@ func EncryptWithNonce(token, vaultID, keyID, data, nonce string) (*EncryptDecryp
 		return nil, err
 	}
 
-	if r, rOk := resp.(*EncryptDecryptRequestResponse); rOk {
-		return r, nil
+	// FIXME...
+	r := &EncryptDecryptRequestResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &r)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to encrypt payload; status: %v", status)
+	return r, nil
 }
 
 // Decrypt decrypts provided encrypted data with a key from the vault
@@ -292,9 +327,14 @@ func Decrypt(token, vaultID, keyID string, params map[string]interface{}) (*Encr
 		return nil, err
 	}
 
-	if r, rOk := resp.(*EncryptDecryptRequestResponse); rOk {
-		return r, nil
+	// FIXME...
+	r := &EncryptDecryptRequestResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &r)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt payload; status: %v; %s", status, err.Error())
 	}
 
-	return nil, fmt.Errorf("failed to decrypt payload; status: %v", status)
+	return r, nil
 }

@@ -40,7 +40,7 @@ type Secret struct {
 // EncryptDecryptRequestResponse contains the data (i.e., encrypted or decrypted) and an optional nonce
 type EncryptDecryptRequestResponse struct {
 	Data  string  `json:"data"`
-	Nonce *string `json:"nonce,omitempty`
+	Nonce *string `json:"nonce,omitempty"`
 }
 
 // SignRequest contains a message to be signed
