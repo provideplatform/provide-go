@@ -17,8 +17,8 @@ type Service struct {
 	api.Client
 }
 
-// InitNChain convenience method to initialize an `nchain.Service` instance
-func InitNChain(token string) *Service {
+// InitNChainService convenience method to initialize an `nchain.Service` instance
+func InitNChainService(token string) *Service {
 	host := defaultNChainHost
 	if os.Getenv("NCHAIN_API_HOST") != "" {
 		host = os.Getenv("NCHAIN_API_HOST")

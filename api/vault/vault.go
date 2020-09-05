@@ -18,8 +18,8 @@ type Service struct {
 	api.Client
 }
 
-// InitVault convenience method to initialize an `vault.Service` instance
-func InitVault(token *string) *Service {
+// InitVaultService convenience method to initialize an `vault.Service` instance
+func InitVaultService(token *string) *Service {
 	host := defaultVaultHost
 	if os.Getenv("VAULT_API_HOST") != "" {
 		host = os.Getenv("VAULT_API_HOST")
