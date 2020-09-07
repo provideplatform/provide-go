@@ -1,4 +1,4 @@
-package provide
+package api
 
 import (
 	"bytes"
@@ -14,19 +14,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/provideservices/provide-go/common"
 	"github.com/vincent-petithory/dataurl"
 )
 
 const defaultContentType = "application/json"
 const defaultRequestTimeout = time.Second * 10
 
-// APIClient is a generic base class for calling a REST API; when a token is configured on an
-// APIClient instance it will be provided as a bearer authorization header; when a username and
-// password are configured on an APIClient instance, they will be used for HTTP basic authorization
+// Client is a generic base class for calling a REST API; when a token is configured on an
+// Client instance it will be provided as a bearer authorization header; when a username and
+// password are configured on an Client instance, they will be used for HTTP basic authorization
 // but will be passed as the Authorization header instead of as part of the URL itself. When a token
-// is confgiured on an APIClient instance, the username and password supplied for basic auth are
+// is confgiured on an Client instance, the username and password supplied for basic auth are
 // currently discarded.
-type APIClient struct {
+type Client struct {
 	Host     string
 	Path     string
 	Scheme   string
@@ -35,7 +36,7 @@ type APIClient struct {
 	Password *string
 }
 
-func (c *APIClient) sendRequest(method, urlString, contentType string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) sendRequest(method, urlString, contentType string, params map[string]interface{}) (status int, response interface{}, err error) {
 	return c.sendRequestWithTLSClientConfig(method, urlString, contentType, params,
 		&tls.Config{
 			InsecureSkipVerify: false,
@@ -43,7 +44,7 @@ func (c *APIClient) sendRequest(method, urlString, contentType string, params ma
 	)
 }
 
-func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentType string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) sendRequestWithTLSClientConfig(method, urlString, contentType string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
@@ -55,7 +56,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
-		log.Warningf("Failed to parse URL for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		common.Log.Warningf("failed to parse URL for HTTP %s request: %s; %s", method, urlString, err.Error())
 		return -1, nil, err
 	}
 
@@ -89,7 +90,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		case "application/json":
 			payload, err = json.Marshal(params)
 			if err != nil {
-				log.Warningf("Failed to marshal JSON payload for HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+				common.Log.Warningf("failed to marshal JSON payload for HTTP %s request: %s; %s", method, urlString, err.Error())
 				return -1, nil, err
 			}
 
@@ -99,7 +100,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				if valStr, valOk := val.(string); valOk {
 					urlEncodedForm.Add(key, valStr)
 				} else {
-					log.Warningf("Failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
+					common.Log.Warningf("failed to marshal application/x-www-form-urlencoded parameter: %s; value was non-string", key)
 				}
 			}
 			payload = []byte(urlEncodedForm.Encode())
@@ -111,7 +112,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 				if valStr, valStrOk := val.(string); valStrOk {
 					dURL, err := dataurl.DecodeString(valStr)
 					if err == nil {
-						log.Debugf("Parsed data url parameter: %s", key)
+						common.Log.Debugf("parsed data url parameter: %s", key)
 						part, err := writer.CreateFormFile(key, key)
 						if err != nil {
 							return 0, nil, err
@@ -121,7 +122,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 						_ = writer.WriteField(key, valStr)
 					}
 				} else {
-					log.Warningf("Skipping non-string value when constructing multipart/form-data request: %s", key)
+					common.Log.Warningf("skipping non-string value when constructing multipart/form-data request: %s", key)
 				}
 			}
 			err = writer.Close()
@@ -131,7 +132,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 			payload = []byte(body.Bytes())
 
 		default:
-			log.Warningf("Attempted HTTP %s request with unsupported content type: %s; unable to marshal request body", mthd, contentType)
+			common.Log.Warningf("attempted HTTP %s request with unsupported content type: %s; unable to marshal request body", mthd, contentType)
 		}
 
 		req, _ = http.NewRequest(method, urlString, bytes.NewReader(payload))
@@ -150,7 +151,7 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		log.Warningf("Failed to invoke HTTP %s request; URL: %s; %s", method, urlString, err.Error())
+		common.Log.Warningf("failed to invoke HTTP %s request: %s; %s", method, urlString, err.Error())
 		return 0, nil, err
 	}
 
@@ -174,90 +175,90 @@ func (c *APIClient) sendRequestWithTLSClientConfig(method, urlString, contentTyp
 		case "application/json":
 			err = json.Unmarshal(buf.Bytes(), &response)
 			if err != nil {
-				return resp.StatusCode, nil, fmt.Errorf("Failed to unmarshal HTTP %s response; URL: %s; response: %s; %s", method, urlString, buf.Bytes(), err.Error())
+				return resp.StatusCode, nil, fmt.Errorf("failed to unmarshal %v-byte HTTP %s response from %s; %s", len(buf.Bytes()), method, urlString, err.Error())
 			}
 		default:
 			// no-op
 		}
 	}
 
-	log.Debugf("Received %v response for HTTP %s request (%v-byte response received); URL: %s", resp.StatusCode, method, buf.Len(), urlString)
+	common.Log.Debugf("received %v (%v-byte) response for HTTP %s request: %s", resp.StatusCode, buf.Len(), method, urlString)
 	return resp.StatusCode, response, nil
 }
 
 // Get constructs and synchronously sends an API GET request
-func (c *APIClient) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("GET", url, defaultContentType, params)
 }
 
 // GetWithTLSClientConfig constructs and synchronously sends an API GET request
-func (c *APIClient) GetWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) GetWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("GET", url, defaultContentType, params, tlsClientConfig)
 }
 
 // Post constructs and synchronously sends an API POST request
-func (c *APIClient) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, defaultContentType, params)
 }
 
 // PostWithTLSClientConfig constructs and synchronously sends an API POST request
-func (c *APIClient) PostWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) PostWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("POST", url, defaultContentType, params, tlsClientConfig)
 }
 
 // PostWWWFormURLEncoded constructs and synchronously sends an API POST request using application/x-www-form-urlencoded as the content-type
-func (c *APIClient) PostWWWFormURLEncoded(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) PostWWWFormURLEncoded(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, "application/x-www-form-urlencoded", params)
 }
 
 // PostWWWFormURLEncodedWithTLSClientConfig constructs and synchronously sends an API POST request using application/x-www-form-urlencoded as the content-type
-func (c *APIClient) PostWWWFormURLEncodedWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) PostWWWFormURLEncodedWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("POST", url, "application/x-www-form-urlencoded", params, tlsClientConfig)
 }
 
 // PostMultipartFormData constructs and synchronously sends an API POST request using multipart/form-data as the content-type
-func (c *APIClient) PostMultipartFormData(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) PostMultipartFormData(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("POST", url, "multipart/form-data", params)
 }
 
 // PostMultipartFormDataWithTLSClientConfig constructs and synchronously sends an API POST request using multipart/form-data as the content-type
-func (c *APIClient) PostMultipartFormDataWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) PostMultipartFormDataWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("POST", url, "multipart/form-data", params, tlsClientConfig)
 }
 
 // Put constructs and synchronously sends an API PUT request
-func (c *APIClient) Put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+func (c *Client) Put(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("PUT", url, defaultContentType, params)
 }
 
 // PutWithTLSClientConfig constructs and synchronously sends an API PUT request
-func (c *APIClient) PutWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) PutWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("PUT", url, defaultContentType, params, tlsClientConfig)
 }
 
 // Delete constructs and synchronously sends an API DELETE request
-func (c *APIClient) Delete(uri string) (status int, response interface{}, err error) {
+func (c *Client) Delete(uri string) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequest("DELETE", url, defaultContentType, nil)
 }
 
 // DeleteWithTLSClientConfig constructs and synchronously sends an API DELETE request
-func (c *APIClient) DeleteWithTLSClientConfig(uri string, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+func (c *Client) DeleteWithTLSClientConfig(uri string, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
 	return c.sendRequestWithTLSClientConfig("DELETE", url, defaultContentType, nil, tlsClientConfig)
 }
 
-func (c *APIClient) buildURL(uri string) string {
+func (c *Client) buildURL(uri string) string {
 	path := c.Path
 	if len(path) == 1 && path == "/" {
 		path = ""

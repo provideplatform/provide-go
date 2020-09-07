@@ -1,4 +1,4 @@
-package provide
+package crypto
 
 import (
 	"bytes"
@@ -35,6 +35,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
+	api "github.com/provideservices/provide-go/api/nchain"
+	prvdcommon "github.com/provideservices/provide-go/common"
 )
 
 // The purpose of this class is to expose generic transactional and ABI-related helper
@@ -70,7 +72,7 @@ func EVMDialJsonRpc(rpcClientKey, rpcURL string) (*ethclient.Client, error) {
 	if networkClients, _ := ethclientRpcClients[rpcClientKey]; len(networkClients) == 0 {
 		rpcClient, err := EVMResolveJsonRpcClient(rpcClientKey, rpcURL)
 		if err != nil {
-			log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
+			prvdcommon.Log.Warningf("Failed to dial JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		client = ethclient.NewClient(rpcClient)
@@ -101,7 +103,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 	}
 	id, err := uuid.NewV4()
 	if err != nil {
-		log.Warningf("Failed to generate UUID for JSON-RPC request; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to generate UUID for JSON-RPC request; %s", err.Error())
 		return err
 	}
 	payload := map[string]interface{}{
@@ -112,12 +114,12 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		log.Warningf("Failed to marshal JSON payload for %s JSON-RPC invocation; %s", method, err.Error())
+		prvdcommon.Log.Warningf("Failed to marshal JSON payload for %s JSON-RPC invocation; %s", method, err.Error())
 		return err
 	}
 	resp, err := client.Post(rpcURL, "application/json", bytes.NewReader(body))
 	if err != nil {
-		log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke JSON-RPC method: %s; %s", method, err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -127,7 +129,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 	if err != nil {
 		return fmt.Errorf("Failed to unmarshal %s JSON-RPC response: %s; %s", method, buf.Bytes(), err.Error())
 	}
-	log.Debugf("Invocation of JSON-RPC method %s succeeded (%v-byte response)", method, buf.Len())
+	prvdcommon.Log.Debugf("Invocation of JSON-RPC method %s succeeded (%v-byte response)", method, buf.Len())
 	return nil
 }
 
@@ -137,7 +139,7 @@ func EVMResolveEthClient(rpcClientKey, rpcURL string) (*ethclient.Client, error)
 	if networkClients, _ := ethclientRpcClients[rpcClientKey]; len(networkClients) == 0 {
 		client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 		if err != nil {
-			log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
+			prvdcommon.Log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		evmMutex.Lock()
@@ -145,7 +147,7 @@ func EVMResolveEthClient(rpcClientKey, rpcURL string) (*ethclient.Client, error)
 		evmMutex.Unlock()
 	} else {
 		client = ethclientRpcClients[rpcClientKey][0]
-		log.Debugf("Resolved cached *ethclient.Client instance for JSON-RPC host @ %s", rpcURL)
+		prvdcommon.Log.Debugf("Resolved cached *ethclient.Client instance for JSON-RPC host @ %s", rpcURL)
 	}
 	return client, nil
 }
@@ -156,7 +158,7 @@ func EVMResolveJsonRpcClient(rpcClientKey, rpcURL string) (*ethrpc.Client, error
 	if networkClients, _ := ethrpcClients[rpcClientKey]; len(networkClients) == 0 {
 		erpc, err := ethrpc.Dial(rpcURL)
 		if err != nil {
-			log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
+			prvdcommon.Log.Warningf("Failed to dial RPC client for JSON-RPC host: %s", rpcURL)
 			return nil, err
 		}
 		client = erpc
@@ -165,7 +167,7 @@ func EVMResolveJsonRpcClient(rpcClientKey, rpcURL string) (*ethrpc.Client, error
 		evmMutex.Unlock()
 	} else {
 		client = ethrpcClients[rpcClientKey][0]
-		log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
+		prvdcommon.Log.Debugf("Resolved JSON-RPC host @ %s", rpcURL)
 	}
 	return client, nil
 }
@@ -175,11 +177,11 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 	var methodDescriptor = fmt.Sprintf("method %s", method.Name)
 	defer func() {
 		if r := recover(); r != nil {
-			log.Debugf("Failed to encode ABI-compliant calldata for method: %s", methodDescriptor)
+			prvdcommon.Log.Debugf("Failed to encode ABI-compliant calldata for method: %s", methodDescriptor)
 		}
 	}()
 
-	log.Debugf("Attempting to encode %d parameters prior to executing contract method: %s", len(params), methodDescriptor)
+	prvdcommon.Log.Debugf("Attempting to encode %d parameters prior to executing contract method: %s", len(params), methodDescriptor)
 	var args []interface{}
 
 	for i := range params {
@@ -190,10 +192,10 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		param := params[i]
 		paramType := reflect.TypeOf(param).Kind()
 
-		log.Debugf("Attempting to coerce encoding of %v abi parameter; value (%s): %s", input.Type, paramType, param)
+		prvdcommon.Log.Debugf("Attempting to coerce encoding of %v abi parameter; value (%s): %s", input.Type, paramType, param)
 		switch paramType {
 		case reflect.Slice:
-			if input.Type.Kind == reflect.String {
+			if input.Type.GetType().Kind() == reflect.String {
 				param = []byte(param.(string))
 			}
 		default:
@@ -201,7 +203,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		}
 
 		args = append(args, param)
-		log.Debugf("Coerced encoding of %s abi parameter; value: %s", input.Type.String(), param)
+		prvdcommon.Log.Debugf("Coerced encoding of %s abi parameter; value: %s", input.Type.String(), param)
 	}
 
 	encodedArgs, err := method.Inputs.Pack(args...)
@@ -209,8 +211,8 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	log.Debugf("Encoded %v abi params prior to executing contract method: %s; abi-encoded arguments %v bytes packed", len(params), methodDescriptor, len(encodedArgs))
-	return append(method.ID(), encodedArgs...), nil
+	prvdcommon.Log.Debugf("Encoded %v abi params prior to executing contract method: %s; abi-encoded arguments %v bytes packed", len(params), methodDescriptor, len(encodedArgs))
+	return append(method.ID, encodedArgs...), nil
 }
 
 // EVMGenerateKeyPair - creates and returns an ECDSA keypair;
@@ -220,7 +222,7 @@ func EVMGenerateKeyPair() (address *string, privateKey *ecdsa.PrivateKey, err er
 	if err != nil {
 		return nil, nil, err
 	}
-	address = stringOrNil(ethcrypto.PubkeyToAddress(privateKey.PublicKey).Hex())
+	address = prvdcommon.StringOrNil(ethcrypto.PubkeyToAddress(privateKey.PublicKey).Hex())
 	return address, privateKey, nil
 }
 
@@ -275,7 +277,7 @@ func EVMMarshalEncryptedKey(addr common.Address, privateKey *ecdsa.PrivateKey, s
 
 	salt := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
+		prvdcommon.Log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
 		return nil, err
 	}
 
@@ -288,7 +290,7 @@ func EVMMarshalEncryptedKey(addr common.Address, privateKey *ecdsa.PrivateKey, s
 
 	iv := make([]byte, aes.BlockSize) // 16
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
+		prvdcommon.Log.Errorf("Failed while reading from crypto/rand; %s", err.Error())
 		return nil, err
 	}
 
@@ -393,7 +395,7 @@ func EVMBroadcastSignedTx(rpcClientKey, rpcURL string, signedTx *types.Transacti
 	if err != nil {
 		return fmt.Errorf("Failed to dial JSON-RPC host; %s", err.Error())
 	} else if signedTx != nil {
-		log.Debugf("Transmitting signed tx to JSON-RPC host")
+		prvdcommon.Log.Debugf("Transmitting signed tx to JSON-RPC host")
 		err = EVMBroadcastTx(context.TODO(), rpcClientKey, rpcURL, signedTx, client, nil)
 		if err != nil {
 			return fmt.Errorf("Failed to transmit signed tx to JSON-RPC host; %s", err.Error())
@@ -435,20 +437,20 @@ func EVMSignTx(
 			}
 			if pendingNonce == 0 {
 				// check to make sure this isn't parity
-				var jsonRPCResponse = &EthereumJsonRpcResponse{}
+				var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
 				err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
 				if err != nil {
-					log.Warningf("Failed to retrieve next nonce; %s", err.Error())
+					prvdcommon.Log.Warningf("Failed to retrieve next nonce; %s", err.Error())
 					return nil, nil, err
 				}
 				if jsonRPCResponse.Result != nil {
 					pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
 					if err != nil {
-						log.Warningf("Failed to decode next nonce; %s", err.Error())
+						prvdcommon.Log.Warningf("Failed to decode next nonce; %s", err.Error())
 						return nil, nil, err
 					}
 				} else {
-					log.Warningf("Failed to retrieve next nonce; JSON-RPC result was nil")
+					prvdcommon.Log.Warningf("Failed to retrieve next nonce; JSON-RPC result was nil")
 				}
 			}
 			nonce = &pendingNonce
@@ -457,7 +459,7 @@ func EVMSignTx(
 		if gasPrice == nil {
 			suggestedGasPrice, err := client.SuggestGasPrice(context.TODO())
 			if err != nil {
-				log.Warningf("Failed to suggest gas price; %s", err.Error())
+				prvdcommon.Log.Warningf("Failed to suggest gas price; %s", err.Error())
 				return nil, nil, err
 			}
 			_gasPrice := suggestedGasPrice.Uint64()
@@ -474,7 +476,7 @@ func EVMSignTx(
 		if gasLimit == 0 {
 			callMsg := asEVMCallMsg(from, data, to, val, *gasPrice, gasLimit)
 			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
-			log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
+			prvdcommon.Log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
 		}
 
 		if to != nil {
@@ -482,19 +484,19 @@ func EVMSignTx(
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
-			log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
+			prvdcommon.Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewTransaction(*nonce, addr, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
 		} else {
-			log.Debugf("Attempting to deploy contract via tx; network: %s", rpcClientKey)
+			prvdcommon.Log.Debugf("Attempting to deploy contract via tx; network: %s", rpcClientKey)
 			if err != nil {
 				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
 			}
-			log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
+			prvdcommon.Log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
 			tx = types.NewContractCreation(*nonce, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
 		}
 		signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
 		hash := signer.Hash(tx).Bytes()
-		log.Debugf("Signing tx on behalf of %s", from)
+		prvdcommon.Log.Debugf("Signing tx on behalf of %s", from)
 		_privateKey, err := ethcrypto.HexToECDSA(privateKey)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
@@ -505,9 +507,9 @@ func EVMSignTx(
 		}
 		if err == nil {
 			signedTx, _ := tx.WithSignature(signer, sig)
-			hash := stringOrNil(fmt.Sprintf("0x%x", signedTx.Hash()))
+			hash := prvdcommon.StringOrNil(fmt.Sprintf("0x%x", signedTx.Hash()))
 			signedTxJSON, _ := signedTx.MarshalJSON()
-			log.Debugf("Signed tx for broadcast via JSON-RPC: %s", signedTxJSON)
+			prvdcommon.Log.Debugf("Signed tx for broadcast via JSON-RPC: %s", signedTxJSON)
 			return signedTx, hash, nil
 		}
 		return nil, nil, err
@@ -521,7 +523,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 	typestr := fmt.Sprintf("%s", t)
 	defer func() {
 		if r := recover(); r != nil {
-			log.Debugf("Failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
+			prvdcommon.Log.Debugf("Failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
 		}
 	}()
 	switch t.T {
@@ -534,7 +536,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 		default:
 			// HACK-- this fallback for edge case handling isn't the cleanest
 			if typestr == "uint256[]" {
-				log.Debugf("Attempting fallback coercion of uint256[] abi parameter")
+				prvdcommon.Log.Debugf("Attempting fallback coercion of uint256[] abi parameter")
 				vals := make([]*big.Int, t.Size)
 				for _, val := range v.([]interface{}) {
 					vals = append(vals, big.NewInt(int64(val.(float64))))
@@ -548,7 +550,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 		}
 		return string(v.([]byte)), nil
 	case abi.IntTy, abi.UintTy:
-		switch t.Kind {
+		switch t.GetType().Kind() {
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 			var intval *big.Int
 			if valInt64, valInt64Ok := v.(int64); valInt64Ok {
@@ -557,13 +559,13 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				intval = big.NewInt(int64(valFloat64))
 			}
 			if intval != nil {
-				return evmReadInteger(t.Kind, intval.Bytes()), nil
+				return evmReadInteger(t.GetType().Kind(), intval.Bytes()), nil
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if val, valOk := v.(string); valOk {
 				intval, err := strconv.Atoi(val)
 				if err != nil {
-					log.Warningf("Failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
+					prvdcommon.Log.Warningf("Failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
 					return nil, err
 				}
 				return big.NewInt(int64(intval)), nil
@@ -577,7 +579,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				return big.NewInt(int64(v.(float64))), nil
 			}
 		default:
-			return evmReadInteger(t.Kind, v.([]byte)), nil
+			return evmReadInteger(t.GetType().Kind(), v.([]byte)), nil
 		}
 	case abi.BoolTy:
 		if boolstr, ok := v.(string); ok {
@@ -632,10 +634,10 @@ func evmForEachUnpack(t abi.Type, output []byte, start, size int) (interface{}, 
 
 	if t.T == abi.SliceTy {
 		// declare our slice
-		refSlice = reflect.MakeSlice(t.Type, size, size)
+		refSlice = reflect.MakeSlice(t.GetType(), size, size)
 	} else if t.T == abi.ArrayTy {
 		// declare our array
-		refSlice = reflect.New(t.Type).Elem()
+		refSlice = reflect.New(t.GetType()).Elem()
 	} else {
 		return nil, fmt.Errorf("abi: invalid type in array/slice unpacking stage")
 	}
@@ -705,10 +707,10 @@ func evmReadFixedBytes(t abi.Type, word []byte) (interface{}, error) {
 		return nil, fmt.Errorf("abi: invalid type in call to make fixed byte array")
 	}
 
-	log.Debugf("Attempting to read fixed bytes in accordance with Ethereum contract ABI; type: %v; word: %s", t, word)
+	prvdcommon.Log.Debugf("Attempting to read fixed bytes in accordance with Ethereum contract ABI; type: %v; word: %s", t, word)
 
 	// convert
-	array := reflect.New(t.Type).Elem()
+	array := reflect.New(t.GetType()).Elem()
 	reflect.Copy(array, reflect.ValueOf(word))
 	return array.Interface(), nil
 }
@@ -800,13 +802,13 @@ func asEVMCallMsg(from string, data, to *string, val *big.Int, gasPrice, gasLimi
 func parseContractABI(contractAbi interface{}) (*abi.ABI, error) {
 	abistr, err := json.Marshal(contractAbi)
 	if err != nil {
-		log.Warningf("Failed to marshal ABI from contract params to json; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to marshal ABI from contract params to json; %s", err.Error())
 		return nil, err
 	}
 
 	abival, err := abi.JSON(strings.NewReader(string(abistr)))
 	if err != nil {
-		log.Warningf("Failed to initialize ABI from contract  params to json; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to initialize ABI from contract  params to json; %s", err.Error())
 		return nil, err
 	}
 
@@ -814,8 +816,8 @@ func parseContractABI(contractAbi interface{}) (*abi.ABI, error) {
 }
 
 // EVMEthCall invokes eth_call manually via JSON-RPC
-func EVMEthCall(rpcClientKey, rpcURL string, params []interface{}) (*EthereumJsonRpcResponse, error) {
-	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+func EVMEthCall(rpcClientKey, rpcURL string, params []interface{}) (*api.EthereumJsonRpcResponse, error) {
+	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_call", params, &jsonRPCResponse)
 	return jsonRPCResponse, err
 }
@@ -823,11 +825,11 @@ func EVMEthCall(rpcClientKey, rpcURL string, params []interface{}) (*EthereumJso
 // EVMGetBlockNumber retrieves the latest block known to the JSON-RPC client
 func EVMGetBlockNumber(rpcClientKey, rpcURL string) *uint64 {
 	params := make([]interface{}, 0)
-	var resp = &EthereumJsonRpcResponse{}
-	log.Debugf("Attempting to fetch latest block number via JSON-RPC eth_blockNumber method")
+	var resp = &api.EthereumJsonRpcResponse{}
+	prvdcommon.Log.Debugf("Attempting to fetch latest block number via JSON-RPC eth_blockNumber method")
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_blockNumber", params, &resp)
 	if err != nil {
-		log.Warningf("Failed to invoke eth_blockNumber method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke eth_blockNumber method via JSON-RPC; %s", err.Error())
 		return nil
 	}
 	blockNumber, err := hexutil.DecodeBig(resp.Result.(string))
@@ -859,20 +861,20 @@ func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
 func EVMGetChainID(rpcClientKey, rpcURL string) *big.Int {
 	ethClient, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 	if err != nil {
-		log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if ethClient == nil {
-		log.Warningf("Failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
+		prvdcommon.Log.Warningf("Failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
 		return nil
 	}
 	chainID, err := ethClient.NetworkID(context.TODO())
 	if err != nil {
-		log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if chainID != nil {
-		log.Debugf("Received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
+		prvdcommon.Log.Debugf("Received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
 	}
 	return chainID
 }
@@ -880,19 +882,19 @@ func EVMGetChainID(rpcClientKey, rpcURL string) *big.Int {
 // EVMGetGasPrice returns the gas price
 func EVMGetGasPrice(rpcClientKey, rpcURL string) *string {
 	params := make([]interface{}, 0)
-	var resp = &EthereumJsonRpcResponse{}
-	log.Debugf("Attempting to fetch gas price via JSON-RPC eth_gasPrice method")
+	var resp = &api.EthereumJsonRpcResponse{}
+	prvdcommon.Log.Debugf("Attempting to fetch gas price via JSON-RPC eth_gasPrice method")
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_gasPrice", params, &resp)
 	if err != nil {
-		log.Warningf("Failed to invoke eth_gasPrice method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke eth_gasPrice method via JSON-RPC; %s", err.Error())
 		return nil
 	}
-	return stringOrNil(resp.Result.(string))
+	return prvdcommon.StringOrNil(resp.Result.(string))
 }
 
 // EVMGetLatestBlock retrieves the latsest block
-func EVMGetLatestBlock(rpcClientKey, rpcURL string) (*EthereumJsonRpcResponse, error) {
-	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+func EVMGetLatestBlock(rpcClientKey, rpcURL string) (*api.EthereumJsonRpcResponse, error) {
+	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_getBlockByNumber", []interface{}{"latest", true}, &jsonRPCResponse)
 	return jsonRPCResponse, err
 }
@@ -932,15 +934,15 @@ func EVMGetBlockGasLimit(rpcClientKey, rpcURL string) (uint64, error) {
 }
 
 // EVMGetBlockByNumber retrieves a given block by number
-func EVMGetBlockByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
-	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+func EVMGetBlockByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*api.EthereumJsonRpcResponse, error) {
+	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_getBlockByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRPCResponse)
 	return jsonRPCResponse, err
 }
 
 // EVMGetHeaderByNumber retrieves a given block header by number
-func EVMGetHeaderByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*EthereumJsonRpcResponse, error) {
-	var jsonRPCResponse = &EthereumJsonRpcResponse{}
+func EVMGetHeaderByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*api.EthereumJsonRpcResponse, error) {
+	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_getHeaderByNumber", []interface{}{hexutil.EncodeUint64(blockNumber), true}, &jsonRPCResponse)
 	return jsonRPCResponse, err
 }
@@ -957,36 +959,36 @@ func EVMGetNativeBalance(rpcClientKey, rpcURL, addr string) (*big.Int, error) {
 // EVMGetNetworkStatus retrieves current metadata from the JSON-RPC client;
 // returned struct includes block height, chainID, number of connected peers,
 // protocol version, and syncing state.
-func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*NetworkStatus, error) {
+func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*api.NetworkStatus, error) {
 	ethClient, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 	if err != nil || rpcURL == "" || ethClient == nil {
 		meta := map[string]interface{}{
 			"error": nil,
 		}
 		if err != nil {
-			log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
+			prvdcommon.Log.Warningf("Failed to dial JSON-RPC host: %s; %s", rpcURL, err.Error())
 			meta["error"] = err.Error()
 		} else if rpcURL == "" {
 			meta["error"] = "No 'full-node' JSON-RPC URL configured or resolvable"
 		} else if ethClient == nil {
 			meta["error"] = "Configured 'full-node' JSON-RPC client not resolved"
 		}
-		return &NetworkStatus{
-			State: stringOrNil("configuring"),
+		return &api.NetworkStatus{
+			State: prvdcommon.StringOrNil("configuring"),
 			Meta:  meta,
 		}, nil
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Debugf("Recovered from failed attempt to retrieve network sync progress from JSON-RPC host: %s", rpcURL)
+			prvdcommon.Log.Debugf("Recovered from failed attempt to retrieve network sync progress from JSON-RPC host: %s", rpcURL)
 			evmClearCachedClients(rpcClientKey)
 		}
 	}()
 
 	syncProgress, err := EVMGetSyncProgress(ethClient)
 	if err != nil {
-		log.Warningf("Failed to read network sync progress using JSON-RPC host; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to read network sync progress using JSON-RPC host; %s", err.Error())
 		evmClearCachedClients(rpcClientKey)
 		return nil, err
 	}
@@ -1003,7 +1005,7 @@ func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*NetworkStatus, error) {
 		state = "synced"
 		resp, err := EVMGetLatestBlock(rpcClientKey, rpcURL)
 		if err != nil {
-			log.Warningf("Failed to read latest block for %s using JSON-RPC host; %s", rpcURL, err.Error())
+			prvdcommon.Log.Warningf("Failed to read latest block for %s using JSON-RPC host; %s", rpcURL, err.Error())
 			return nil, err
 		}
 		hdr := resp.Result.(map[string]interface{})
@@ -1026,14 +1028,14 @@ func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*NetworkStatus, error) {
 		height = &syncProgress.HighestBlock
 		syncing = true
 	}
-	return &NetworkStatus{
+	return &api.NetworkStatus{
 		Block:           block,
 		Height:          height,
-		ChainID:         stringOrNil(hexutil.EncodeBig(chainID)),
+		ChainID:         prvdcommon.StringOrNil(hexutil.EncodeBig(chainID)),
 		PeerCount:       peers,
 		LastBlockAt:     lastBlockAt,
 		ProtocolVersion: protocolVersion,
-		State:           stringOrNil(state),
+		State:           prvdcommon.StringOrNil(state),
 		Syncing:         syncing,
 		Meta:            meta,
 	}, nil
@@ -1043,13 +1045,13 @@ func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*NetworkStatus, error) {
 func EVMGetPeerCount(rpcClientKey, rpcURL string) uint64 {
 	var peerCount uint64
 	params := make([]interface{}, 0)
-	var resp = &EthereumJsonRpcResponse{}
-	log.Debugf("Attempting to fetch peer count via net_peerCount method via JSON-RPC")
+	var resp = &api.EthereumJsonRpcResponse{}
+	prvdcommon.Log.Debugf("Attempting to fetch peer count via net_peerCount method via JSON-RPC")
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "net_peerCount", params, &resp)
 	if err != nil {
-		log.Debugf("Attempting to fetch peer count via parity_netPeers method via JSON-RPC")
+		prvdcommon.Log.Debugf("Attempting to fetch peer count via parity_netPeers method via JSON-RPC")
 		err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_netPeers", params, &resp)
-		log.Warningf("Failed to invoke parity_netPeers method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke parity_netPeers method via JSON-RPC; %s", err.Error())
 		return 0
 	}
 	if peerCountStr, ok := resp.Result.(string); ok {
@@ -1064,17 +1066,17 @@ func EVMGetPeerCount(rpcClientKey, rpcURL string) uint64 {
 // EVMGetProtocolVersion returns the JSON-RPC client protocol version
 func EVMGetProtocolVersion(rpcClientKey, rpcURL string) *string {
 	params := make([]interface{}, 0)
-	var resp = &EthereumJsonRpcResponse{}
-	log.Debugf("Attempting to fetch protocol version via JSON-RPC eth_protocolVersion method")
+	var resp = &api.EthereumJsonRpcResponse{}
+	prvdcommon.Log.Debugf("Attempting to fetch protocol version via JSON-RPC eth_protocolVersion method")
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_protocolVersion", params, &resp)
 	if err != nil {
-		log.Debugf("Attempting to fetch protocol version via JSON-RPC net_version method")
+		prvdcommon.Log.Debugf("Attempting to fetch protocol version via JSON-RPC net_version method")
 		err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "net_version", params, &resp)
 
-		log.Warningf("Failed to invoke eth_protocolVersion method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke eth_protocolVersion method via JSON-RPC; %s", err.Error())
 		return nil
 	}
-	return stringOrNil(resp.Result.(string))
+	return prvdcommon.StringOrNil(resp.Result.(string))
 }
 
 // EVMGetCode retrieves the code stored at the named address in the given scope;
@@ -1083,14 +1085,14 @@ func EVMGetCode(rpcClientKey, rpcURL, addr, scope string) (*string, error) {
 	params := make([]interface{}, 0)
 	params = append(params, addr)
 	params = append(params, scope)
-	var resp = &EthereumJsonRpcResponse{}
-	log.Debugf("Attempting to fetch code from %s via eth_getCode JSON-RPC method", addr)
+	var resp = &api.EthereumJsonRpcResponse{}
+	prvdcommon.Log.Debugf("Attempting to fetch code from %s via eth_getCode JSON-RPC method", addr)
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_getCode", params, &resp)
 	if err != nil {
-		log.Warningf("Failed to invoke eth_getCode method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke eth_getCode method via JSON-RPC; %s", err.Error())
 		return nil, err
 	}
-	return stringOrNil(resp.Result.(string)), nil
+	return prvdcommon.StringOrNil(resp.Result.(string)), nil
 }
 
 // EVMGetSyncProgress retrieves the status of the current network sync
@@ -1098,12 +1100,12 @@ func EVMGetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
 	progress, err := client.SyncProgress(ctx)
 	if err != nil {
-		log.Warningf("Failed to read sync progress for *ethclient.Client instance; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to read sync progress for *ethclient.Client instance; %s", err.Error())
 		cancel()
 		return nil, err
 	}
 	if progress != nil {
-		log.Debugf("Latest synced block reported by *ethclient.Client instance [%v of %v]", progress.CurrentBlock, progress.HighestBlock)
+		prvdcommon.Log.Debugf("Latest synced block reported by *ethclient.Client instance [%v of %v]", progress.CurrentBlock, progress.HighestBlock)
 	}
 	cancel()
 	return progress, nil
@@ -1133,11 +1135,11 @@ func EVMGetTokenBalance(rpcClientKey, rpcURL, tokenAddr, addr string, contractAB
 		if balance != nil {
 			symbol, _ := EVMGetTokenSymbol(rpcClientKey, rpcURL, addr, tokenAddr, contractABI)
 			if symbol != nil {
-				log.Debugf("Read %s token balance (%v) from token contract address: %s", *symbol, balance, addr)
+				prvdcommon.Log.Debugf("Read %s token balance (%v) from token contract address: %s", *symbol, balance, addr)
 			}
 		}
 	} else {
-		log.Warningf("Unable to read balance of unsupported token contract address: %s", tokenAddr)
+		prvdcommon.Log.Warningf("Unable to read balance of unsupported token contract address: %s", tokenAddr)
 	}
 	return balance, nil
 }
@@ -1166,10 +1168,10 @@ func EVMGetTokenSymbol(rpcClientKey, rpcURL, from, tokenAddr string, contractABI
 	if method, ok := _abi.Methods["symbol"]; ok {
 		err = method.Outputs.Unpack(&symbol, result)
 		if err != nil {
-			log.Warningf("Failed to read token symbol from deployed token contract %s; %s", tokenAddr, err.Error())
+			prvdcommon.Log.Warningf("Failed to read token symbol from deployed token contract %s; %s", tokenAddr, err.Error())
 		}
 	}
-	return stringOrNil(symbol), nil
+	return prvdcommon.StringOrNil(symbol), nil
 }
 
 // EVMTraceTx returns the VM traces; requires parity JSON-RPC client and the node must
@@ -1181,11 +1183,11 @@ func EVMTraceTx(rpcClientKey, rpcURL string, hash *string) (interface{}, error) 
 	}
 	params := make([]interface{}, 0)
 	params = append(params, addr)
-	var result = &EthereumTxTraceResponse{}
-	log.Debugf("Attempting to trace tx via trace_transaction method via JSON-RPC; tx hash: %s", addr)
+	var result = &api.EthereumTxTraceResponse{}
+	prvdcommon.Log.Debugf("Attempting to trace tx via trace_transaction method via JSON-RPC; tx hash: %s", addr)
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "trace_transaction", params, &result)
 	if err != nil {
-		log.Warningf("Failed to invoke trace_transaction method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("Failed to invoke trace_transaction method via JSON-RPC; %s", err.Error())
 		return nil, err
 	}
 	return result, nil
@@ -1195,9 +1197,9 @@ func EVMTraceTx(rpcClientKey, rpcURL string, hash *string) (interface{}, error) 
 func EVMGetTxReceipt(rpcClientKey, rpcURL, txHash, from string) (*types.Receipt, error) {
 	client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 	if err != nil {
-		log.Warningf("Failed to retrieve tx receipt for broadcast tx: %s; %s", txHash, err.Error())
+		prvdcommon.Log.Warningf("Failed to retrieve tx receipt for broadcast tx: %s; %s", txHash, err.Error())
 		return nil, err
 	}
-	log.Debugf("Attempting to retrieve tx receipt for broadcast tx: %s", txHash)
+	prvdcommon.Log.Debugf("Attempting to retrieve tx receipt for broadcast tx: %s", txHash)
 	return client.TransactionReceipt(context.TODO(), common.HexToHash(txHash))
 }

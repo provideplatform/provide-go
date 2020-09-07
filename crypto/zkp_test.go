@@ -1,9 +1,11 @@
-package provide
+package crypto
 
 import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+
+	"github.com/provideservices/provide-go/common"
 )
 
 func TestTECGenerateKeyPair(t *testing.T) {
@@ -12,8 +14,8 @@ func TestTECGenerateKeyPair(t *testing.T) {
 		t.Fail()
 	}
 
-	log.Debugf("private key: %s", privateKey)
-	log.Debugf("public key: %s", publicKey)
+	common.Log.Debugf("private key: %s", privateKey)
+	common.Log.Debugf("public key: %s", publicKey)
 }
 
 func TestTECSign(t *testing.T) {
@@ -39,7 +41,7 @@ func TestTECVerify(t *testing.T) {
 		t.Fail()
 	}
 
-	log.Debugf("public key: %s", publicKey)
+	common.Log.Debugf("public key: %s", publicKey)
 
 	msg := []byte("hello world")
 	sig, err := TECSign(privateKey, msg)
@@ -54,5 +56,5 @@ func TestTECVerify(t *testing.T) {
 		return
 	}
 
-	log.Debugf("verified signed message:\n%s", hex.Dump(sig))
+	common.Log.Debugf("verified signed message:\n%s", hex.Dump(sig))
 }

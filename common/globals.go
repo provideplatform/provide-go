@@ -1,4 +1,4 @@
-package provide
+package common
 
 import (
 	"crypto/rsa"
@@ -14,7 +14,7 @@ var (
 	jwtPublicKey    *rsa.PublicKey
 	jwtPublicKeyPEM string
 
-	log *logger.Logger
+	Log *logger.Logger
 )
 
 func init() {
@@ -22,12 +22,12 @@ func init() {
 	if jwtPublicKeyPEM != "" {
 		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
 		if err != nil {
-			log.Panicf("Failed to parse JWT public key; %s", err.Error())
+			Log.Panicf("Failed to parse JWT public key; %s", err.Error())
 		}
 		jwtPublicKey = publicKey
 	}
 
-	log = logger.NewLogger("provide-go", getLogLevel(), getSyslogEndpoint())
+	Log = logger.NewLogger("provide-go", getLogLevel(), getSyslogEndpoint())
 }
 
 func getLogLevel() string {
@@ -41,12 +41,13 @@ func getLogLevel() string {
 func getSyslogEndpoint() *string {
 	var endpoint *string
 	if os.Getenv("SYSLOG_ENDPOINT") != "" {
-		endpoint = stringOrNil(os.Getenv("SYSLOG_ENDPOINT"))
+		endpoint = StringOrNil(os.Getenv("SYSLOG_ENDPOINT"))
 	}
 	return endpoint
 }
 
-func stringOrNil(str string) *string {
+// StringOrNil returns a pointer to the string, or nil if the given string is empty
+func StringOrNil(str string) *string {
 	if str == "" {
 		return nil
 	}

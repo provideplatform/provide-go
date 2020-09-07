@@ -1,4 +1,4 @@
-package provide
+package crypto
 
 import (
 	"crypto"
@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/aead/ecdh"
+	"github.com/provideservices/provide-go/common"
 )
 
 type point struct {
@@ -37,7 +38,7 @@ func C25519GenerateKeyPair() (publicKey, privateKey []byte, err error) {
 
 	privkey, pubkey, err := c25519.GenerateKey(rand.Reader)
 	if err != nil {
-		log.Warningf("failed to generate c25519 key pair; %s", err.Error())
+		common.Log.Warningf("failed to generate c25519 key pair; %s", err.Error())
 		return nil, nil, err
 	}
 
@@ -51,7 +52,7 @@ func C25519GenerateKeyPair() (publicKey, privateKey []byte, err error) {
 		return nil, nil, fmt.Errorf("failed to generate c25519 key pair")
 	}
 
-	log.Debugf("generated c25519 keypair with public key: %s", string(publicKey))
+	common.Log.Debugf("generated c25519 keypair with public key: %s", string(publicKey))
 	return publicKey, privateKey, nil
 }
 
