@@ -50,7 +50,9 @@ type SignRequest struct {
 
 // SignResponse contains the signature for the message
 type SignResponse struct {
-	Signature string `json:"signature"`
+	Signature      *string `json:"signature,omitempty"`
+	Address        *string `json:"address,omitempty"`
+	DerivationPath *string `json:"hd_derivation_path,omitempty"`
 }
 
 // VerifyRequest contains the message and signature for verification
