@@ -52,9 +52,15 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create vault; status: %v; %s", status, resp)
+	}
+
 	vlt := &Vault{}
-	vltraw, _ := json.Marshal(resp)
+	vltraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create vault; status: %v; %s", status, err.Error())
+	}
 	err = json.Unmarshal(vltraw, &vlt)
 
 	if err != nil {
@@ -72,14 +78,20 @@ func ListVaults(token string, params map[string]interface{}) ([]*Vault, error) {
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch vaults; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, resp)
 	}
 
 	vaults := make([]*Vault, 0)
 	for _, item := range resp.([]interface{}) {
 		vlt := &Vault{}
-		vltraw, _ := json.Marshal(item)
-		json.Unmarshal(vltraw, &vlt)
+		vltraw, err := json.Marshal(item)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+		}
+		err = json.Unmarshal(vltraw, &vlt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+		}
 		vaults = append(vaults, vlt)
 	}
 
@@ -95,14 +107,20 @@ func ListKeys(token, vaultID string, params map[string]interface{}) ([]*Key, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch keys; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch keys; status: %v; %s", status, resp)
 	}
 
 	keys := make([]*Key, 0)
 	for _, item := range resp.([]interface{}) {
 		key := &Key{}
-		keyraw, _ := json.Marshal(item)
-		json.Unmarshal(keyraw, &key)
+		keyraw, err := json.Marshal(item)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
+		}
+		err = json.Unmarshal(keyraw, &key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
+		}
 		keys = append(keys, key)
 	}
 
@@ -117,13 +135,18 @@ func CreateKey(token, vaultID string, params map[string]interface{}) (*Key, erro
 		return nil, err
 	}
 
-	// FIXME...
-	key := &Key{}
-	keyraw, _ := json.Marshal(resp)
-	err = json.Unmarshal(keyraw, &key)
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create vault key; status: %v; %s", status, resp)
+	}
 
+	key := &Key{}
+	keyraw, err := json.Marshal(resp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create key; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to create vault key; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(keyraw, &key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create vault key; status: %v; %s", status, err.Error())
 	}
 
 	return key, nil
@@ -152,13 +175,13 @@ func DeriveKey(token, vaultID, keyID string, params map[string]interface{}) (*Ke
 // DeleteKey deletes a key
 func DeleteKey(token, vaultID, keyID string) error {
 	uri := fmt.Sprintf("vaults/%s/keys/%s", vaultID, keyID)
-	status, _, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
 	if err != nil {
 		return err
 	}
 
 	if status != 204 {
-		return fmt.Errorf("failed to delete key; status: %v", status)
+		return fmt.Errorf("failed to delete key; status: %v; %s", status, resp)
 	}
 
 	return nil
@@ -175,13 +198,19 @@ func SignMessage(token, vaultID, keyID, msg string, opts map[string]interface{})
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 201 {
+		return nil, fmt.Errorf("failed to sign message with key; status: %v; %s", status, resp)
+	}
+
 	r := &SignResponse{}
-	raw, _ := json.Marshal(resp)
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign message with key; status: %v; %s", status, err.Error())
+	}
 	err = json.Unmarshal(raw, &r)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign message; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to sign message with key; status: %v; %s", status, err.Error())
 	}
 
 	return r, nil
@@ -199,9 +228,16 @@ func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]int
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 201 {
+		return nil, fmt.Errorf("failed to verify message signature; status: %v; %s", status, resp)
+	}
+
 	r := &VerifyResponse{}
-	raw, _ := json.Marshal(resp)
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify message signature; status: %v; %s", status, err.Error())
+	}
+
 	err = json.Unmarshal(raw, &r)
 
 	if err != nil {
@@ -220,14 +256,20 @@ func ListSecrets(token, vaultID string, params map[string]interface{}) ([]*Secre
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch secrets; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
 	}
 
 	secrets := make([]*Secret, 0)
 	for _, item := range resp.([]interface{}) {
 		secret := &Secret{}
-		secretraw, _ := json.Marshal(item)
-		json.Unmarshal(secretraw, &secret)
+		secretraw, err := json.Marshal(item)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
+		}
+		err = json.Unmarshal(secretraw, &secret)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
+		}
 		secrets = append(secrets, secret)
 	}
 
@@ -247,9 +289,15 @@ func CreateSecret(token, vaultID, value, name, description, secretType string) (
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create secret; status: %v; %s", status, resp)
+	}
+
 	secret := &Secret{}
-	secretraw, _ := json.Marshal(resp)
+	secretraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secret; status: %v; %s", status, err.Error())
+	}
 	err = json.Unmarshal(secretraw, &secret)
 
 	if err != nil {
@@ -267,9 +315,15 @@ func FetchSecret(token, vaultID, secretID string, params map[string]interface{})
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch secret; status: %v; %s", status, resp)
+	}
+
 	secret := &Secret{}
-	secretraw, _ := json.Marshal(resp)
+	secretraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret; status: %v; %s", status, err.Error())
+	}
 	err = json.Unmarshal(secretraw, &secret)
 
 	if err != nil {
@@ -282,13 +336,13 @@ func FetchSecret(token, vaultID, secretID string, params map[string]interface{})
 // DeleteSecret deletes a secret from the vault
 func DeleteSecret(token, vaultID, secretID string) error {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
-	status, _, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
 	if err != nil {
 		return err
 	}
 
 	if status != 204 {
-		return fmt.Errorf("failed to delete secret; status: %v", status)
+		return fmt.Errorf("failed to delete secret; status: %v; %s", status, resp)
 	}
 
 	return nil
@@ -304,11 +358,16 @@ func Encrypt(token, vaultID, keyID, data string) (*EncryptDecryptRequestResponse
 		return nil, err
 	}
 
-	// FIXME...
-	r := &EncryptDecryptRequestResponse{}
-	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &r)
+	if status != 200 {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, resp)
+	}
 
+	r := &EncryptDecryptRequestResponse{}
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(raw, &r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
 	}
@@ -327,11 +386,16 @@ func EncryptWithNonce(token, vaultID, keyID, data, nonce string) (*EncryptDecryp
 		return nil, err
 	}
 
-	// FIXME...
-	r := &EncryptDecryptRequestResponse{}
-	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &r)
+	if status != 200 {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, resp)
+	}
 
+	r := &EncryptDecryptRequestResponse{}
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(raw, &r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt payload; status: %v; %s", status, err.Error())
 	}
@@ -347,14 +411,83 @@ func Decrypt(token, vaultID, keyID string, params map[string]interface{}) (*Encr
 		return nil, err
 	}
 
-	// FIXME...
-	r := &EncryptDecryptRequestResponse{}
-	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &r)
+	if status != 200 {
+		return nil, fmt.Errorf("failed to decrypt payload; status: %v; %s", status, resp)
+	}
 
+	r := &EncryptDecryptRequestResponse{}
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt payload; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(raw, &r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt payload; status: %v; %s", status, err.Error())
 	}
 
 	return r, nil
+}
+
+// UnsealVault unseals the vault to enable decryption of vault, key and secret material
+func UnsealVault(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+	uri := fmt.Sprintf("unseal")
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 204 {
+		return nil, fmt.Errorf("failed to unseal vault; status %v, %s", status, resp)
+	}
+
+	return nil, nil
+}
+
+// GenerateSeal returns a valid unsealing key used to encrypt vault master keys
+func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+	uri := fmt.Sprintf("unsealerkey")
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, resp)
+	}
+
+	r := &SealUnsealRequestResponse{}
+	raw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(raw, &r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, err.Error())
+	}
+	return r, nil
+}
+
+// DeriveVaultKey derives a new vault key from the provided data
+func DeriveVaultKey(token, vaultID, keyID string, params map[string]interface{}) (*Key, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/derive", vaultID, keyID)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, resp)
+	}
+
+	key := &Key{}
+	keyraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(keyraw, &key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, err.Error())
+	}
+
+	return key, nil
 }

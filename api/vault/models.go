@@ -22,6 +22,11 @@ type Key struct {
 	Name        *string    `json:"name"`
 	Description *string    `json:"description"`
 
+	// these fields are only populated for ephemeral keys
+	Ephemeral  *bool   `json:"ephemeral,omitempty"`
+	PrivateKey *string `json:"private_key,omitempty"`
+	Seed       *string `json:"seed,omitempty"`
+
 	Address          *string `json:"address,omitempty"`
 	HDDerivationPath *string `json:"hd_derivation_path,omitempty"`
 	PublicKey        *string `json:"public_key,omitempty"`
@@ -50,7 +55,9 @@ type SignRequest struct {
 
 // SignResponse contains the signature for the message
 type SignResponse struct {
-	Signature string `json:"signature"`
+	Signature      *string `json:"signature,omitempty"`
+	Address        *string `json:"address,omitempty"`
+	DerivationPath *string `json:"hd_derivation_path,omitempty"`
 }
 
 // VerifyRequest contains the message and signature for verification
@@ -62,4 +69,10 @@ type VerifyRequest struct {
 // VerifyResponse contains a flag indicating if the signature was verified
 type VerifyResponse struct {
 	Verified bool `json:"verified"`
+}
+
+// SealUnsealRequestResponse provides the unseal information
+type SealUnsealRequestResponse struct {
+	UnsealerKey    *string `json:"unsealer_key,omitempty"`
+	ValidationHash *string `json:"validation_hash,omitempty"`
 }
