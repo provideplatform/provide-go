@@ -347,16 +347,11 @@ func UnsealVault(token string, params map[string]interface{}) (*SealUnsealReques
 		return nil, err
 	}
 
-	// FIXME...
-	r := &SealUnsealRequestResponse{}
-	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &r)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to unseal vault; status: %v; %s", status, err.Error())
+	if status != 204 {
+		return nil, fmt.Errorf("failed to unseal vault; status %v, %s", status, resp)
 	}
 
-	return r, nil
+	return nil, nil
 }
 
 // GenerateSeal returns a valid unsealing key used to encrypt vault master keys
@@ -367,14 +362,13 @@ func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealReque
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 200 {
+		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, resp)
+	}
+
 	r := &SealUnsealRequestResponse{}
 	raw, _ := json.Marshal(resp)
 	err = json.Unmarshal(raw, &r)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, err.Error())
-	}
 
 	return r, nil
 }
