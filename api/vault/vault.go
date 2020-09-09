@@ -57,7 +57,10 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 	}
 
 	vlt := &Vault{}
-	vltraw, _ := json.Marshal(resp)
+	vltraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create vault; status: %v; %s", status, err.Error())
+	}
 	err = json.Unmarshal(vltraw, &vlt)
 
 	if err != nil {
