@@ -52,7 +52,10 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 		return nil, err
 	}
 
-	// FIXME...
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create vault; status: %v; %s", status, resp)
+	}
+
 	vlt := &Vault{}
 	vltraw, _ := json.Marshal(resp)
 	err = json.Unmarshal(vltraw, &vlt)
