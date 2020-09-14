@@ -22,6 +22,12 @@ type Application struct {
 	Hidden      bool                   `json:"hidden"`
 }
 
+// AuthenticationResponse is returned upon successful authentication of a user (i.e., by email address)
+type AuthenticationResponse struct {
+	User  *User  `json:"user"`
+	Token *Token `json:"token"`
+}
+
 // Organization model
 type Organization struct {
 	api.Model
