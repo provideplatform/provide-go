@@ -425,13 +425,13 @@ func UnsealVault(token string, params map[string]interface{}) (*SealUnsealReques
 
 // GenerateSeal returns a valid unsealing key used to encrypt vault master keys
 func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
-	uri := fmt.Sprintf("unseal")
+	uri := fmt.Sprintf("unsealerkey")
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
 		return nil, err
 	}
 
-	if status != 200 {
+	if status != 201 {
 		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, resp)
 	}
 
