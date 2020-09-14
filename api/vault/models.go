@@ -68,6 +68,6 @@ type VerifyResponse struct {
 
 // SealUnsealRequestResponse provides the unseal information
 type SealUnsealRequestResponse struct {
-	UnsealerKey    *string `json:"unsealer-key,omitempty"`
-	ValidationHash *string `json:"validation-hash,omitempty"`
+	UnsealerKey    *string `json:"unsealer_key,omitempty"`
+	ValidationHash *string `json:"validation_hash,omitempty"`
 }
