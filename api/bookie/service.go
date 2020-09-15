@@ -9,7 +9,7 @@ import (
 	"github.com/provideservices/provide-go/common"
 )
 
-const defaultBookieHost = "bookie.provide.services"
+const defaultBookieHost = "api.providepayments.com"
 const defaultBookiePath = "api/v1"
 const defaultBookieScheme = "https"
 
