@@ -1,4 +1,4 @@
-package ident
+package bookie
 
 import (
 	"encoding/json"
