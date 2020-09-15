@@ -30,7 +30,7 @@ func InitBookieService(token *string) *Service {
 		host = os.Getenv("BOOKIE_API_PATH")
 	}
 
-	scheme := defaultBookiePath
+	scheme := defaultBookieScheme
 	if os.Getenv("BOOKIE_API_SCHEME") != "" {
 		scheme = os.Getenv("BOOKIE_API_SCHEME")
 	}
