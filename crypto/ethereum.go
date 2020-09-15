@@ -404,6 +404,102 @@ func EVMBroadcastSignedTx(rpcClientKey, rpcURL string, signedTx *types.Transacti
 	return nil
 }
 
+// EVMTxFactory builds and returns an unsigned transaction hash
+func EVMTxFactory(
+	rpcClientKey,
+	rpcURL,
+	from string,
+	to,
+	data *string,
+	val *big.Int,
+	nonce *uint64,
+	gasLimit uint64,
+	gasPrice *uint64,
+) (types.Signer, *types.Transaction, []byte, error) {
+	client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	_, err = EVMGetSyncProgress(client)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	cfg := EVMGetChainConfig(rpcClientKey, rpcURL)
+	blockNumber, err := EVMGetLatestBlockNumber(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if nonce == nil {
+		pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if pendingNonce == 0 {
+			// check to make sure this isn't parity
+			var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
+			err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
+			if err != nil {
+				prvdcommon.Log.Warningf("Failed to retrieve next nonce; %s", err.Error())
+				return nil, nil, nil, err
+			}
+			if jsonRPCResponse.Result != nil {
+				pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
+				if err != nil {
+					prvdcommon.Log.Warningf("Failed to decode next nonce; %s", err.Error())
+					return nil, nil, nil, err
+				}
+			} else {
+				prvdcommon.Log.Warningf("Failed to retrieve next nonce; JSON-RPC result was nil")
+			}
+		}
+		nonce = &pendingNonce
+	}
+
+	if gasPrice == nil {
+		suggestedGasPrice, err := client.SuggestGasPrice(context.TODO())
+		if err != nil {
+			prvdcommon.Log.Warningf("Failed to suggest gas price; %s", err.Error())
+			return nil, nil, nil, err
+		}
+		_gasPrice := suggestedGasPrice.Uint64()
+		gasPrice = &_gasPrice
+	}
+
+	var _data []byte
+	if data != nil {
+		_data = common.FromHex(*data)
+	}
+
+	var tx *types.Transaction
+
+	if gasLimit == 0 {
+		callMsg := asEVMCallMsg(from, data, to, val, *gasPrice, gasLimit)
+		gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+		prvdcommon.Log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
+	}
+
+	if to != nil {
+		addr := common.HexToAddress(*to)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+		}
+		prvdcommon.Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
+		tx = types.NewTransaction(*nonce, addr, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
+	} else {
+		prvdcommon.Log.Debugf("Attempting to deploy contract via tx; network: %s", rpcClientKey)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
+		}
+		prvdcommon.Log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
+		tx = types.NewContractCreation(*nonce, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
+	}
+
+	signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
+	hash := signer.Hash(tx).Bytes()
+
+	return signer, tx, hash, err
+}
+
 // EVMSignTx signs a transaction using the given private key and calldata;
 // providing 0 gas results in the tx attempting to use up to the block
 // gas limit for execution
@@ -419,102 +515,38 @@ func EVMSignTx(
 	gasLimit uint64,
 	gasPrice *uint64,
 ) (*types.Transaction, *string, error) {
-	client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
+	signer, tx, hash, err := EVMTxFactory(
+		rpcClientKey,
+		rpcURL,
+		from,
+		to,
+		data,
+		val,
+		nonce,
+		gasLimit,
+		gasPrice,
+	)
+
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
 	}
-	_, err = EVMGetSyncProgress(client)
-	if err == nil {
-		cfg := EVMGetChainConfig(rpcClientKey, rpcURL)
-		blockNumber, err := EVMGetLatestBlockNumber(rpcClientKey, rpcURL)
-		if err != nil {
-			return nil, nil, err
-		}
-		if nonce == nil {
-			pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
-			if err != nil {
-				return nil, nil, err
-			}
-			if pendingNonce == 0 {
-				// check to make sure this isn't parity
-				var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
-				err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
-				if err != nil {
-					prvdcommon.Log.Warningf("Failed to retrieve next nonce; %s", err.Error())
-					return nil, nil, err
-				}
-				if jsonRPCResponse.Result != nil {
-					pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
-					if err != nil {
-						prvdcommon.Log.Warningf("Failed to decode next nonce; %s", err.Error())
-						return nil, nil, err
-					}
-				} else {
-					prvdcommon.Log.Warningf("Failed to retrieve next nonce; JSON-RPC result was nil")
-				}
-			}
-			nonce = &pendingNonce
-		}
 
-		if gasPrice == nil {
-			suggestedGasPrice, err := client.SuggestGasPrice(context.TODO())
-			if err != nil {
-				prvdcommon.Log.Warningf("Failed to suggest gas price; %s", err.Error())
-				return nil, nil, err
-			}
-			_gasPrice := suggestedGasPrice.Uint64()
-			gasPrice = &_gasPrice
-		}
-
-		var _data []byte
-		if data != nil {
-			_data = common.FromHex(*data)
-		}
-
-		var tx *types.Transaction
-
-		if gasLimit == 0 {
-			callMsg := asEVMCallMsg(from, data, to, val, *gasPrice, gasLimit)
-			gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
-			prvdcommon.Log.Debugf("Estimated gas for %d-byte tx: %d", len(_data), gasLimit)
-		}
-
-		if to != nil {
-			addr := common.HexToAddress(*to)
-			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
-			}
-			prvdcommon.Log.Debugf("Estimated %d total gas required for tx with %d-byte data payload", gasLimit, len(_data))
-			tx = types.NewTransaction(*nonce, addr, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
-		} else {
-			prvdcommon.Log.Debugf("Attempting to deploy contract via tx; network: %s", rpcClientKey)
-			if err != nil {
-				return nil, nil, fmt.Errorf("Failed to estimate gas for tx; %s", err.Error())
-			}
-			prvdcommon.Log.Debugf("Estimated %d total gas required for contract deployment tx with %d-byte data payload", gasLimit, len(_data))
-			tx = types.NewContractCreation(*nonce, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
-		}
-		signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
-		hash := signer.Hash(tx).Bytes()
-		prvdcommon.Log.Debugf("Signing tx on behalf of %s", from)
-		_privateKey, err := ethcrypto.HexToECDSA(privateKey)
-		if err != nil {
-			return nil, nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
-		}
-		sig, err := ethcrypto.Sign(hash, _privateKey)
-		if err != nil {
-			return nil, nil, fmt.Errorf("Failed to sign tx on behalf of %s; %s", *to, err.Error())
-		}
-		if err == nil {
-			signedTx, _ := tx.WithSignature(signer, sig)
-			hash := prvdcommon.StringOrNil(fmt.Sprintf("0x%x", signedTx.Hash()))
-			signedTxJSON, _ := signedTx.MarshalJSON()
-			prvdcommon.Log.Debugf("Signed tx for broadcast via JSON-RPC: %s", signedTxJSON)
-			return signedTx, hash, nil
-		}
-		return nil, nil, err
+	prvdcommon.Log.Debugf("Signing tx on behalf of %s", from)
+	_privateKey, err := ethcrypto.HexToECDSA(privateKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed read private key bytes prior to signing tx; %s", err.Error())
 	}
-	return nil, nil, err
+
+	sig, err := ethcrypto.Sign(hash, _privateKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to sign tx on behalf of %s; %s", *to, err.Error())
+	}
+
+	signedTx, _ := tx.WithSignature(signer, sig)
+	signedTxJSON, _ := signedTx.MarshalJSON()
+
+	prvdcommon.Log.Debugf("Signed eth tx: %s", signedTxJSON)
+	return signedTx, prvdcommon.StringOrNil(fmt.Sprintf("0x%x", signedTx.Hash())), nil
 }
 
 // ABI-related helpers
