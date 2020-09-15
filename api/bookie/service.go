@@ -47,9 +47,8 @@ func InitBookieService(token *string) *Service {
 
 // BroadcastPayment attempts to broadcast a payment using the given params
 // FIXME-- this is a proof of concept for now...
-func BroadcastPayment(token, applicationID string, params map[string]interface{}) (map[string]interface{}, error) {
-	uri := fmt.Sprintf("payments/%s", applicationID)
-	status, resp, err := InitBookieService(common.StringOrNil(token)).Put(uri, params)
+func BroadcastPayment(token string, params map[string]interface{}) (map[string]interface{}, error) {
+	status, resp, err := InitBookieService(common.StringOrNil(token)).Post("payments", params)
 	if err != nil {
 		return nil, err
 	}
