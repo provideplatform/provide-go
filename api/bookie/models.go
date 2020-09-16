@@ -42,8 +42,8 @@ type PaymentMethod struct {
 	Metadata *json.RawMessage `json:"metadata,omitempty"`
 }
 
-// PaymentRequest defines a payment request
-type PaymentRequest struct {
+// Payment defines a payment request
+type Payment struct {
 	api.Model
 
 	NetworkID uuid.UUID `json:"network_id,omitempty"`

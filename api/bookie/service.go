@@ -45,9 +45,9 @@ func InitBookieService(token *string) *Service {
 	}
 }
 
-// BroadcastPayment attempts to broadcast a payment using the given params
+// CreatePayment attempts to create/broadcast a payment using the given params
 // FIXME-- this is a proof of concept for now...
-func BroadcastPayment(token string, params map[string]interface{}) (map[string]interface{}, error) {
+func CreatePayment(token string, params map[string]interface{}) (*Payment, error) {
 	status, resp, err := InitBookieService(common.StringOrNil(token)).Post("payments", params)
 	if err != nil {
 		return nil, err
@@ -58,13 +58,13 @@ func BroadcastPayment(token string, params map[string]interface{}) (map[string]i
 	}
 
 	// FIXME...
-	response := map[string]interface{}{}
+	payment := &Payment{}
 	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &response)
+	err = json.Unmarshal(raw, &payment)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create payment; status: %v; %s", status, err.Error())
 	}
 
-	return response, nil
+	return payment, nil
 }
