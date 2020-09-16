@@ -22,6 +22,10 @@ type Key struct {
 	Name        *string    `json:"name"`
 	Description *string    `json:"description"`
 
+	// these fields are only populated for ephemeral keys
+	PrivateKey *string `json:"private_key,omitempty"`
+	Seed       *string `json:"seed,omitempty"`
+
 	Address          *string `json:"address,omitempty"`
 	HDDerivationPath *string `json:"hd_derivation_path,omitempty"`
 	PublicKey        *string `json:"public_key,omitempty"`
