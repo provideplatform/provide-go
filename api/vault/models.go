@@ -23,6 +23,7 @@ type Key struct {
 	Description *string    `json:"description"`
 
 	// these fields are only populated for ephemeral keys
+	Ephemeral  *string `json:"ephemeral,omitempty"`
 	PrivateKey *string `json:"private_key,omitempty"`
 	Seed       *string `json:"seed,omitempty"`
 
