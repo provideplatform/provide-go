@@ -98,8 +98,8 @@ func ListVaults(token string, params map[string]interface{}) ([]*Vault, error) {
 	return vaults, nil
 }
 
-// ListVaultKeys retrieves a paginated list of vault keys
-func ListVaultKeys(token, vaultID string, params map[string]interface{}) ([]*Key, error) {
+// ListKeys retrieves a paginated list of vault keys
+func ListKeys(token, vaultID string, params map[string]interface{}) ([]*Key, error) {
 	uri := fmt.Sprintf("vaults/%s/keys", vaultID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
@@ -127,8 +127,8 @@ func ListVaultKeys(token, vaultID string, params map[string]interface{}) ([]*Key
 	return keys, nil
 }
 
-// CreateVaultKey creates a new vault key
-func CreateVaultKey(token, vaultID string, params map[string]interface{}) (*Key, error) {
+// CreateKey creates a new vault key
+func CreateKey(token, vaultID string, params map[string]interface{}) (*Key, error) {
 	uri := fmt.Sprintf("vaults/%s/keys", vaultID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
@@ -152,8 +152,28 @@ func CreateVaultKey(token, vaultID string, params map[string]interface{}) (*Key,
 	return key, nil
 }
 
-// DeleteVaultKey deletes a key
-func DeleteVaultKey(token, vaultID, keyID string) error {
+// DeriveKey derives a key
+func DeriveKey(token, vaultID, keyID string, params map[string]interface{}) (*Key, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s/derive", vaultID, keyID)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME...
+	key := &Key{}
+	keyraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(keyraw, &key)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to derive key; status: %v; %s", status, err.Error())
+	}
+
+	return key, nil
+}
+
+// DeleteKey deletes a key
+func DeleteKey(token, vaultID, keyID string) error {
 	uri := fmt.Sprintf("vaults/%s/keys/%s", vaultID, keyID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
 	if err != nil {
@@ -227,8 +247,8 @@ func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]int
 	return r, nil
 }
 
-// ListVaultSecrets retrieves a paginated list of secrets in the vault
-func ListVaultSecrets(token, vaultID string, params map[string]interface{}) ([]*Secret, error) {
+// ListSecrets retrieves a paginated list of secrets in the vault
+func ListSecrets(token, vaultID string, params map[string]interface{}) ([]*Secret, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
@@ -256,8 +276,8 @@ func ListVaultSecrets(token, vaultID string, params map[string]interface{}) ([]*
 	return secrets, nil
 }
 
-// CreateVaultSecret stores a new secret in the vault
-func CreateVaultSecret(token, vaultID, value, name, description, secretType string) (*Secret, error) {
+// CreateSecret stores a new secret in the vault
+func CreateSecret(token, vaultID, value, name, description, secretType string) (*Secret, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, map[string]interface{}{
 		"name":        name,
@@ -287,8 +307,8 @@ func CreateVaultSecret(token, vaultID, value, name, description, secretType stri
 	return secret, nil
 }
 
-// RetrieveVaultSecret stores a new secret in the vault
-func RetrieveVaultSecret(token, vaultID, secretID string, params map[string]interface{}) (*Secret, error) {
+// FetchSecret stores a new secret in the vault
+func FetchSecret(token, vaultID, secretID string, params map[string]interface{}) (*Secret, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
@@ -313,8 +333,8 @@ func RetrieveVaultSecret(token, vaultID, secretID string, params map[string]inte
 	return secret, nil
 }
 
-// DeleteVaultSecret deletes a secret from the vault
-func DeleteVaultSecret(token, vaultID, secretID string) error {
+// DeleteSecret deletes a secret from the vault
+func DeleteSecret(token, vaultID, secretID string) error {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Delete(uri)
 	if err != nil {
