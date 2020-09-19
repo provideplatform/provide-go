@@ -135,6 +135,7 @@ github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5a
 github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
+github.com/google/logger v1.0.1/go.mod h1:w7O8nrRr0xufejBlQMI83MXqRusvREoJdaAxV+CoAB4=
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OItoe0UupaVj+oy1omPYYDuagoSzA8v9mc=
 github.com/google/uuid v1.0.0 h1:b4Gk+7WdP/d3HZH8EJsZpvV7EtDOgaZLtnaNGIu1adA=
@@ -190,8 +191,13 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/kthomas/go-logger v0.0.0-20200602041232-5c46e0cab608/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531 h1:8SnbaD9jO9OWBECn2X6IcCLz8RASFgB0bLbVNtt7yGE=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
+github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943 h1:cDp8m82Etk3UybAMLVTgUyvscBc54Yuy1MsoqXbo71c=
+github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943/go.mod h1:1wYaoVWP9k76g2FfW5U9NaJ6dELUDFt2J2XMzSbJAVg=
+github.com/kthomas/go-self-signed-cert v0.0.0-20200602041729-f9878375d46e h1:G//bQmubE/JtHY10bbiPnulIuDi1zHkjuP9QpcB4+8I=
+github.com/kthomas/go-self-signed-cert v0.0.0-20200602041729-f9878375d46e/go.mod h1:2U4e9gFnjUVWhKO7bMhpRh5k3SoQIZAsahqb+gQhaFI=
 github.com/kthomas/go.uuid v1.2.1-0.20190324131420-28d1fa77e9a4 h1:xWgita+beQTA+NaWz1dSFnWMZFLFPpRNZ0NdG1VOfOQ=
 github.com/kthomas/go.uuid v1.2.1-0.20190324131420-28d1fa77e9a4/go.mod h1:HqzG4AC71EusLj6ojuBNx8UKX03eWGSSXNYuKE7sUNo=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
@@ -310,6 +316,7 @@ golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnf
 golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 h1:psW17arqaxU48Z5kZ0CQnkZWQJsqcURM6tKiBApRjXI=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
