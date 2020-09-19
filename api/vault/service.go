@@ -443,6 +443,21 @@ func UnsealVault(token string, params map[string]interface{}) (*SealUnsealReques
 	return nil, nil
 }
 
+// SealVault seals the vault to disable decryption of vault, key and secret material
+func SealVault(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+	uri := fmt.Sprintf("seal")
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 204 {
+		return nil, fmt.Errorf("failed to seal vault; status %v, %s", status, resp)
+	}
+
+	return nil, nil
+}
+
 // GenerateSeal returns a valid unsealing key used to encrypt vault master keys
 func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
 	uri := fmt.Sprintf("unsealerkey")
