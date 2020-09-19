@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/ssh"
 	"os"
 	"strconv"
@@ -30,6 +31,9 @@ const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
 
 // jwt configuration vars
 var (
+	// EdDSA signing method for Ed25519 jwt
+	edDSASigningMethod SigningMethodEdDSA
+
 	// JWTApplicationClaimsKey is the key within the JWT payload where application-specific claims are encoded
 	JWTApplicationClaimsKey string
 
@@ -63,6 +67,58 @@ type jwtKeypair struct {
 	privateKey  *rsa.PrivateKey
 }
 
+// SigningMethodEdDSA enables Ed25519
+type SigningMethodEdDSA struct{}
+
+// Alg returns EdDSA
+func (m *SigningMethodEdDSA) Alg() string {
+	return "EdDSA"
+}
+
+// Verify the Ed25519 jwt
+func (m *SigningMethodEdDSA) Verify(signingString string, signature string, key interface{}) error {
+	var err error
+
+	var sig []byte
+	if sig, err = jwt.DecodeSegment(signature); err != nil {
+		return err
+	}
+
+	var ed25519Key ed25519.PublicKey
+	var ok bool
+
+	if ed25519Key, ok = key.(ed25519.PublicKey); !ok {
+		return jwt.ErrInvalidKeyType
+	}
+
+	if len(ed25519Key) != ed25519.PublicKeySize {
+		return jwt.ErrInvalidKey
+	}
+
+	if ok := ed25519.Verify(ed25519Key, []byte(signingString), sig); !ok {
+		return fmt.Errorf("failed to sign %d-byte jwt with Ed25519 key", len(signingString))
+	}
+
+	return nil
+}
+
+// Sign the jwt using Ed25519
+func (m *SigningMethodEdDSA) Sign(signingString string, key interface{}) (str string, err error) {
+	var ed25519Key ed25519.PrivateKey
+	var ok bool
+	if ed25519Key, ok = key.(ed25519.PrivateKey); !ok {
+		return "", jwt.ErrInvalidKeyType
+	}
+
+	if len(ed25519Key) != ed25519.PrivateKeySize {
+		return "", jwt.ErrInvalidKey
+	}
+
+	// Sign the string and return the encoded result
+	sig := ed25519.Sign(ed25519Key, []byte(signingString))
+	return jwt.EncodeSegment(sig), nil
+}
+
 func init() {
 	jwtPublicKeyPEM = strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
 	if jwtPublicKeyPEM != "" {
@@ -72,6 +128,8 @@ func init() {
 		}
 		jwtPublicKey = publicKey
 	}
+
+	jwt.RegisterSigningMethod(edDSASigningMethod.Alg(), func() jwt.SigningMethod { return &edDSASigningMethod })
 }
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
@@ -124,8 +182,8 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 		}
 
 		_, rsaSigningMethodOk := _jwtToken.Method.(*jwt.SigningMethodRSA)
-		_, ecdsaSigningMethodOk := _jwtToken.Method.(*jwt.SigningMethodECDSA)
-		if !rsaSigningMethodOk && !ecdsaSigningMethodOk {
+		_, eddsaSigningMethodOk := _jwtToken.Method.(*SigningMethodEdDSA)
+		if !rsaSigningMethodOk && !eddsaSigningMethodOk {
 			return nil, fmt.Errorf("failed to parse bearer authorization header; unexpected JWT signing alg: %s", _jwtToken.Method.Alg())
 		}
 
