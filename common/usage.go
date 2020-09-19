@@ -50,7 +50,7 @@ type UsageDelegate interface {
 // as a singleton
 func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis uint, delegate UsageDelegate) error {
 	if daemon != nil {
-		msg := "Attempted to run API usage daemon after singleton instance started"
+		msg := "attempted to run API usage daemon after singleton instance started"
 		Log.Warningf(msg)
 		return fmt.Errorf(msg)
 	}
@@ -69,7 +69,7 @@ func RunAPIUsageDaemon(bufferSize int, flushIntervalMillis uint, delegate UsageD
 }
 
 func (d *usageDaemon) run() error {
-	Log.Debugf("Running API usage daemon...")
+	Log.Debugf("running API usage daemon...")
 	ticker := time.NewTicker(time.Duration(d.flushIntervalMillis) * time.Millisecond)
 	for {
 		select {
@@ -90,10 +90,10 @@ func (d *usageDaemon) flush() error {
 		select {
 		case apiCall, ok := <-d.q:
 			if ok {
-				Log.Debugf("Attempting to track API call consumed by subject: %s", apiCall.Sub)
+				Log.Debugf("attempting to track API call consumed by subject: %s", apiCall.Sub)
 				d.delegate.Track(apiCall)
 			} else {
-				Log.Warningf("Failed to receive message from API usage daemon")
+				Log.Warningf("failed to receive message from API usage daemon")
 			}
 		default:
 			if len(d.q) == 0 {
@@ -137,33 +137,22 @@ func newAPICall(c *gin.Context, sub string) *APICall {
 	}
 }
 
-// trackAPICall
-func trackAPICall(c *gin.Context) error {
+// TrackAPICall tracks the api call for the given subject and gin context
+func TrackAPICall(c *gin.Context, subject string) error {
 	if daemon == nil {
-		return fmt.Errorf("Failed to track API call; singleton usage daemon not initialized")
+		return fmt.Errorf("failed to track API call; singleton usage daemon not initialized")
 	}
 
 	if c.GetHeader(authorizationHeader) == "" {
 		// no-op
-		return fmt.Errorf("Failed to track API call; no authorization header provided")
-	}
-
-	var subject string
-	appID := AuthorizedSubjectID(c, "application")
-	if appID != nil {
-		subject = fmt.Sprintf("application:%s", appID)
-	} else {
-		userID := AuthorizedSubjectID(c, "user")
-		if userID != nil {
-			subject = fmt.Sprintf("user:%s", userID)
-		}
+		return fmt.Errorf("failed to track API call; no authorization header provided")
 	}
 
 	if subject == "" {
-		return fmt.Errorf("Failed to resolve subject to which API usage could be attributed")
+		return fmt.Errorf("failed to resolve subject to which API usage could be attributed")
 	}
 
-	Log.Tracef("Attempting to track API call for caller: %s", subject)
+	Log.Tracef("attempting to track API call for caller: %s", subject)
 	daemon.q <- newAPICall(c, subject)
 	if len(daemon.q) == daemon.bufferSize {
 		go daemon.flush()

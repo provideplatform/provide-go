@@ -428,23 +428,8 @@ func Decrypt(token, vaultID, keyID string, params map[string]interface{}) (*Encr
 	return r, nil
 }
 
-// UnsealVault unseals the vault to enable decryption of vault, key and secret material
-func UnsealVault(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
-	uri := fmt.Sprintf("unseal")
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
-	if err != nil {
-		return nil, err
-	}
-
-	if status != 204 {
-		return nil, fmt.Errorf("failed to unseal vault; status %v, %s", status, resp)
-	}
-
-	return nil, nil
-}
-
-// SealVault seals the vault to disable decryption of vault, key and secret material
-func SealVault(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+// Seal seals the vault to disable decryption of vault, key and secret material
+func Seal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
 	uri := fmt.Sprintf("seal")
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
@@ -453,6 +438,21 @@ func SealVault(token string, params map[string]interface{}) (*SealUnsealRequestR
 
 	if status != 204 {
 		return nil, fmt.Errorf("failed to seal vault; status %v, %s", status, resp)
+	}
+
+	return nil, nil
+}
+
+// Unseal unseals the vault to enable decryption of vault, key and secret material
+func Unseal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+	uri := fmt.Sprintf("unseal")
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 204 {
+		return nil, fmt.Errorf("failed to unseal vault; status %v, %s", status, resp)
 	}
 
 	return nil, nil
@@ -467,17 +467,17 @@ func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealReque
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, resp)
+		return nil, fmt.Errorf("failed to generate vault seal/unseal key; status: %v; %s", status, resp)
 	}
 
 	r := &SealUnsealRequestResponse{}
 	raw, err := json.Marshal(resp)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to generate vault seal/unseal key; status: %v; %s", status, err.Error())
 	}
 	err = json.Unmarshal(raw, &r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate vault unsealer key; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to generate vault seal/unseal key; status: %v; %s", status, err.Error())
 	}
 	return r, nil
 }

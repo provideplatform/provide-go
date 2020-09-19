@@ -8,10 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
-	uuid "github.com/kthomas/go.uuid"
 )
 
 const authorizationHeader = "Authorization"
@@ -22,35 +20,6 @@ const defaultCorsAccessControlAllowMethods = "GET, POST, PUT, DELETE, OPTIONS"
 const defaultCorsAccessControlExposeHeaders = "X-Total-Results-Count"
 const defaultResponseContentType = "application/json; charset=UTF-8"
 const defaultResultsPerPage = 25
-
-// AuthorizedSubjectID returns the requested JWT subject if it matches
-func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
-	token, err := ParseBearerAuthorizationHeader(c, nil)
-	if err != nil {
-		Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
-		return nil
-	}
-	var id string
-	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		if sub, subok := claims["sub"].(string); subok {
-			subprts := strings.Split(sub, ":")
-			if len(subprts) != 2 {
-				Log.Warningf("Failed to parse %s subject from bearer authorization header; JWT subject malformed: %s", subject, sub)
-				return nil
-			}
-			if subprts[0] != subject {
-				return nil
-			}
-			id = subprts[1]
-		}
-	}
-	uuidV4, err := uuid.FromString(id)
-	if err != nil {
-		Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
-		return nil
-	}
-	return &uuidV4
-}
 
 // CORSMiddleware is a working middlware for using CORS with gin
 func CORSMiddleware() gin.HandlerFunc {
@@ -76,20 +45,24 @@ func CORSMiddleware() gin.HandlerFunc {
 func Paginate(c *gin.Context, db *gorm.DB, model interface{}) *gorm.DB {
 	page := int64(1)
 	rpp := int64(defaultResultsPerPage)
+
 	if c.Query("page") != "" {
 		if _page, err := strconv.ParseInt(c.Query("page"), 10, 64); err == nil {
 			page = _page
 		}
 	}
+
 	if c.Query("rpp") != "" {
 		if _rpp, err := strconv.ParseInt(c.Query("rpp"), 10, 64); err == nil {
 			rpp = _rpp
 		}
 	}
+
 	query, totalResults := paginate(db, model, page, rpp)
 	if totalResults != nil {
 		c.Header("x-total-results-count", fmt.Sprintf("%d", *totalResults))
 	}
+
 	return query
 }
 
@@ -99,37 +72,6 @@ func paginate(db *gorm.DB, model interface{}, page, rpp int64) (query *gorm.DB, 
 	db.Model(model).Count(&totalResults)
 	query = db.Limit(rpp).Offset((page - 1) * rpp)
 	return query, totalResults
-}
-
-// ParseBearerAuthorizationHeader parses a bearer authorization header
-// expecting to find a valid JWT token; returns the token if present
-func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt.Token) (interface{}, error)) (*jwt.Token, error) {
-	authorization := c.GetHeader(authorizationHeader)
-	if authorization == "" {
-		return nil, errors.New("No authentication header provided")
-	}
-	hdrprts := strings.Split(authorization, "bearer ")
-	if len(hdrprts) != 2 {
-		return nil, fmt.Errorf("Failed to parse bearer authentication header: %s", authorization)
-	}
-	authorization = hdrprts[1]
-	jwtToken, err := jwt.Parse(authorization, func(_jwtToken *jwt.Token) (interface{}, error) {
-		if keyfunc != nil {
-			fn := *keyfunc
-			return fn(_jwtToken)
-		}
-		if _, ok := _jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("Failed to parse bearer authentication header; unexpected JWT signing alg: %s", _jwtToken.Method.Alg())
-		}
-		if jwtPublicKey != nil {
-			return jwtPublicKey, nil
-		}
-		return nil, nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse bearer authentication header as valid JWT; %s", err.Error())
-	}
-	return jwtToken, err
 }
 
 // Render an object and status using the given gin context
@@ -168,12 +110,4 @@ func RequireParams(requiredParams []string, c *gin.Context) error {
 		return errors.New(msg)
 	}
 	return nil
-}
-
-// TrackAPICalls returns gin middleware for tracking API calls
-func TrackAPICalls() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		defer trackAPICall(c)
-		c.Next()
-	}
 }
