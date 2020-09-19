@@ -38,6 +38,11 @@ func RequireVault() {
 		common.Log.Panicf("failed to authorize vault access token for environment")
 	}
 
+	defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
+	if defaultVaultSealUnsealKey == "" {
+		common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environent")
+	}
+
 	err = UnsealVault()
 	if err != nil {
 		common.Log.Panicf("failed to unseal vault; %s", err.Error())
@@ -46,7 +51,7 @@ func RequireVault() {
 
 // SealVault seals the configured vault context
 func SealVault() error {
-	_, err := vault.Seal(defaultVaultRefreshJWT, map[string]interface{}{
+	_, err := vault.Seal(DefaultVaultAccessJWT, map[string]interface{}{
 		"key": defaultVaultSealUnsealKey,
 	})
 
@@ -60,7 +65,7 @@ func SealVault() error {
 
 // UnsealVault unseals the configured vault context
 func UnsealVault() error {
-	_, err := vault.Unseal(defaultVaultRefreshJWT, map[string]interface{}{
+	_, err := vault.Unseal(DefaultVaultAccessJWT, map[string]interface{}{
 		"key": defaultVaultSealUnsealKey,
 	})
 
