@@ -495,7 +495,7 @@ func EVMTxFactory(
 	}
 
 	signer := types.MakeSigner(cfg, big.NewInt(int64(blockNumber)))
-	hash := signer.Hash(tx).Bytes()
+	hash := tx.Hash().Bytes()
 
 	return signer, tx, hash, err
 }
