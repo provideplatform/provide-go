@@ -420,10 +420,10 @@ func EVMTxFactory(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	_, err = EVMGetSyncProgress(client)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	// _, err = EVMGetSyncProgress(client)
+	// if err != nil {
+	// 	return nil, nil, nil, err
+	// }
 	cfg := EVMGetChainConfig(rpcClientKey, rpcURL)
 	blockNumber, err := EVMGetLatestBlockNumber(rpcClientKey, rpcURL)
 	if err != nil {
@@ -879,7 +879,7 @@ func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
 		return cfg
 	}
 	cfg := params.MainnetChainConfig
-	chainID, err := strconv.ParseUint(rpcClientKey, 10, 0)
+	chainID, err := strconv.ParseUint(rpcClientKey, 10, 64)
 	if err == nil {
 		cfg.ChainID = big.NewInt(int64(chainID))
 		chainConfigs[rpcClientKey] = cfg
