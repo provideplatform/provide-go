@@ -404,6 +404,24 @@ func EVMBroadcastSignedTx(rpcClientKey, rpcURL string, signedTx *types.Transacti
 	return nil
 }
 
+// EVMChainConfigFactory returns the chain config for the given chain id
+func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
+	switch chainID.Uint64() {
+	case params.MainnetChainConfig.ChainID.Uint64():
+		return params.MainnetChainConfig
+	case params.RopstenChainConfig.ChainID.Uint64():
+		return params.RopstenChainConfig
+	case params.RinkebyChainConfig.ChainID.Uint64():
+		return params.RinkebyChainConfig
+	case params.GoerliChainConfig.ChainID.Uint64():
+		return params.GoerliChainConfig
+	case params.YoloV1ChainConfig.ChainID.Uint64():
+		return params.YoloV1ChainConfig
+	}
+
+	return nil
+}
+
 // EVMTxFactory builds and returns an unsigned transaction hash
 func EVMTxFactory(
 	rpcClientKey,
@@ -420,6 +438,15 @@ func EVMTxFactory(
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
+	chainID := EVMGetChainID(rpcClientKey, rpcURL)
+	block, err := EVMGetLatestBlockNumber(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	chainParams := EVMChainConfigFactory(chainID)
+	signer := types.MakeSigner(chainParams, big.NewInt(int64(block)))
 
 	if nonce == nil {
 		pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
@@ -489,10 +516,7 @@ func EVMTxFactory(
 		tx = types.NewContractCreation(*nonce, val, gasLimit, big.NewInt(int64(*gasPrice)), _data)
 	}
 
-	chainID := EVMGetChainID(rpcClientKey, rpcURL)
-	signer := types.NewEIP155Signer(chainID)
 	hash := signer.Hash(tx).Bytes()
-
 	return signer, tx, hash, err
 }
 
