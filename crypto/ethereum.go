@@ -419,7 +419,7 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 		return params.YoloV1ChainConfig
 	}
 
-	return nil
+	return params.MainnetChainConfig
 }
 
 // EVMTxFactory builds and returns an unsigned transaction hash
@@ -451,29 +451,34 @@ func EVMTxFactory(
 	if nonce == nil {
 		pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
 		if err != nil {
+			prvdcommon.Log.Warningf("failed to retrieve next nonce; %s", err.Error())
 			return nil, nil, nil, err
 		}
 		if pendingNonce == 0 {
 			pendingNonce, err = client.NonceAt(context.TODO(), common.HexToAddress(from), nil)
-		}
-		if pendingNonce == 0 {
-			// check to make sure this isn't parity
-			var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
-			err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
 			if err != nil {
 				prvdcommon.Log.Warningf("failed to retrieve next nonce; %s", err.Error())
 				return nil, nil, nil, err
 			}
-			if jsonRPCResponse.Result != nil {
-				pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
-				if err != nil {
-					prvdcommon.Log.Warningf("failed to decode next nonce; %s", err.Error())
-					return nil, nil, nil, err
-				}
-			} else {
-				prvdcommon.Log.Warningf("failed to retrieve next nonce; JSON-RPC result was nil")
-			}
 		}
+		// if err != nil || pendingNonce == 0 {
+		// 	// check to make sure this isn't parity
+		// 	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
+		// 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "parity_nextNonce", []interface{}{from}, &jsonRPCResponse)
+		// 	if err != nil {
+		// 		prvdcommon.Log.Warningf("failed to retrieve next nonce; %s", err.Error())
+		// 		return nil, nil, nil, err
+		// 	}
+		// 	if jsonRPCResponse.Result != nil {
+		// 		pendingNonce, err = hexutil.DecodeUint64(jsonRPCResponse.Result.(string))
+		// 		if err != nil {
+		// 			prvdcommon.Log.Warningf("failed to decode next nonce; %s", err.Error())
+		// 			return nil, nil, nil, err
+		// 		}
+		// 	} else {
+		// 		prvdcommon.Log.Warningf("failed to retrieve next nonce; JSON-RPC result was nil")
+		// 	}
+		// }
 		nonce = &pendingNonce
 	}
 
@@ -575,7 +580,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 	typestr := fmt.Sprintf("%s", t)
 	defer func() {
 		if r := recover(); r != nil {
-			prvdcommon.Log.Debugf("Failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
+			prvdcommon.Log.Debugf("failed to coerce ABI parameter of type: %s; value: %s", typestr, v)
 		}
 	}()
 	switch t.T {
@@ -617,7 +622,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 			if val, valOk := v.(string); valOk {
 				intval, err := strconv.Atoi(val)
 				if err != nil {
-					prvdcommon.Log.Warningf("Failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
+					prvdcommon.Log.Warningf("failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
 					return nil, err
 				}
 				return big.NewInt(int64(intval)), nil
@@ -669,7 +674,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 	default:
 		// no-op
 	}
-	return nil, fmt.Errorf("Failed to coerce %s parameter for abi encoding; unhandled type: %v", t.String(), t)
+	return nil, fmt.Errorf("failed to coerce %s parameter for abi encoding; unhandled type: %v", t.String(), t)
 }
 
 // iteratively unpack elements
@@ -854,13 +859,13 @@ func asEVMCallMsg(from string, data, to *string, val *big.Int, gasPrice, gasLimi
 func parseContractABI(contractAbi interface{}) (*abi.ABI, error) {
 	abistr, err := json.Marshal(contractAbi)
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to marshal ABI from contract params to json; %s", err.Error())
+		prvdcommon.Log.Warningf("failed to marshal ABI from contract params to json; %s", err.Error())
 		return nil, err
 	}
 
 	abival, err := abi.JSON(strings.NewReader(string(abistr)))
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to initialize ABI from contract  params to json; %s", err.Error())
+		prvdcommon.Log.Warningf("failed to initialize ABI from contract  params to json; %s", err.Error())
 		return nil, err
 	}
 
@@ -878,10 +883,10 @@ func EVMEthCall(rpcClientKey, rpcURL string, params []interface{}) (*api.Ethereu
 func EVMGetBlockNumber(rpcClientKey, rpcURL string) *uint64 {
 	params := make([]interface{}, 0)
 	var resp = &api.EthereumJsonRpcResponse{}
-	prvdcommon.Log.Debugf("Attempting to fetch latest block number via JSON-RPC eth_blockNumber method")
+	prvdcommon.Log.Debugf("attempting to fetch latest block number via JSON-RPC eth_blockNumber method")
 	err := EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, "eth_blockNumber", params, &resp)
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to invoke eth_blockNumber method via JSON-RPC; %s", err.Error())
+		prvdcommon.Log.Warningf("failed to invoke eth_blockNumber method via JSON-RPC; %s", err.Error())
 		return nil
 	}
 	blockNumber, err := hexutil.DecodeBig(resp.Result.(string))
@@ -913,20 +918,20 @@ func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
 func EVMGetChainID(rpcClientKey, rpcURL string) *big.Int {
 	ethClient, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf("failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if ethClient == nil {
-		prvdcommon.Log.Warningf("Failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
+		prvdcommon.Log.Warningf("failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
 		return nil
 	}
 	chainID, err := ethClient.NetworkID(context.TODO())
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf("failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
 		return nil
 	}
 	if chainID != nil {
-		prvdcommon.Log.Debugf("Received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
+		prvdcommon.Log.Debugf("received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
 	}
 	return chainID
 }
