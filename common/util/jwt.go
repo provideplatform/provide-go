@@ -124,7 +124,7 @@ func init() {
 	if jwtPublicKeyPEM != "" {
 		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
 		if err != nil {
-			common.Log.Panicf("Failed to parse JWT public key; %s", err.Error())
+			common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
 		}
 		jwtPublicKey = publicKey
 	}
@@ -136,7 +136,7 @@ func init() {
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 	token, err := ParseBearerAuthorizationHeader(c, nil)
 	if err != nil {
-		common.Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		common.Log.Tracef("no %s subject claim parsed from bearer authorization header; %s", subject, err.Error())
 		return nil
 	}
 	var id string
@@ -144,7 +144,7 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 		if sub, subok := claims["sub"].(string); subok {
 			subprts := strings.Split(sub, ":")
 			if len(subprts) != 2 {
-				common.Log.Warningf("Failed to parse %s subject from bearer authorization header; JWT subject malformed: %s", subject, sub)
+				common.Log.Debugf("failed to parse %s subject claim from bearer authorization header; subject malformed: %s", subject, sub)
 				return nil
 			}
 			if subprts[0] != subject {
@@ -155,7 +155,7 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 	}
 	uuidV4, err := uuid.FromString(id)
 	if err != nil {
-		common.Log.Warningf("Failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		common.Log.Debugf("failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
 		return nil
 	}
 	return &uuidV4
