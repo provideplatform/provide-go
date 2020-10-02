@@ -27,7 +27,7 @@ func InitVaultService(token *string) *Service {
 
 	path := defaultVaultPath
 	if os.Getenv("VAULT_API_PATH") != "" {
-		host = os.Getenv("VAULT_API_PATH")
+		path = os.Getenv("VAULT_API_PATH")
 	}
 
 	scheme := defaultVaultScheme
