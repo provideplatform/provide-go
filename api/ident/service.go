@@ -27,7 +27,7 @@ func InitIdentService(token *string) *Service {
 
 	path := defaultIdentPath
 	if os.Getenv("IDENT_API_PATH") != "" {
-		host = os.Getenv("IDENT_API_PATH")
+		path = os.Getenv("IDENT_API_PATH")
 	}
 
 	scheme := defaultIdentScheme
