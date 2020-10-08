@@ -444,9 +444,8 @@ func Seal(token string, params map[string]interface{}) (*SealUnsealRequestRespon
 }
 
 // Unseal unseals the vault to enable decryption of vault, key and secret material
-func Unseal(token string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
-	uri := fmt.Sprintf("unseal")
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
+func Unseal(token *string, params map[string]interface{}) (*SealUnsealRequestResponse, error) {
+	status, resp, err := InitVaultService(token).Post("unseal", params)
 	if err != nil {
 		return nil, err
 	}
