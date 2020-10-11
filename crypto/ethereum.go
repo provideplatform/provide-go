@@ -500,8 +500,18 @@ func EVMTxFactory(
 	var tx *types.Transaction
 
 	if gasLimit == 0 {
-		callMsg := asEVMCallMsg(from, prvdcommon.StringOrNil(string(_data)), to, val, *gasPrice, gasLimit)
-		gasLimit, err = client.EstimateGas(context.TODO(), callMsg)
+		gasLimit, err = client.EstimateGas(context.TODO(), asEVMCallMsg(
+			from,
+			_data,
+			to,
+			val,
+			*gasPrice,
+			gasLimit,
+		))
+		if err != nil {
+			prvdcommon.Log.Warningf("failed to estimate gas for tx; %s", err.Error())
+			return nil, nil, nil, err
+		}
 		prvdcommon.Log.Debugf("estimated gas for %d-byte tx: %d", len(_data), gasLimit)
 	}
 
@@ -836,9 +846,15 @@ func evmReadBool(word []byte) (bool, error) {
 
 // More calldata construction related items
 
-func asEVMCallMsg(from string, data, to *string, val *big.Int, gasPrice, gasLimit uint64) ethereum.CallMsg {
+func asEVMCallMsg(
+	from string,
+	data []byte,
+	to *string,
+	val *big.Int,
+	gasPrice,
+	gasLimit uint64,
+) ethereum.CallMsg {
 	var _to *common.Address
-	var _data []byte
 	if to != nil {
 		addr := common.HexToAddress(*to)
 		_to = &addr
@@ -849,7 +865,7 @@ func asEVMCallMsg(from string, data, to *string, val *big.Int, gasPrice, gasLimi
 		Gas:      gasLimit,
 		GasPrice: big.NewInt(int64(gasPrice)),
 		Value:    val,
-		Data:     _data,
+		Data:     data,
 	}
 }
 
