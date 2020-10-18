@@ -480,28 +480,3 @@ func GenerateSeal(token string, params map[string]interface{}) (*SealUnsealReque
 	}
 	return r, nil
 }
-
-// DeriveVaultKey derives a new vault key from the provided data
-func DeriveVaultKey(token, vaultID, keyID string, params map[string]interface{}) (*Key, error) {
-	uri := fmt.Sprintf("vaults/%s/keys/%s/derive", vaultID, keyID)
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
-	if err != nil {
-		return nil, err
-	}
-
-	if status != 201 {
-		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, resp)
-	}
-
-	key := &Key{}
-	keyraw, err := json.Marshal(resp)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, err.Error())
-	}
-	err = json.Unmarshal(keyraw, &key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, err.Error())
-	}
-
-	return key, nil
-}
