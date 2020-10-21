@@ -48,7 +48,6 @@ type Token struct {
 	// OAuth 2 fields
 	AccessToken  *string `json:"access_token,omitempty"`
 	RefreshToken *string `json:"refresh_token,omitempty"`
-	TokenType    *string `json:"token_type,omitempty"`
 	Scope        *string `json:"scope,omitempty"`
 
 	// Ephemeral JWT header fields and claims; these are here for convenience and
@@ -58,6 +57,7 @@ type Token struct {
 	Issuer    *string    `json:"issuer,omitempty"`
 	IssuedAt  *time.Time `json:"issued_at,omitempty"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	ExpiresIn *uint64    `json:"expires_in,omitempty"`
 	NotBefore *time.Time `json:"not_before_at,omitempty"`
 	Subject   *string    `json:"subject,omitempty"`
 
