@@ -167,6 +167,59 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 	return tkns, nil
 }
 
+// ListApplicationUsers retrieves a paginated list of users scoped to the given API token
+func ListApplicationUsers(token, appID string, params map[string]interface{}) ([]*User, error) {
+	uri := fmt.Sprintf("applications/%s/users", appID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list application users; status: %v", status)
+	}
+
+	users := make([]*User, 0)
+	for _, item := range resp.([]interface{}) {
+		usr := &User{}
+		usrraw, _ := json.Marshal(item)
+		json.Unmarshal(usrraw, &usr)
+		users = append(users, usr)
+	}
+
+	return users, nil
+}
+
+// CreateApplicationUser associates a user with an application
+func CreateApplicationUser(token, appID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("applications/%s/users", appID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to associate application user; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeleteApplicationUser disassociates a user with an application
+func DeleteApplicationUser(token, appID, userID string) error {
+	uri := fmt.Sprintf("applications/%s/users/%s", appID, userID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Delete(uri)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to disassociate application user; status: %v", status)
+	}
+
+	return nil
+}
+
 // CreateApplicationToken creates a new API token for the given application ID.
 func CreateApplicationToken(token, applicationID string, params map[string]interface{}) (*Token, error) {
 	params["application_id"] = applicationID
@@ -299,6 +352,58 @@ func CreateUser(token string, params map[string]interface{}) (*User, error) {
 	}
 
 	return usr, nil
+}
+
+// ListOrganizationUsers retrieves a paginated list of users scoped to an organization
+func ListOrganizationUsers(token, orgID string, params map[string]interface{}) ([]*User, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("users", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list users; status: %v", status)
+	}
+
+	users := make([]*User, 0)
+	for _, item := range resp.([]interface{}) {
+		usr := &User{}
+		usrraw, _ := json.Marshal(item)
+		json.Unmarshal(usrraw, &usr)
+		users = append(users, usr)
+	}
+
+	return users, nil
+}
+
+// CreateOrganizationUser associates a user with an organization
+func CreateOrganizationUser(token, orgID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("organizations/%s/users", orgID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to associate organization user; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeleteOrganizationUser disassociates a user with an organization
+func DeleteOrganizationUser(token, orgID, userID string) error {
+	uri := fmt.Sprintf("organizations/%s/users/%s", orgID, userID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Delete(uri)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to disassociate organization user; status: %v", status)
+	}
+
+	return nil
 }
 
 // ListUsers retrieves a paginated list of users scoped to the given API token
