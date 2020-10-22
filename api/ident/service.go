@@ -168,8 +168,8 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 }
 
 // ListApplicationUsers retrieves a paginated list of users scoped to the given API token
-func ListApplicationUsers(token, appID string, params map[string]interface{}) ([]*User, error) {
-	uri := fmt.Sprintf("applications/%s/users", appID)
+func ListApplicationUsers(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+	uri := fmt.Sprintf("applications/%s/users", applicationID)
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
 		return nil, err
@@ -191,8 +191,8 @@ func ListApplicationUsers(token, appID string, params map[string]interface{}) ([
 }
 
 // CreateApplicationUser associates a user with an application
-func CreateApplicationUser(token, appID string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("applications/%s/users", appID)
+func CreateApplicationUser(token, applicationID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("applications/%s/users", applicationID)
 	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
 		return err
@@ -206,8 +206,8 @@ func CreateApplicationUser(token, appID string, params map[string]interface{}) e
 }
 
 // DeleteApplicationUser disassociates a user with an application
-func DeleteApplicationUser(token, appID, userID string) error {
-	uri := fmt.Sprintf("applications/%s/users/%s", appID, userID)
+func DeleteApplicationUser(token, applicationID, userID string) error {
+	uri := fmt.Sprintf("applications/%s/users/%s", applicationID, userID)
 	status, _, err := InitIdentService(common.StringOrNil(token)).Delete(uri)
 	if err != nil {
 		return err
@@ -356,7 +356,8 @@ func CreateUser(token string, params map[string]interface{}) (*User, error) {
 
 // ListOrganizationUsers retrieves a paginated list of users scoped to an organization
 func ListOrganizationUsers(token, orgID string, params map[string]interface{}) ([]*User, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("users", params)
+	uri := fmt.Sprintf("organizations/%s/users", orgID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
