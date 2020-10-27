@@ -167,6 +167,82 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 	return tkns, nil
 }
 
+// ListApplicationInvitations retrieves a paginated list of invitations scoped to the given API token
+func ListApplicationInvitations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+	uri := fmt.Sprintf("applications/%s/invitations", applicationID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list application invitations; status: %v", status)
+	}
+
+	users := make([]*User, 0)
+	for _, item := range resp.([]interface{}) {
+		usr := &User{}
+		usrraw, _ := json.Marshal(item)
+		json.Unmarshal(usrraw, &usr)
+		users = append(users, usr)
+	}
+
+	return users, nil
+}
+
+// ListApplicationOrganizations retrieves a paginated list of users scoped to the given API token
+func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list application organizations; status: %v", status)
+	}
+
+	users := make([]*User, 0)
+	for _, item := range resp.([]interface{}) {
+		usr := &User{}
+		usrraw, _ := json.Marshal(item)
+		json.Unmarshal(usrraw, &usr)
+		users = append(users, usr)
+	}
+
+	return users, nil
+}
+
+// CreateApplicationOrganization associates a user with an application
+func CreateApplicationOrganization(token, applicationID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to associate application organization; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeleteApplicationOrganization disassociates an organization with an application
+func DeleteApplicationOrganization(token, applicationID, organizationID string) error {
+	uri := fmt.Sprintf("applications/%s/organizations/%s", applicationID, organizationID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Delete(uri)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to disassociate application organization; status: %v", status)
+	}
+
+	return nil
+}
+
 // ListApplicationUsers retrieves a paginated list of users scoped to the given API token
 func ListApplicationUsers(token, applicationID string, params map[string]interface{}) ([]*User, error) {
 	uri := fmt.Sprintf("applications/%s/users", applicationID)
@@ -392,6 +468,21 @@ func CreateOrganizationUser(token, orgID string, params map[string]interface{}) 
 	return nil
 }
 
+// UpdateOrganizationUser updates an associated organization user=
+func UpdateOrganizationUser(token, orgID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("organizations/%s/users", orgID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Put(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to update associated organization user; status: %v", status)
+	}
+
+	return nil
+}
+
 // DeleteOrganizationUser disassociates a user with an organization
 func DeleteOrganizationUser(token, orgID, userID string) error {
 	uri := fmt.Sprintf("organizations/%s/users/%s", orgID, userID)
@@ -405,6 +496,29 @@ func DeleteOrganizationUser(token, orgID, userID string) error {
 	}
 
 	return nil
+}
+
+// ListOrganizationInvitations retrieves a paginated list of organization invitations scoped to the given API token
+func ListOrganizationInvitations(token, organizationID string, params map[string]interface{}) ([]*User, error) {
+	uri := fmt.Sprintf("organizations/%s/invitations", organizationID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list organization invitations; status: %v", status)
+	}
+
+	users := make([]*User, 0)
+	for _, item := range resp.([]interface{}) {
+		usr := &User{}
+		usrraw, _ := json.Marshal(item)
+		json.Unmarshal(usrraw, &usr)
+		users = append(users, usr)
+	}
+
+	return users, nil
 }
 
 // ListUsers retrieves a paginated list of users scoped to the given API token
@@ -462,32 +576,4 @@ func UpdateUser(token, userID string, params map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-// ListUserKYCApplications retrieves a paginated list of KYC applications by user, scoped to the given API token
-func ListUserKYCApplications(token, userID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("users/%s/kyc_applications", userID)
-	return InitIdentService(common.StringOrNil(token)).Get(uri, params)
-}
-
-// CreateKYCApplication creates a new KYC application
-func CreateKYCApplication(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitIdentService(common.StringOrNil(token)).Post("kyc_applications", params)
-}
-
-// UpdateKYCApplication updates an existing KYC application
-func UpdateKYCApplication(token, kycApplicationID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("kyc_applications/%s", kycApplicationID)
-	return InitIdentService(common.StringOrNil(token)).Put(uri, params)
-}
-
-// GetKYCApplicationDetails retrieves details for the given user id
-func GetKYCApplicationDetails(token, kycApplicationID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("kyc_applications/%s", kycApplicationID)
-	return InitIdentService(common.StringOrNil(token)).Get(uri, params)
-}
-
-// ListKYCApplications retrieves a paginated list of KYC applications scoped to the given API token
-func ListKYCApplications(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitIdentService(common.StringOrNil(token)).Get("kyc_applications", params)
 }
