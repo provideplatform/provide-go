@@ -411,6 +411,26 @@ func CreateOrganization(token string, params map[string]interface{}) (*Organizat
 	return org, nil
 }
 
+// GetOrganizationDetails retrieves details for the given organization
+func GetOrganizationDetails(token, organizationID string, params map[string]interface{}) (*Organization, error) {
+	uri := fmt.Sprintf("organizations/%s", organizationID)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME...
+	org := &Organization{}
+	orgraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(orgraw, &org)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch organization details; status: %v; %s", status, err.Error())
+	}
+
+	return org, nil
+}
+
 // UpdateOrganization updates an organization
 func UpdateOrganization(token, organizationID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("organizations/%s", organizationID)
