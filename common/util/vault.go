@@ -38,7 +38,7 @@ func RequireVault() {
 
 	defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
 	if defaultVaultSealUnsealKey == "" {
-		common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environent")
+		common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
 	}
 
 	err := UnsealVault()
