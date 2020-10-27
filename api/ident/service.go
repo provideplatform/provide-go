@@ -411,6 +411,21 @@ func CreateOrganization(token string, params map[string]interface{}) (*Organizat
 	return org, nil
 }
 
+// UpdateOrganization updates an organization
+func UpdateOrganization(token, organizationID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("organizations/%s", organizationID)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Put(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to update associated organization user; status: %v", status)
+	}
+
+	return nil
+}
+
 // CreateUser creates a new user for which API tokens and managed signing identities can be authorized
 func CreateUser(token string, params map[string]interface{}) (*User, error) {
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("users", params)
