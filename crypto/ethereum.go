@@ -45,6 +45,8 @@ import (
 // It also caches JSON-RPC client instances in a few flavors (*ethclient.Client and *ethrpc.Client)
 // and maps them to an arbitrary `rpcClientKey` after successfully dialing the given RPC URL.
 
+const kovanChainID = uint64(42)
+
 var chainConfigs = map[string]*params.ChainConfig{}        // mapping of rpc client keys to *params.ChainConfig
 var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of rpc client keys to *ethclient.Client instances
 var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of rpc client keys to *ethrpc.Client instances
@@ -417,6 +419,9 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 		return params.GoerliChainConfig
 	case params.YoloV1ChainConfig.ChainID.Uint64():
 		return params.YoloV1ChainConfig
+	case kovanChainID: // HACK
+		cfg := params.GoerliChainConfig
+		cfg.ChainID = chainID
 	}
 
 	return params.MainnetChainConfig
