@@ -85,11 +85,17 @@ func refreshVaultAccessToken() (*string, error) {
 		return nil, err
 	}
 
-	if token.AccessToken == nil {
+	tkn := token.AccessToken
+	if tkn == nil {
+		// FIXME
+		tkn = token.Token
+	}
+
+	if tkn == nil {
 		err := fmt.Errorf("failed to authorize access token for given vault refresh token: %s", token.ID.String())
 		common.Log.Warning(err.Error())
 		return nil, err
 	}
 
-	return token.AccessToken, nil
+	return tkn, nil
 }
