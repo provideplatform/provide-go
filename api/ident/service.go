@@ -180,23 +180,18 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 }
 
 // CreateApplicationInvitation creates an invitation scoped to the given API token
-func CreateApplicationInvitation(token, applicationID string, params map[string]interface{}) (*Invite, error) {
+func CreateApplicationInvitation(token, applicationID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("applications/%s/invitations", applicationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to create application invitation; status: %v", status)
+		return fmt.Errorf("failed to create application invitation; status: %v", status)
 	}
 
-	// FIXME...
-	invite := &Invite{}
-	inviteraw, _ := json.Marshal(resp)
-	err = json.Unmarshal(inviteraw, &invite)
-
-	return invite, nil
+	return nil
 }
 
 // ListApplicationInvitations retrieves a paginated list of invitations scoped to the given API token
@@ -479,22 +474,17 @@ func UpdateOrganization(token, organizationID string, params map[string]interfac
 }
 
 // CreateInvitation creates a user invitation
-func CreateInvitation(token string, params map[string]interface{}) (*Invite, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("invitations", params)
+func CreateInvitation(token string, params map[string]interface{}) error {
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post("invitations", params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if status != 201 {
-		return nil, fmt.Errorf("failed to create invitation; status: %v", status)
+	if status != 204 {
+		return fmt.Errorf("failed to create invitation; status: %v", status)
 	}
 
-	// FIXME...
-	invite := &Invite{}
-	inviteraw, _ := json.Marshal(resp)
-	err = json.Unmarshal(inviteraw, &invite)
-
-	return invite, nil
+	return nil
 }
 
 // CreateUser creates a new user for which API tokens and managed signing identities can be authorized
@@ -585,23 +575,18 @@ func DeleteOrganizationUser(token, orgID, userID string) error {
 }
 
 // CreateOrganizationInvitation creates an invitation scoped to the given org API token
-func CreateOrganizationInvitation(token, organizationID string, params map[string]interface{}) (*Invite, error) {
+func CreateOrganizationInvitation(token, organizationID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("organizations/%s/invitations", organizationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
+	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to create organization invitation; status: %v", status)
+		return fmt.Errorf("failed to create organization invitation; status: %v", status)
 	}
 
-	// FIXME...
-	invite := &Invite{}
-	inviteraw, _ := json.Marshal(resp)
-	err = json.Unmarshal(inviteraw, &invite)
-
-	return invite, nil
+	return nil
 }
 
 // ListOrganizationInvitations retrieves a paginated list of organization invitations scoped to the given API token
