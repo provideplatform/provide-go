@@ -28,6 +28,23 @@ type AuthenticationResponse struct {
 	Token *Token `json:"token"`
 }
 
+// Invite model
+type Invite struct {
+	api.Model
+
+	ApplicationID    *uuid.UUID             `json:"application_id,omitempty"`
+	UserID           *uuid.UUID             `json:"user_id,omitempty"`
+	FirstName        *string                `json:"first_name,omitempty"`
+	LastName         *string                `json:"last_name,omitempty"`
+	Email            *string                `json:"email,omitempty"`
+	InvitorID        *uuid.UUID             `json:"invitor_id,omitempty"`
+	InvitorName      *string                `json:"invitor_name,omitempty"`
+	OrganizationID   *uuid.UUID             `json:"organization_id,omitempty"`
+	OrganizationName *string                `json:"organization_name,omitempty"`
+	Permissions      uint32                 `json:"permissions,omitempty"`
+	Params           map[string]interface{} `json:"params,omitempty"`
+}
+
 // Organization model
 type Organization struct {
 	api.Model
