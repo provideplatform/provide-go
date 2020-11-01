@@ -102,6 +102,18 @@ func UpdateApplication(token, applicationID string, params map[string]interface{
 	return nil
 }
 
+// DeleteApplication soft-deletes the application using the given API token
+func DeleteApplication(token, applicationID string, params map[string]interface{}) error {
+	err := UpdateApplication(token, applicationID, map[string]interface{}{
+		"hidden": true,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ListApplications retrieves a paginated list of applications scoped to the given API token
 func ListApplications(token string, params map[string]interface{}) ([]*Application, error) {
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("applications", params)
