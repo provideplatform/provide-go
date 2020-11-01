@@ -103,7 +103,7 @@ func UpdateApplication(token, applicationID string, params map[string]interface{
 }
 
 // DeleteApplication soft-deletes the application using the given API token
-func DeleteApplication(token, applicationID string, params map[string]interface{}) error {
+func DeleteApplication(token, applicationID string) error {
 	err := UpdateApplication(token, applicationID, map[string]interface{}{
 		"hidden": true,
 	})
