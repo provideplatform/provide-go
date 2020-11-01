@@ -480,7 +480,7 @@ func UpdateOrganization(token, organizationID string, params map[string]interfac
 
 // CreateInvitation creates a user invitation
 func CreateInvitation(token string, params map[string]interface{}) (*Invite, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("organizations", params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("invitations", params)
 	if err != nil {
 		return nil, err
 	}
