@@ -670,7 +670,7 @@ func UpdateUser(token, userID string, params map[string]interface{}) error {
 }
 
 // RequestPasswordReset initiates a password reset request
-func RequestPasswordReset(token, applicationID *string, email string) (*ResetPasswordResponse, error) {
+func RequestPasswordReset(token, applicationID *string, email string) error {
 	params := map[string]interface{}{
 		"email": email,
 	}
@@ -678,21 +678,16 @@ func RequestPasswordReset(token, applicationID *string, email string) (*ResetPas
 		params["application_id"] = applicationID
 	}
 
-	status, resp, err := InitIdentService(token).Post("reset_password", params)
+	status, _, err := InitIdentService(token).Post("reset_password", params)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to request password reset; status: %v; %s", status, err.Error())
 	}
 
-	// FIXME...
-	resetresp := &ResetPasswordResponse{}
-	raw, _ := json.Marshal(resp)
-	err = json.Unmarshal(raw, &resetresp)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to request password reset; status: %v; %s", status, err.Error())
+	if status != 204 {
+		return fmt.Errorf("failed to request password reset for user: %s; status: %v", email, status)
 	}
 
-	return resetresp, nil
+	return nil
 }
 
 // ResetPassword completes a previously-requested password reset operation for a user
