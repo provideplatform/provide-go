@@ -678,7 +678,7 @@ func RequestPasswordReset(token, applicationID *string, email string) error {
 		params["application_id"] = applicationID
 	}
 
-	status, _, err := InitIdentService(token).Post("reset_password", params)
+	status, _, err := InitIdentService(token).Post("users/reset_password", params)
 	if err != nil {
 		return fmt.Errorf("failed to request password reset; status: %v; %s", status, err.Error())
 	}
@@ -692,7 +692,7 @@ func RequestPasswordReset(token, applicationID *string, email string) error {
 
 // ResetPassword completes a previously-requested password reset operation for a user
 func ResetPassword(token *string, resetPasswordToken, passwd string) error {
-	uri := fmt.Sprintf("reset_password/%s", resetPasswordToken)
+	uri := fmt.Sprintf("users/reset_password/%s", resetPasswordToken)
 	status, _, err := InitIdentService(token).Post(uri, map[string]interface{}{
 		"password": passwd,
 	})
