@@ -668,3 +668,42 @@ func UpdateUser(token, userID string, params map[string]interface{}) error {
 
 	return nil
 }
+
+// RequestPasswordReset initiates a password reset request
+func RequestPasswordReset(token, applicationID *string, email, passwd string) (*ResetPasswordResponse, error) {
+	params := map[string]interface{}{
+		"email": email,
+	}
+	if applicationID != nil {
+		params["application_id"] = applicationID
+	}
+
+	status, resp, err := InitIdentService(token).Post("reset_password", params)
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME...
+	resetresp := &ResetPasswordResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &resetresp)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to request password reset; status: %v; %s", status, err.Error())
+	}
+
+	return resetresp, nil
+}
+
+// ResetPassword completes a previously-requested password reset operation for a user
+func ResetPassword(token *string, resetPasswordToken, password string) error {
+	uri := fmt.Sprintf("reset_password/%s", resetPasswordToken)
+	status, _, err := InitIdentService(token).Post(uri, map[string]interface{}{
+		"password": password,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reset password; status: %v; %s", status, err.Error())
+	}
+
+	return nil
+}

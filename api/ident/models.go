@@ -28,6 +28,11 @@ type AuthenticationResponse struct {
 	Token *Token `json:"token"`
 }
 
+// ResetPasswordResponse is returned upon a successful request to initiate user password reset
+type ResetPasswordResponse struct {
+	Token *string `json:"reset_password_token"`
+}
+
 // Invite model
 type Invite struct {
 	api.Model
