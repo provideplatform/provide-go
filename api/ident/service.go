@@ -179,21 +179,6 @@ func ListApplicationTokens(token, applicationID string, params map[string]interf
 	return tkns, nil
 }
 
-// CreateApplicationInvitation creates an invitation scoped to the given API token
-func CreateApplicationInvitation(token, applicationID string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("applications/%s/invitations", applicationID)
-	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
-	if err != nil {
-		return err
-	}
-
-	if status != 201 {
-		return fmt.Errorf("failed to create application invitation; status: %v", status)
-	}
-
-	return nil
-}
-
 // ListApplicationInvitations retrieves a paginated list of invitations scoped to the given API token
 func ListApplicationInvitations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
 	uri := fmt.Sprintf("applications/%s/invitations", applicationID)
@@ -569,21 +554,6 @@ func DeleteOrganizationUser(token, orgID, userID string) error {
 
 	if status != 204 {
 		return fmt.Errorf("failed to disassociate organization user; status: %v", status)
-	}
-
-	return nil
-}
-
-// CreateOrganizationInvitation creates an invitation scoped to the given org API token
-func CreateOrganizationInvitation(token, organizationID string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("organizations/%s/invitations", organizationID)
-	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
-	if err != nil {
-		return err
-	}
-
-	if status != 201 {
-		return fmt.Errorf("failed to create organization invitation; status: %v", status)
 	}
 
 	return nil
