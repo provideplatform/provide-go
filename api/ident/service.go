@@ -699,6 +699,9 @@ func ResetPassword(token *string, resetPasswordToken, passwd string) error {
 	if err != nil {
 		return fmt.Errorf("failed to reset password; status: %v; %s", status, err.Error())
 	}
+	if status != 204 {
+		return fmt.Errorf("failed to reset password; status: %v", status)
+	}
 
 	return nil
 }
