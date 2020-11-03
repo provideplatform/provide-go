@@ -530,8 +530,8 @@ func CreateOrganizationUser(token, orgID string, params map[string]interface{}) 
 }
 
 // UpdateOrganizationUser updates an associated organization user=
-func UpdateOrganizationUser(token, orgID string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("organizations/%s/users", orgID)
+func UpdateOrganizationUser(token, orgID, userID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("organizations/%s/users/%s", orgID, userID)
 	status, _, err := InitIdentService(common.StringOrNil(token)).Put(uri, params)
 	if err != nil {
 		return err
