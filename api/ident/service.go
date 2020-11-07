@@ -144,6 +144,10 @@ func GetApplicationDetails(token, applicationID string, params map[string]interf
 		return nil, err
 	}
 
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch application details; status: %v", status)
+	}
+
 	// FIXME...
 	app := &Application{}
 	appraw, _ := json.Marshal(resp)
