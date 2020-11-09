@@ -381,6 +381,10 @@ func GetTokenDetails(token, tokenID string, params map[string]interface{}) (*Tok
 		return nil, err
 	}
 
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch token details; status: %v", status)
+	}
+
 	// FIXME...
 	tkn := &Token{}
 	tknraw, _ := json.Marshal(resp)
@@ -415,8 +419,8 @@ func CreateOrganization(token string, params map[string]interface{}) (*Organizat
 		return nil, err
 	}
 
-	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch organization; status: %v", status)
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create organization; status: %v", status)
 	}
 
 	// FIXME...
@@ -437,6 +441,10 @@ func GetOrganizationDetails(token, organizationID string, params map[string]inte
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
 		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch organization; status: %v", status)
 	}
 
 	// FIXME...
