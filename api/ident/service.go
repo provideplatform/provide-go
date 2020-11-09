@@ -416,7 +416,7 @@ func CreateOrganization(token string, params map[string]interface{}) (*Organizat
 	}
 
 	if status != 200 {
-		return fmt.Errorf("failed to fetch organization; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch organization; status: %v", status)
 	}
 
 	// FIXME...
