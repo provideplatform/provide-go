@@ -3,11 +3,15 @@ package util
 import (
 	"fmt"
 	"os"
+	"time"
 
 	ident "github.com/provideservices/provide-go/api/ident"
 	vault "github.com/provideservices/provide-go/api/vault"
 	common "github.com/provideservices/provide-go/common"
 )
+
+const refreshTokenTickInterval = 60000 * 45 * time.Millisecond
+const refreshTokenSleepInterval = 60000 * 10 * time.Millisecond
 
 var (
 	// DefaultVaultAccessJWT for the default vault context
@@ -34,6 +38,23 @@ func RequireVault() {
 		if DefaultVaultAccessJWT == "" {
 			common.Log.Panicf("failed to authorize vault access token for environment")
 		}
+
+		go func() {
+			timer := time.NewTicker(refreshTokenTickInterval)
+			for {
+				select {
+				case <-timer.C:
+					token, err := refreshVaultAccessToken()
+					if err != nil {
+						common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
+					} else {
+						DefaultVaultAccessJWT = *token
+					}
+				default:
+					time.Sleep(refreshTokenSleepInterval)
+				}
+			}
+		}()
 	}
 
 	defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
