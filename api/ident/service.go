@@ -18,6 +18,18 @@ type Service struct {
 	api.Client
 }
 
+// InitDefaultIdentService convenience method to initialize a default `ident.Service` (i.e., production) instance
+func InitDefaultIdentService(token *string) *Service {
+	return &Service{
+		api.Client{
+			Host:   defaultIdentHost,
+			Path:   defaultIdentPath,
+			Scheme: defaultIdentScheme,
+			Token:  token,
+		},
+	}
+}
+
 // InitIdentService convenience method to initialize an `ident.Service` instance
 func InitIdentService(token *string) *Service {
 	host := defaultIdentHost
