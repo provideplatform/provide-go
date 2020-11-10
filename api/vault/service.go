@@ -160,6 +160,10 @@ func DeriveKey(token, vaultID, keyID string, params map[string]interface{}) (*Ke
 		return nil, err
 	}
 
+	if status != 201 {
+		return nil, fmt.Errorf("failed to derive vault key; status: %v; %s", status, resp)
+	}
+
 	// FIXME...
 	key := &Key{}
 	keyraw, _ := json.Marshal(resp)
