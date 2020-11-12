@@ -183,7 +183,7 @@ func GetNetworkDetails(token, networkID string, params map[string]interface{}) (
 	}
 
 	if status != 200 {
-		return nil, fmt.Error("failed to fetch network. status %v", status)
+		return nil, fmt.Errorf("failed to fetch network. status %v", status)
 	}
 
 	network := &Network{}
