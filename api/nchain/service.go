@@ -133,9 +133,20 @@ func CreateNetwork(token string, params map[string]interface{}) (int, interface{
 }
 
 // UpdateNetwork updates an existing network
-func UpdateNetwork(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
+func UpdateNetwork(token, networkID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("networks/%s", networkID)
-	return InitNChainService(token).Put(uri, params)
+
+	status, _, err := InitNChainService(token).Put(uri, params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to fetch network. status %v", status)
+	}
+
+	return nil
+
 }
 
 // ListNetworks
