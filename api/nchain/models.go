@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	uuid "github.com/kthomas/go.uuid"
 )
 
 // CompiledArtifact represents compiled sourcecode
@@ -124,4 +125,20 @@ type NetworkStatus struct {
 	State           *string                `json:"state,omitempty"`            // i.e., syncing, synced, etc
 	Syncing         bool                   `json:"syncing,omitempty"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
 	Meta            map[string]interface{} `json:"meta,omitempty"`             // network-specific metadata
+}
+
+// Network contains the specific Ethereum network details (mainnet, etc.)
+type Network struct {
+	ApplicationID   *uuid.UUID       `sql:"type:uuid" json:"application_id,omitempty"`
+	UserID          *uuid.UUID       `sql:"type:uuid" json:"user_id,omitempty"`
+	Name            *string          `sql:"not null" json:"name"`
+	Description     *string          `json:"description"`
+	IsProduction    *bool            `sql:"not null" json:"-"` // deprecated
+	Cloneable       *bool            `sql:"not null" json:"-"` // deprecated
+	Enabled         *bool            `sql:"not null" json:"enabled"`
+	ChainID         *string          `json:"chain_id"`                               // protocol-specific chain id
+	SidechainID     *uuid.UUID       `sql:"type:uuid" json:"sidechain_id,omitempty"` // network id used as the transactional sidechain (or null)
+	NetworkID       *uuid.UUID       `sql:"type:uuid" json:"network_id,omitempty"`   // network id used as the parent
+	Config          *json.RawMessage `sql:"type:json not null" json:"config,omitempty"`
+	EncryptedConfig *string          `sql:"-" json:"-"`
 }

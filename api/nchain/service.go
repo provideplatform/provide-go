@@ -1,6 +1,7 @@
 package nchain
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -138,8 +139,38 @@ func UpdateNetwork(token, networkID string, params map[string]interface{}) (int,
 }
 
 // ListNetworks
-func ListNetworks(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitNChainService(token).Get("networks", params)
+func ListNetworks(token string, public, cloneable *bool, params map[string]interface{}) ([]*Network, error) {
+
+	uri := fmt.Sprintf("networks")
+
+	// handle querystring parameters
+	if public != nil || cloneable != nil {
+		uri = fmt.Sprintf("%s?", uri)
+		if public != nil {
+			uri = fmt.Sprintf("%spublic=%t", uri, *public)
+		}
+		if cloneable != nil {
+			uri = fmt.Sprintf("%scloneable=%t", uri, *cloneable)
+		}
+	}
+
+	status, resp, err := InitNChainService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list networks. status: %v", status)
+	}
+
+	networks := make([]*Network, 0)
+	for _, item := range resp.([]interface{}) {
+		netwrk := &Network{}
+		netwrkRaw, _ := json.Marshal(item)
+		json.Unmarshal(netwrkRaw, &netwrk)
+		networks = append(networks, netwrk)
+	}
+	return networks, nil
 }
 
 // GetNetworkDetails
