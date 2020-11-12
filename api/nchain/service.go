@@ -147,7 +147,7 @@ func ListNetworks(token string, public, cloneable *bool, params map[string]inter
 	if public != nil || cloneable != nil {
 		uri = fmt.Sprintf("%s?", uri)
 		if public != nil {
-			uri = fmt.Sprintf("%spublic=%t", uri, *public)
+			uri = fmt.Sprintf("%spublic=%t&", uri, *public)
 		}
 		if cloneable != nil {
 			uri = fmt.Sprintf("%scloneable=%t", uri, *cloneable)
