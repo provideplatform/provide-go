@@ -173,10 +173,27 @@ func ListNetworks(token string, public, cloneable *bool, params map[string]inter
 	return networks, nil
 }
 
-// GetNetworkDetails
-func GetNetworkDetails(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
+// GetNetworkDetails returns the details for the specified network id
+func GetNetworkDetails(token, networkID string, params map[string]interface{}) (*Network, error) {
 	uri := fmt.Sprintf("networks/%s", networkID)
-	return InitNChainService(token).Get(uri, params)
+
+	status, resp, err := InitNChainService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Error("failed to fetch network. status %v", status)
+	}
+
+	network := &Network{}
+	networkRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(networkRaw, &network)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch network details. status: %v; %s", status, err.Error())
+	}
+
+	return network, nil
 }
 
 // ListNetworkAccounts
