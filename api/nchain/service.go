@@ -267,10 +267,27 @@ func GetNetworkTransactionDetails(token, networkID, txID string, params map[stri
 	return InitNChainService(token).Get(uri, params)
 }
 
-// GetNetworkStatusMeta
-func GetNetworkStatusMeta(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
+// GetNetworkStatusMeta returns the status details for the specified network
+func GetNetworkStatusMeta(token, networkID string, params map[string]interface{}) (*NetworkStatus, error) {
 	uri := fmt.Sprintf("networks/%s/status", networkID)
-	return InitNChainService(token).Get(uri, params)
+
+	status, resp, err := InitNChainService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch network. status %v", status)
+	}
+
+	networkStatus := &NetworkStatus{}
+	networkStatusRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(networkStatusRaw, &networkStatus)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch network status. status: %v; %s", status, err.Error())
+	}
+
+	return networkStatus, nil
 }
 
 // CreateOracle
