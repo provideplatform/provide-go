@@ -45,9 +45,27 @@ func InitNChainService(token string) *Service {
 	}
 }
 
-// CreateAccount
-func CreateAccount(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitNChainService(token).Post("accounts", params)
+// CreateAccount creates a new account
+func CreateAccount(token string, params map[string]interface{}) (*Account, error) {
+	uri := "accounts"
+	status, resp, err := InitNChainService(token).Post(uri, params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create account. status: %v", status)
+	}
+
+	account := &Account{}
+	accountRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(accountRaw, &account)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account. status: %v; %s", status, err.Error())
+	}
+
+	return account, nil
 }
 
 // ListAccounts
@@ -127,9 +145,28 @@ func GetContractDetails(token, contractID string, params map[string]interface{})
 	return InitNChainService(token).Get(uri, params)
 }
 
-// CreateNetwork
-func CreateNetwork(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitNChainService(token).Post("networks", params)
+// CreateNetwork creates a new network
+func CreateNetwork(token string, params map[string]interface{}) (*Network, error) {
+
+	uri := "networks"
+	status, resp, err := InitNChainService(token).Post(uri, params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create network. status: %v", status)
+	}
+
+	network := &Network{}
+	networkRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(networkRaw, &network)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create network. status: %v; %s", status, err.Error())
+	}
+
+	return network, nil
 }
 
 // UpdateNetwork updates an existing network

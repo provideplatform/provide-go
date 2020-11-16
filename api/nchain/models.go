@@ -3,9 +3,11 @@ package nchain
 import (
 	"encoding/json"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	uuid "github.com/kthomas/go.uuid"
+	"github.com/tyler-smith/go-bip32"
 )
 
 // CompiledArtifact represents compiled sourcecode
@@ -141,4 +143,49 @@ type Network struct {
 	NetworkID       *uuid.UUID       `sql:"type:uuid" json:"network_id,omitempty"`   // network id used as the parent
 	Config          *json.RawMessage `sql:"type:json not null" json:"config,omitempty"`
 	EncryptedConfig *string          `sql:"-" json:"-"`
+}
+
+// Account contains the specific account user details
+type Account struct {
+	NetworkID      *uuid.UUID `json:"network_id,omitempty"`
+	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
+	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
+	UserID         *uuid.UUID `json:"user_id,omitempty"`
+	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+
+	VaultID *uuid.UUID `json:"vault_id,omitempty"`
+	KeyID   *uuid.UUID `json:"key_id,omitempty"`
+
+	Type *string `json:"type,omitempty"`
+
+	HDDerivationPath *string `json:"hd_derivation_path,omitempty"` // i.e. m/44'/60'/0'/0
+	PublicKey        *string `json:"public_key,omitempty"`
+	PrivateKey       *string `json:"private_key,omitempty"`
+
+	Address    string     `json:"address"`
+	Balance    *big.Int   `json:"balance,omitempty"`
+	AccessedAt *time.Time `json:"accessed_at,omitempty"`
+	Wallet     *Wallet    `json:"-"`
+}
+
+// Wallet contains the specific wallet details
+type Wallet struct {
+	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
+	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
+	UserID         *uuid.UUID `json:"user_id,omitempty"`
+	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+
+	VaultID *uuid.UUID `json:"vault_id,omitempty"`
+	KeyID   *uuid.UUID `json:"key_id,omitempty"`
+
+	Path        *string    `json:"path,omitempty"`
+	Purpose     *int       `json:"purpose,omitempty"`
+	Mnemonic    *string    `json:"mnemonic,omitempty"`
+	ExtendedKey *bip32.Key `json:"-"`
+
+	PublicKey  *string `json:"public_key,omitempty"`
+	PrivateKey *string `json:"private_key,omitempty"`
+
+	Wallet   *Wallet   `sql:"-" json:"-"`
+	Accounts []Account `json:"-"`
 }
