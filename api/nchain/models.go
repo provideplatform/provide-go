@@ -7,8 +7,34 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	uuid "github.com/kthomas/go.uuid"
+	"github.com/provideservices/provide-go/api"
 	"github.com/tyler-smith/go-bip32"
 )
+
+// Account contains the specific account user details
+type Account struct {
+	api.Model
+
+	NetworkID      *uuid.UUID `json:"network_id,omitempty"`
+	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
+	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
+	UserID         *uuid.UUID `json:"user_id,omitempty"`
+	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+
+	VaultID *uuid.UUID `json:"vault_id,omitempty"`
+	KeyID   *uuid.UUID `json:"key_id,omitempty"`
+
+	Type *string `json:"type,omitempty"`
+
+	HDDerivationPath *string `json:"hd_derivation_path,omitempty"` // i.e. m/44'/60'/0'/0
+	PublicKey        *string `json:"public_key,omitempty"`
+	PrivateKey       *string `json:"private_key,omitempty"`
+
+	Address    string     `json:"address"`
+	Balance    *big.Int   `json:"balance,omitempty"`
+	AccessedAt *time.Time `json:"accessed_at,omitempty"`
+	Wallet     *Wallet    `json:"-"`
+}
 
 // CompiledArtifact represents compiled sourcecode
 type CompiledArtifact struct {
@@ -36,35 +62,6 @@ type TxReceipt struct {
 	CumulativeGasUsed uint64         `json:"cumulative_gas_used"`
 	Bloom             interface{}    `json:"logs_bloom"`
 	Logs              []interface{}  `json:"logs"`
-}
-
-// TxTrace is generalized transaction trace model
-type TxTrace struct {
-	Result []struct {
-		Action struct {
-			CallType *string `json:"callType"`
-			From     *string `json:"from"`
-			Gas      *string `json:"gas"`
-			Init     *string `json:"init"`
-			Input    *string `json:"input"`
-			To       *string `json:"to"`
-			Value    *string `json:"value"`
-		} `json:"action"`
-		BlockHash   *string `json:"blockHash"`
-		BlockNumber int     `json:"blockNumber"`
-		Result      struct {
-			Address *string `json:"address"`
-			Code    *string `json:"code"`
-			GasUsed *string `json:"gasUsed"`
-			Output  *string `json:"output"`
-		} `json:"result"`
-		Error               *string       `json:"error"`
-		Subtraces           int           `json:"subtraces"`
-		TraceAddress        []interface{} `json:"traceAddress"`
-		TransactionHash     *string       `json:"transactionHash"`
-		TransactionPosition int           `json:"transactionPosition"`
-		Type                *string       `json:"type"`
-	} `json:"result"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
@@ -116,6 +113,23 @@ type EthereumWebsocketSubscriptionResponse struct {
 	Params map[string]interface{} `json:"params"`
 }
 
+// Network contains the specific Ethereum network details (mainnet, etc.)
+type Network struct {
+	api.Model
+
+	ApplicationID   *uuid.UUID       `json:"application_id,omitempty"`
+	UserID          *uuid.UUID       `json:"user_id,omitempty"`
+	Name            *string          `json:"name"`
+	Description     *string          `json:"description"`
+	IsProduction    *bool            `json:"-"` // deprecated
+	Cloneable       *bool            `json:"-"` // deprecated
+	Enabled         *bool            `json:"enabled"`
+	ChainID         *string          `json:"chain_id"`             // protocol-specific chain id
+	NetworkID       *uuid.UUID       `json:"network_id,omitempty"` // network id used as the parent
+	Config          *json.RawMessage `json:"config,omitempty"`
+	EncryptedConfig *string          `json:"-"`
+}
+
 // NetworkStatus provides network-agnostic status
 type NetworkStatus struct {
 	Block           uint64                 `json:"block,omitempty"`            // current block
@@ -129,47 +143,39 @@ type NetworkStatus struct {
 	Meta            map[string]interface{} `json:"meta,omitempty"`             // network-specific metadata
 }
 
-// Network contains the specific Ethereum network details (mainnet, etc.)
-type Network struct {
-	ApplicationID   *uuid.UUID       `sql:"type:uuid" json:"application_id,omitempty"`
-	UserID          *uuid.UUID       `sql:"type:uuid" json:"user_id,omitempty"`
-	Name            *string          `sql:"not null" json:"name"`
-	Description     *string          `json:"description"`
-	IsProduction    *bool            `sql:"not null" json:"-"` // deprecated
-	Cloneable       *bool            `sql:"not null" json:"-"` // deprecated
-	Enabled         *bool            `sql:"not null" json:"enabled"`
-	ChainID         *string          `json:"chain_id"`                               // protocol-specific chain id
-	SidechainID     *uuid.UUID       `sql:"type:uuid" json:"sidechain_id,omitempty"` // network id used as the transactional sidechain (or null)
-	NetworkID       *uuid.UUID       `sql:"type:uuid" json:"network_id,omitempty"`   // network id used as the parent
-	Config          *json.RawMessage `sql:"type:json not null" json:"config,omitempty"`
-	EncryptedConfig *string          `sql:"-" json:"-"`
-}
-
-// Account contains the specific account user details
-type Account struct {
-	NetworkID      *uuid.UUID `json:"network_id,omitempty"`
-	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
-	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
-	UserID         *uuid.UUID `json:"user_id,omitempty"`
-	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
-
-	VaultID *uuid.UUID `json:"vault_id,omitempty"`
-	KeyID   *uuid.UUID `json:"key_id,omitempty"`
-
-	Type *string `json:"type,omitempty"`
-
-	HDDerivationPath *string `json:"hd_derivation_path,omitempty"` // i.e. m/44'/60'/0'/0
-	PublicKey        *string `json:"public_key,omitempty"`
-	PrivateKey       *string `json:"private_key,omitempty"`
-
-	Address    string     `json:"address"`
-	Balance    *big.Int   `json:"balance,omitempty"`
-	AccessedAt *time.Time `json:"accessed_at,omitempty"`
-	Wallet     *Wallet    `json:"-"`
+// TxTrace is generalized transaction trace model
+type TxTrace struct {
+	Result []struct {
+		Action struct {
+			CallType *string `json:"callType"`
+			From     *string `json:"from"`
+			Gas      *string `json:"gas"`
+			Init     *string `json:"init"`
+			Input    *string `json:"input"`
+			To       *string `json:"to"`
+			Value    *string `json:"value"`
+		} `json:"action"`
+		BlockHash   *string `json:"blockHash"`
+		BlockNumber int     `json:"blockNumber"`
+		Result      struct {
+			Address *string `json:"address"`
+			Code    *string `json:"code"`
+			GasUsed *string `json:"gasUsed"`
+			Output  *string `json:"output"`
+		} `json:"result"`
+		Error               *string       `json:"error"`
+		Subtraces           int           `json:"subtraces"`
+		TraceAddress        []interface{} `json:"traceAddress"`
+		TransactionHash     *string       `json:"transactionHash"`
+		TransactionPosition int           `json:"transactionPosition"`
+		Type                *string       `json:"type"`
+	} `json:"result"`
 }
 
 // Wallet contains the specific wallet details
 type Wallet struct {
+	api.Model
+
 	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
 	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
 	UserID         *uuid.UUID `json:"user_id,omitempty"`
@@ -186,6 +192,6 @@ type Wallet struct {
 	PublicKey  *string `json:"public_key,omitempty"`
 	PrivateKey *string `json:"private_key,omitempty"`
 
-	Wallet   *Wallet   `sql:"-" json:"-"`
+	Wallet   *Wallet   `json:"-"`
 	Accounts []Account `json:"-"`
 }
