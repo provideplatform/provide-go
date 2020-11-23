@@ -47,6 +47,29 @@ type LoadBalancer struct {
 	Config         map[string]interface{} `json:"config"`
 }
 
+// DNSName returns the preferred DNS name for the load balancer
+func (l *LoadBalancer) DNSName() *string {
+	var dnsName *string
+	if dns, dnsOk := l.Config["dns"].([]interface{}); dnsOk {
+		for _, item := range dns {
+			if name, nameOk := item.(string); nameOk {
+				dnsName = &name
+				break
+			}
+		}
+	}
+	if dnsName == nil {
+		if l.Host != nil {
+			dnsName = l.Host
+		} else if l.IPv4 != nil {
+			dnsName = l.IPv4
+		} else if l.IPv6 != nil {
+			dnsName = l.IPv6
+		}
+	}
+	return dnsName
+}
+
 // ReachableOnPort returns true if the given load balancer port is reachable via TCP
 func (l *LoadBalancer) ReachableOnPort(port uint) bool {
 	if l.Host == nil {
