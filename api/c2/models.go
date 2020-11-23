@@ -1,4 +1,4 @@
-package nchain
+package c2
 
 // ContainerParams is a structure of params common to AWS and Azure containers
 type ContainerParams struct {
