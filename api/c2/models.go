@@ -1,10 +1,16 @@
 package c2
 
 import (
+	"fmt"
+	"net"
+	"time"
+
 	uuid "github.com/kthomas/go.uuid"
 
 	"github.com/provideservices/provide-go/api"
 )
+
+const nodeReachabilityTimeout = time.Millisecond * 2500
 
 // ContainerParams is a structure of params common to AWS and Azure containers
 type ContainerParams struct {
@@ -41,6 +47,20 @@ type LoadBalancer struct {
 	Config         map[string]interface{} `json:"config"`
 }
 
+// ReachableOnPort returns true if the given load balancer port is reachable via TCP
+func (l *LoadBalancer) ReachableOnPort(port uint) bool {
+	if l.Host == nil {
+		return false
+	}
+	addr := fmt.Sprintf("%s:%v", *l.Host, port)
+	conn, err := net.DialTimeout("tcp", addr, nodeReachabilityTimeout)
+	if err == nil {
+		defer conn.Close()
+		return true
+	}
+	return false
+}
+
 // NetworkInterface represents a common network interface
 type NetworkInterface struct {
 	Host        *string
@@ -68,6 +88,20 @@ type Node struct {
 	Role           *string                `json:"role"`
 	Status         *string                `json:"status"`
 	Config         map[string]interface{} `json:"config"`
+}
+
+// ReachableOnPort returns true if the given node port is reachable via TCP
+func (n *Node) ReachableOnPort(port uint) bool {
+	if n.Host == nil {
+		return false
+	}
+	addr := fmt.Sprintf("%s:%v", *n.Host, port)
+	conn, err := net.DialTimeout("tcp", addr, nodeReachabilityTimeout)
+	if err == nil {
+		defer conn.Close()
+		return true
+	}
+	return false
 }
 
 // NodeLog represents an abstract API response containing syslog or similar messages
