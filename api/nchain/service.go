@@ -214,36 +214,6 @@ func GetNetworkStatusMeta(token, networkID string, params map[string]interface{}
 	return InitNChainService(token).Get(uri, params)
 }
 
-// ListNetworkNodes
-func ListNetworkNodes(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes", networkID)
-	return InitNChainService(token).Get(uri, params)
-}
-
-// CreateNetworkNode
-func CreateNetworkNode(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes", networkID)
-	return InitNChainService(token).Post(uri, params)
-}
-
-// GetNetworkNodeDetails
-func GetNetworkNodeDetails(token, networkID, nodeID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes/%s", networkID, nodeID)
-	return InitNChainService(token).Get(uri, params)
-}
-
-// GetNetworkNodeLogs
-func GetNetworkNodeLogs(token, networkID, nodeID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes/%s/logs", networkID, nodeID)
-	return InitNChainService(token).Get(uri, params)
-}
-
-// DeleteNetworkNode
-func DeleteNetworkNode(token, networkID, nodeID string) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes/%s", networkID, nodeID)
-	return InitNChainService(token).Delete(uri)
-}
-
 // CreateOracle
 func CreateOracle(token string, params map[string]interface{}) (int, interface{}, error) {
 	return InitNChainService(token).Post("oracles", params)

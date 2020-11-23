@@ -73,3 +73,8 @@ func DeleteNode(token, nodeID string) (int, interface{}, error) {
 	uri := fmt.Sprintf("nodes/%s", nodeID)
 	return InitC2Service(token).Delete(uri)
 }
+
+// ListLoadBalancers list load balancers for the given authorization scope
+func ListLoadBalancers(token string, params map[string]interface{}) (int, interface{}, error) {
+	return InitC2Service(token).Get("load_balancers", params)
+}
