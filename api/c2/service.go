@@ -77,7 +77,7 @@ func CreateNode(token string, params map[string]interface{}) (*Node, error) {
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to create node details; status: %v", status)
+		return nil, fmt.Errorf("failed to create node; status: %v", status)
 	}
 
 	// FIXME...
@@ -172,4 +172,41 @@ func ListLoadBalancers(token string, params map[string]interface{}) ([]*LoadBala
 	}
 
 	return balancers, nil
+}
+
+// CreateLoadBalancer creates and deploys a new load balancer for the given authorization scope
+func CreateLoadBalancer(token string, params map[string]interface{}) (*LoadBalancer, error) {
+	status, resp, err := InitC2Service(token).Post("load_balancers", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to create load balancer; status: %v", status)
+	}
+
+	// FIXME...
+	balancer := &LoadBalancer{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &balancer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create load balancer; status: %v; %s", status, err.Error())
+	}
+
+	return balancer, nil
+}
+
+// DeleteLoadBalancer undeploys and deletes the given load balancer
+func DeleteLoadBalancer(token, loadBalancerID string) error {
+	uri := fmt.Sprintf("load_balancers/%s", loadBalancerID)
+	status, _, err := InitC2Service(token).Delete(uri)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to delete load balancer; status: %v", status)
+	}
+
+	return nil
 }
