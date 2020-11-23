@@ -45,14 +45,14 @@ func InitC2Service(token string) *Service {
 }
 
 // ListNodes list nodes for the given authorization scope
-func ListNodes(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes", networkID)
+func ListNodes(token string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("nodes")
 	return InitC2Service(token).Get(uri, params)
 }
 
 // CreateNode creates and deploys a new node for the given authorization scope
-func CreateNode(token, networkID string, params map[string]interface{}) (int, interface{}, error) {
-	uri := fmt.Sprintf("networks/%s/nodes", networkID)
+func CreateNode(token string, params map[string]interface{}) (int, interface{}, error) {
+	uri := fmt.Sprintf("nodes")
 	return InitC2Service(token).Post(uri, params)
 }
 
