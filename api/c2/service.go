@@ -1,6 +1,7 @@
 package c2
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -45,36 +46,130 @@ func InitC2Service(token string) *Service {
 }
 
 // ListNodes list nodes for the given authorization scope
-func ListNodes(token string, params map[string]interface{}) (int, interface{}, error) {
+func ListNodes(token string, params map[string]interface{}) ([]*Node, error) {
 	uri := fmt.Sprintf("nodes")
-	return InitC2Service(token).Get(uri, params)
+	status, resp, err := InitC2Service(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list nodes; status: %v", status)
+	}
+
+	nodes := make([]*Node, 0)
+	for _, item := range resp.([]interface{}) {
+		node := &Node{}
+		raw, _ := json.Marshal(item)
+		json.Unmarshal(raw, &node)
+		nodes = append(nodes, node)
+	}
+
+	return nodes, nil
 }
 
 // CreateNode creates and deploys a new node for the given authorization scope
-func CreateNode(token string, params map[string]interface{}) (int, interface{}, error) {
+func CreateNode(token string, params map[string]interface{}) (*Node, error) {
 	uri := fmt.Sprintf("nodes")
-	return InitC2Service(token).Post(uri, params)
+	status, resp, err := InitC2Service(token).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to create node details; status: %v", status)
+	}
+
+	// FIXME...
+	node := &Node{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &node)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create node; status: %v; %s", status, err.Error())
+	}
+
+	return node, nil
 }
 
 // GetNodeDetails fetches details for the given node
-func GetNodeDetails(token, nodeID string, params map[string]interface{}) (int, interface{}, error) {
+func GetNodeDetails(token, nodeID string, params map[string]interface{}) (*Node, error) {
 	uri := fmt.Sprintf("nodes/%s", nodeID)
-	return InitC2Service(token).Get(uri, params)
+	status, resp, err := InitC2Service(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch node details; status: %v", status)
+	}
+
+	// FIXME...
+	node := &Node{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &node)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch node details; status: %v; %s", status, err.Error())
+	}
+
+	return node, nil
 }
 
 // GetNodeLogs fetches the logs for the given node
-func GetNodeLogs(token, nodeID string, params map[string]interface{}) (int, interface{}, error) {
+func GetNodeLogs(token, nodeID string, params map[string]interface{}) (*NodeLogsResponse, error) {
 	uri := fmt.Sprintf("nodes/%s/logs", nodeID)
-	return InitC2Service(token).Get(uri, params)
+	status, resp, err := InitC2Service(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch node logs; status: %v", status)
+	}
+
+	// FIXME...
+	logsResponse := &NodeLogsResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &logsResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch node logs; status: %v; %s", status, err.Error())
+	}
+
+	return logsResponse, nil
 }
 
 // DeleteNode undeploys and deletes the given node
-func DeleteNode(token, nodeID string) (int, interface{}, error) {
+func DeleteNode(token, nodeID string) error {
 	uri := fmt.Sprintf("nodes/%s", nodeID)
-	return InitC2Service(token).Delete(uri)
+	status, _, err := InitC2Service(token).Delete(uri)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to delete node; status: %v", status)
+	}
+
+	return nil
 }
 
 // ListLoadBalancers list load balancers for the given authorization scope
-func ListLoadBalancers(token string, params map[string]interface{}) (int, interface{}, error) {
-	return InitC2Service(token).Get("load_balancers", params)
+func ListLoadBalancers(token string, params map[string]interface{}) ([]*LoadBalancer, error) {
+	status, resp, err := InitC2Service(token).Get("load_balancers", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list load balancers; status: %v", status)
+	}
+
+	balancers := make([]*LoadBalancer, 0)
+	for _, item := range resp.([]interface{}) {
+		balancer := &LoadBalancer{}
+		raw, _ := json.Marshal(item)
+		json.Unmarshal(raw, &balancer)
+		balancers = append(balancers, balancer)
+	}
+
+	return balancers, nil
 }

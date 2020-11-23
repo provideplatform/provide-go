@@ -1,5 +1,11 @@
 package c2
 
+import (
+	uuid "github.com/kthomas/go.uuid"
+
+	"github.com/provideservices/provide-go/api"
+)
+
 // ContainerParams is a structure of params common to AWS and Azure containers
 type ContainerParams struct {
 	Region             string
@@ -17,6 +23,24 @@ type ContainerParams struct {
 	Security           map[string]interface{}
 }
 
+// LoadBalancer instances represent a physical or virtual load balancer of a specific type
+type LoadBalancer struct {
+	api.Model
+
+	NetworkID      uuid.UUID              `json:"network_id,omitempty"`
+	ApplicationID  *uuid.UUID             `json:"application_id,omitempty"`
+	OrganizationID *uuid.UUID             `json:"organization_id,omitempty"`
+	Name           *string                `json:"name"`
+	Description    *string                `json:"description"`
+	Type           *string                `json:"type"`
+	Host           *string                `json:"host"`
+	IPv4           *string                `json:"ipv4"`
+	IPv6           *string                `json:"ipv6"`
+	Region         *string                `json:"region"`
+	Status         *string                `json:"status"`
+	Config         map[string]interface{} `json:"config"`
+}
+
 // NetworkInterface represents a common network interface
 type NetworkInterface struct {
 	Host        *string
@@ -24,6 +48,41 @@ type NetworkInterface struct {
 	IPv6        *string
 	PrivateIPv4 *string
 	PrivateIPv6 *string
+}
+
+// Node instances represent physical or virtual, cloud-agnostic infrastructure on a network
+type Node struct {
+	api.Model
+
+	NetworkID      uuid.UUID              `json:"network_id"`
+	UserID         *uuid.UUID             `json:"user_id"`
+	ApplicationID  *uuid.UUID             `json:"application_id"`
+	OrganizationID *uuid.UUID             `json:"organization_id"`
+	Bootnode       bool                   `json:"-"`
+	Host           *string                `json:"host"`
+	IPv4           *string                `json:"ipv4"`
+	IPv6           *string                `json:"ipv6"`
+	PrivateIPv4    *string                `json:"private_ipv4"`
+	PrivateIPv6    *string                `json:"private_ipv6"`
+	Description    *string                `json:"description"`
+	Role           *string                `json:"role"`
+	Status         *string                `json:"status"`
+	Config         map[string]interface{} `json:"config"`
+}
+
+// NodeLog represents an abstract API response containing syslog or similar messages
+type NodeLog struct {
+	Timestamp       *int64 `json:"timestamp"`
+	IngestTimestamp *int64 `json:"ingest_timestamp"`
+	Message         string `json:"message"`
+}
+
+// NodeLogsResponse represents an abstract API response containing NodeLogs
+// and pointer tokens to the next set of events in the stream
+type NodeLogsResponse struct {
+	Logs      []*NodeLog `json:"logs"`
+	PrevToken *string    `json:"prev_token"`
+	NextToken *string    `json:"next_token"`
 }
 
 // ContainerCreateResult is a struct representing the response from container creation function.
