@@ -1,14 +1,15 @@
 package nchain
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"math/big"
+	"net/url"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideservices/provide-go/api"
-	"github.com/tyler-smith/go-bip32"
 )
 
 // Account contains the specific account user details
@@ -33,7 +34,6 @@ type Account struct {
 	Address    string     `json:"address"`
 	Balance    *big.Int   `json:"balance,omitempty"`
 	AccessedAt *time.Time `json:"accessed_at,omitempty"`
-	Wallet     *Wallet    `json:"-"`
 }
 
 // CompiledArtifact represents compiled sourcecode
@@ -47,6 +47,50 @@ type CompiledArtifact struct {
 	Raw         json.RawMessage `json:"raw"`
 	Source      *string         `json:"source"`
 	Fingerprint *string         `json:"fingerprint"`
+}
+
+// Connector instances represent a logical connection to IPFS or other decentralized filesystem;
+// in the future it may represent a logical connection to services of other types
+type Connector struct {
+	api.Model
+
+	ApplicationID  *uuid.UUID       `json:"application_id"`
+	NetworkID      uuid.UUID        `json:"network_id"`
+	OrganizationID *uuid.UUID       `json:"organization_id"`
+	Name           *string          `json:"name"`
+	Type           *string          `json:"type"`
+	Status         *string          `json:"status"`
+	Description    *string          `json:"description"`
+	Config         *json.RawMessage `json:"config,omitempty"`
+	IsVirtual      bool             `json:"is_virtual,omitempty"`
+	AccessedAt     *time.Time       `json:"accessed_at,omitempty"`
+
+	Details *ConnectorDetails `json:"details,omitempty"`
+}
+
+// ConnectorDetails is a generic representation for a type-specific enrichment of a described connector;
+// the details object may have complexity of its own, such as paginated subresults
+type ConnectorDetails struct {
+	Page *int64      `json:"page,omitempty"`
+	RPP  *int64      `json:"rpp,omitempty"`
+	Data interface{} `json:"data,omitempty"`
+}
+
+// Contract instances must be associated with an application identifier.
+type Contract struct {
+	api.Model
+
+	ApplicationID *uuid.UUID `json:"application_id"`
+	NetworkID     uuid.UUID  `json:"network_id"`
+	ContractID    *uuid.UUID `json:"contract_id"`    // id of the contract which created the contract (or null)
+	TransactionID *uuid.UUID `json:"transaction_id"` // id of the transaction which deployed the contract (or null)
+
+	Name         *string          `json:"name"`
+	Address      *string          `json:"address"`
+	Type         *string          `json:"type"`
+	Params       *json.RawMessage `json:"params,omitempty"`
+	AccessedAt   *time.Time       `json:"accessed_at"`
+	PubsubPrefix *string          `json:"pubsub_prefix,omitempty"`
 }
 
 // TxReceipt is generalized transaction receipt model
@@ -117,17 +161,14 @@ type EthereumWebsocketSubscriptionResponse struct {
 type Network struct {
 	api.Model
 
-	ApplicationID   *uuid.UUID       `json:"application_id,omitempty"`
-	UserID          *uuid.UUID       `json:"user_id,omitempty"`
-	Name            *string          `json:"name"`
-	Description     *string          `json:"description"`
-	IsProduction    *bool            `json:"-"` // deprecated
-	Cloneable       *bool            `json:"-"` // deprecated
-	Enabled         *bool            `json:"enabled"`
-	ChainID         *string          `json:"chain_id"`             // protocol-specific chain id
-	NetworkID       *uuid.UUID       `json:"network_id,omitempty"` // network id used as the parent
-	Config          *json.RawMessage `json:"config,omitempty"`
-	EncryptedConfig *string          `json:"-"`
+	ApplicationID *uuid.UUID       `json:"application_id,omitempty"`
+	UserID        *uuid.UUID       `json:"user_id,omitempty"`
+	Name          *string          `json:"name"`
+	Description   *string          `json:"description"`
+	Enabled       *bool            `json:"enabled"`
+	ChainID       *string          `json:"chain_id"`             // protocol-specific chain id
+	NetworkID     *uuid.UUID       `json:"network_id,omitempty"` // network id used as the parent
+	Config        *json.RawMessage `json:"config,omitempty"`
 }
 
 // NetworkStatus provides network-agnostic status
@@ -141,6 +182,79 @@ type NetworkStatus struct {
 	State           *string                `json:"state,omitempty"`            // i.e., syncing, synced, etc
 	Syncing         bool                   `json:"syncing,omitempty"`          // when true, the network is in the process of syncing the ledger; available functionaltiy will be network-specific
 	Meta            map[string]interface{} `json:"meta,omitempty"`             // network-specific metadata
+}
+
+// Oracle instances are smart contracts whose terms are fulfilled
+// writing data from a configured feed onto the blockchain
+type Oracle struct {
+	api.Model
+
+	ApplicationID *uuid.UUID `json:"application_id"`
+	NetworkID     uuid.UUID  `json:"network_id"`
+	ContractID    uuid.UUID  `json:"contract_id"`
+
+	Name          *string          `json:"name"`
+	FeedURL       *url.URL         `json:"feed_url"`
+	Params        *json.RawMessage `json:"params"`
+	AttachmentIds []*uuid.UUID     `json:"attachment_ids"`
+}
+
+// Token contract
+type Token struct {
+	api.Model
+
+	ApplicationID  *uuid.UUID `json:"application_id"`
+	NetworkID      uuid.UUID  `json:"network_id"`
+	ContractID     *uuid.UUID `json:"contract_id"`
+	SaleContractID *uuid.UUID `json:"sale_contract_id"`
+
+	Name        *string    `json:"name"`
+	Symbol      *string    `json:"symbol"`
+	Decimals    uint64     `json:"decimals"`
+	Address     *string    `json:"address"`      // network-specific token contract address
+	SaleAddress *string    `json:"sale_address"` // non-null if token sale contract is specified
+	AccessedAt  *time.Time `json:"accessed_at"`
+}
+
+// Transaction instances are associated with a signing wallet and exactly one matching instance
+// of either an a) application identifier or b) user identifier.
+type Transaction struct {
+	api.Model
+	NetworkID uuid.UUID `json:"network_id,omitempty"`
+
+	// Application or user id, if populated, is the entity for which the transaction was custodially signed and broadcast
+	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
+	UserID        *uuid.UUID `json:"user_id,omitempty"`
+
+	// Account or HD wallet which custodially signed the transaction; when an HD wallet is used, if no HD derivation path is provided,
+	// the most recently derived non-zero account is used to sign
+	AccountID *uuid.UUID `json:"account_id,omitempty"`
+	WalletID  *uuid.UUID `json:"wallet_id,omitempty"`
+	Path      *string    `json:"hd_derivation_path,omitempty"`
+
+	// Network-agnostic tx fields
+	Signer      *string          `json:"signer,omitempty"`
+	To          *string          `json:"to"`
+	Value       *TxValue         `json:"value"`
+	Data        *string          `json:"data"`
+	Hash        *string          `json:"hash"`
+	Status      *string          `json:"status"`
+	Params      *json.RawMessage `json:"params,omitempty"`
+	Ref         *string          `json:"ref"`
+	Description *string          `json:"description"`
+
+	// Ephemeral fields for managing the tx/rx and tracing lifecycles
+	Traces interface{} `json:"traces,omitempty"`
+
+	// Transaction metadata/instrumentation
+	Block          *uint64    `json:"block"`
+	BlockTimestamp *time.Time `json:"block_timestamp,omitempty"` // timestamp when the tx was finalized on-chain, according to its tx receipt
+	BroadcastAt    *time.Time `json:"broadcast_at,omitempty"`    // timestamp when the tx was broadcast to the network
+	FinalizedAt    *time.Time `json:"finalized_at,omitempty"`    // timestamp when the tx was finalized on-platform
+	PublishedAt    *time.Time `json:"published_at,omitempty"`    // timestamp when the tx was published to NATS cluster
+	QueueLatency   *uint64    `json:"queue_latency,omitempty"`   // broadcast_at - published_at (in millis) -- the amount of time between when a message is enqueued to the NATS broker and when it is broadcast to the network
+	NetworkLatency *uint64    `json:"network_latency,omitempty"` // finalized_at - broadcast_at (in millis) -- the amount of time between when a message is broadcast to the network and when it is finalized on-chain
+	E2ELatency     *uint64    `json:"e2e_latency,omitempty"`     // finalized_at - published_at (in millis) -- the amount of time between when a message is published to the NATS broker and when it is finalized on-chain
 }
 
 // TxTrace is generalized transaction trace model
@@ -172,6 +286,47 @@ type TxTrace struct {
 	} `json:"result"`
 }
 
+// TxValue provides JSON marshaling and gorm driver support for wrapping/unwrapping big.Int
+type TxValue struct {
+	value *big.Int
+}
+
+// NewTxValue is a convenience method to return a TxValue
+func NewTxValue(val int64) *TxValue {
+	return &TxValue{value: big.NewInt(val)}
+}
+
+// Value returns the underlying big.Int as a string for use by the gorm driver (psql)
+func (v *TxValue) Value() (driver.Value, error) {
+	return v.value.String(), nil
+}
+
+// Scan reads the persisted value using the gorm driver and marshals it into a TxValue
+func (v *TxValue) Scan(val interface{}) error {
+	v.value = new(big.Int)
+	if str, ok := val.(string); ok {
+		v.value.SetString(str, 10)
+	}
+	return nil
+}
+
+// BigInt returns the value represented as big.Int
+func (v *TxValue) BigInt() *big.Int {
+	return v.value
+}
+
+// MarshalJSON marshals the tx value to bytes
+func (v *TxValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.value)
+}
+
+// UnmarshalJSON sets the tx value big.Int from its string representation
+func (v *TxValue) UnmarshalJSON(data []byte) error {
+	v.value = new(big.Int)
+	v.value.SetString(string(data), 10)
+	return nil
+}
+
 // Wallet contains the specific wallet details
 type Wallet struct {
 	api.Model
@@ -184,14 +339,10 @@ type Wallet struct {
 	VaultID *uuid.UUID `json:"vault_id,omitempty"`
 	KeyID   *uuid.UUID `json:"key_id,omitempty"`
 
-	Path        *string    `json:"path,omitempty"`
-	Purpose     *int       `json:"purpose,omitempty"`
-	Mnemonic    *string    `json:"mnemonic,omitempty"`
-	ExtendedKey *bip32.Key `json:"-"`
+	Path     *string `json:"path,omitempty"`
+	Purpose  *int    `json:"purpose,omitempty"`
+	Mnemonic *string `json:"mnemonic,omitempty"`
 
 	PublicKey  *string `json:"public_key,omitempty"`
 	PrivateKey *string `json:"private_key,omitempty"`
-
-	Wallet   *Wallet   `json:"-"`
-	Accounts []Account `json:"-"`
 }
