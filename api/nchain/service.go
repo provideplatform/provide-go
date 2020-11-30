@@ -234,9 +234,25 @@ func CreateContract(token string, params map[string]interface{}) (*Contract, err
 }
 
 // ExecuteContract
-func ExecuteContract(token, contractID string, params map[string]interface{}) (int, interface{}, error) {
+func ExecuteContract(token, contractID string, params map[string]interface{}) (*ContractExecutionResponse, error) {
 	uri := fmt.Sprintf("contracts/%s/execute", contractID)
-	return InitNChainService(token).Post(uri, params)
+	status, resp, err := InitNChainService(token).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 && status != 202 {
+		return nil, fmt.Errorf("failed to execute contract; status %v", status)
+	}
+
+	execResponse := &ContractExecutionResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &execResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute contract; status: %v; %s", status, err.Error())
+	}
+
+	return execResponse, nil
 }
 
 // ListContracts
