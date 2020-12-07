@@ -27,7 +27,7 @@ func InitNChainService(token string) *Service {
 
 	path := defaultNChainPath
 	if os.Getenv("NCHAIN_API_PATH") != "" {
-		host = os.Getenv("NCHAIN_API_PATH")
+		path = os.Getenv("NCHAIN_API_PATH")
 	}
 
 	scheme := defaultNChainScheme
