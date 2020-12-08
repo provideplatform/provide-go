@@ -87,6 +87,10 @@ func CreateApplication(token string, params map[string]interface{}) (*Applicatio
 		return nil, err
 	}
 
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create application; status: %v", status)
+	}
+
 	// FIXME...
 	app := &Application{}
 	appraw, _ := json.Marshal(resp)
