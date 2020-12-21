@@ -104,6 +104,25 @@ func CreateCircuit(token string, params map[string]interface{}) (*Circuit, error
 	return circuit, nil
 }
 
+// Prove generates a proof using the given inputs for the named circuit
+func Prove(token, circuitID string, params map[string]interface{}) (*ProveResponse, error) {
+	uri := fmt.Sprintf("circuits/%s/prove", circuitID)
+	status, resp, err := InitPrivacyService(token).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 && status != 201 && status != 202 {
+		return nil, fmt.Errorf("failed to generate proof; status: %v", status)
+	}
+
+	prove := &ProveResponse{}
+	raw, _ := json.Marshal(resp)
+	json.Unmarshal(raw, &prove)
+
+	return prove, nil
+}
+
 // Verify verifies the given inputs using the named circuit
 func Verify(token, circuitID string, params map[string]interface{}) (*VerificationResponse, error) {
 	uri := fmt.Sprintf("circuits/%s/verify", circuitID)

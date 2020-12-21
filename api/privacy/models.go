@@ -15,6 +15,14 @@ type Circuit struct {
 	ConstraintSystem *string `json:"constraint_system"`
 }
 
+// ProveResponse model
+type ProveResponse struct {
+	Errors []*api.Error `json:"errors,omitempty"`
+	Proof  *string      `json:"proof"`
+}
+
 // VerificationResponse model
 type VerificationResponse struct {
+	Errors []*api.Error `json:"errors,omitempty"`
+	Result bool         `json:"result"`
 }
