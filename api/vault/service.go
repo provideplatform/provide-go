@@ -152,6 +152,32 @@ func CreateKey(token, vaultID string, params map[string]interface{}) (*Key, erro
 	return key, nil
 }
 
+// FetchKey fetches a key from the given vault
+func FetchKey(token, vaultID, keyID string) (*Key, error) {
+	uri := fmt.Sprintf("vaults/%s/keys/%s", vaultID, keyID)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch key; status: %v; %s", status, resp)
+	}
+
+	key := &Key{}
+	keyraw, err := json.Marshal(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch key; status: %v; %s", status, err.Error())
+	}
+	err = json.Unmarshal(keyraw, &key)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch key; status: %v; %s", status, err.Error())
+	}
+
+	return key, nil
+}
+
 // DeriveKey derives a key
 func DeriveKey(token, vaultID, keyID string, params map[string]interface{}) (*Key, error) {
 	uri := fmt.Sprintf("vaults/%s/keys/%s/derive", vaultID, keyID)
@@ -311,7 +337,7 @@ func CreateSecret(token, vaultID, value, name, description, secretType string) (
 	return secret, nil
 }
 
-// FetchSecret stores a new secret in the vault
+// FetchSecret fetches a secret from the given vault
 func FetchSecret(token, vaultID, secretID string, params map[string]interface{}) (*Secret, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets/%s", vaultID, secretID)
 	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
