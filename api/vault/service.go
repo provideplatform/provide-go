@@ -543,3 +543,49 @@ func VerifyDetachedSignature(token, spec, msg, sig, pubkeyhex string, opts map[s
 
 	return r, nil
 }
+
+// AggregateSignatures aggregates BLS signatures into a single BLS signature
+func AggregateSignatures(token *string, params map[string]interface{}) (*BLSAggregateRequestResponse, error) {
+	uri := fmt.Sprintf("bls/aggregate")
+	status, resp, err := InitVaultService(token).Post(uri, params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to aggregate bls signatures. status: %v", status)
+	}
+
+	response := &BLSAggregateRequestResponse{}
+	responseRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(responseRaw, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aggregate response. status: %v; %s", status, err.Error())
+	}
+
+	return response, nil
+}
+
+// VerifyAggregateSignatures verifies a bls signature
+func VerifyAggregateSignatures(token *string, params map[string]interface{}) (*VerifyResponse, error) {
+	uri := fmt.Sprintf("bls/verify")
+	status, resp, err := InitVaultService(token).Post(uri, params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to aggregate bls signatures. status: %v", status)
+	}
+
+	response := &VerifyResponse{}
+	responseRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(responseRaw, &response)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aggregate signature verification response. status: %v; %s", status, err.Error())
+	}
+
+	return response, nil
+}
