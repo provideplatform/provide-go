@@ -15,6 +15,13 @@ type Circuit struct {
 	ConstraintSystem *string `json:"constraint_system"`
 }
 
+// StoreValueResponse model
+type StoreValueResponse struct {
+	Errors   []*api.Error           `json:"errors,omitempty"`
+	Value    *string                `json:"value"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
 // ProveResponse model
 type ProveResponse struct {
 	Errors []*api.Error `json:"errors,omitempty"`

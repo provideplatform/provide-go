@@ -141,3 +141,22 @@ func Verify(token, circuitID string, params map[string]interface{}) (*Verificati
 
 	return verification, nil
 }
+
+// GetStoreValue fetches the value in the store at a specified index
+func GetStoreValue(token, circuitID string, index uint64) (*StoreValueResponse, error) {
+	uri := fmt.Sprintf("circuits/%s/store/%d", circuitID, index)
+	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 && status != 202 {
+		return nil, fmt.Errorf("failed to fetch stored circuit proof; status: %v", status)
+	}
+
+	val := &StoreValueResponse{}
+	raw, _ := json.Marshal(resp)
+	json.Unmarshal(raw, &val)
+
+	return val, nil
+}
