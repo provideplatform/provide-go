@@ -526,10 +526,10 @@ func EVMTxFactory(
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		gl := new(big.Int).SetUint64(gasLimit)
-		cmp := gl.Cmp(balance)
+		gasCost := new(big.Int).SetUint64(gasLimit * *gasPrice) // gascost = gaslimit * gasprice(wei)
+		cmp := balance.Cmp(gasCost)
 		if cmp == -1 {
-			// there is not enough balance in the account to pay for the transaction
+			// there is not enough wei in the account to pay for the transaction (balance < gaslimit)
 			return nil, nil, nil, fmt.Errorf("insufficient balance in account")
 		}
 	}
