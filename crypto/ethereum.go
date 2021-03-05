@@ -529,7 +529,7 @@ func EVMTxFactory(
 		// cost = gaslimit * gasprice
 		limit := new(big.Int).SetUint64(gasLimit)
 		price := new(big.Int).SetUint64(*gasPrice)
-		var cost *big.Int
+		cost := new(big.Int)
 		cost = cost.Mul(limit, price)
 		// compare the balance to the cost
 		cmp := balance.Cmp(cost)
