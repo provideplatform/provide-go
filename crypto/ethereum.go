@@ -520,6 +520,20 @@ func EVMTxFactory(
 		prvdcommon.Log.Debugf("estimated gas for %d-byte tx: %d", len(_data), gasLimit)
 	}
 
+	// check account balance
+	if gasLimit > 0 {
+		balance, err := client.BalanceAt(context.TODO(), common.HexToAddress(from), nil)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		gl := new(big.Int).SetUint64(gasLimit)
+		cmp := gl.Cmp(balance)
+		if cmp == -1 {
+			// there is not enough balance in the account to pay for the transaction
+			return nil, nil, nil, fmt.Errorf("insufficient balance in account")
+		}
+	}
+
 	if to != nil {
 		addr := common.HexToAddress(*to)
 		if err != nil {
