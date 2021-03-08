@@ -420,8 +420,9 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 	case params.YoloV1ChainConfig.ChainID.Uint64():
 		return params.YoloV1ChainConfig
 	case kovanChainID: // HACK
-		cfg := params.GoerliChainConfig
-		cfg.ChainID = chainID
+		kovanConfig := params.GoerliChainConfig
+		kovanConfig.ChainID = chainID
+		return kovanConfig
 	}
 
 	return params.MainnetChainConfig
