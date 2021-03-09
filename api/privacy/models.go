@@ -1,6 +1,7 @@
 package privacy
 
 import (
+	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideservices/provide-go/api"
 )
 
@@ -8,11 +9,16 @@ import (
 type Circuit struct {
 	*api.Model
 
-	Name             *string `json:"name"`
-	Description      *string `json:"description"`
-	Type             *string `json:"type"`
-	Curve            *string `json:"curve"`
-	ConstraintSystem *string `json:"constraint_system"`
+	Name          *string `json:"name"`
+	Description   *string `json:"description"`
+	Identifier    *string `json:"identifier"`
+	Provider      *string `json:"provider"`
+	ProvingScheme *string `json:"proving_scheme"`
+	Curve         *string `json:"curve"`
+
+	StoreID          *uuid.UUID             `json:"store_id"`
+	Aritfacts        map[string]interface{} `json:"artifacts,omitempty"`
+	VerifierContract map[string]interface{} `json:"verifier_contract,omitempty"`
 }
 
 // StoreValueResponse model
