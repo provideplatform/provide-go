@@ -17,7 +17,7 @@ type Circuit struct {
 	Curve         *string `json:"curve"`
 
 	StoreID          *uuid.UUID             `json:"store_id"`
-	Aritfacts        map[string]interface{} `json:"artifacts,omitempty"`
+	Artifacts        map[string]interface{} `json:"artifacts,omitempty"`
 	VerifierContract map[string]interface{} `json:"verifier_contract,omitempty"`
 }
 
