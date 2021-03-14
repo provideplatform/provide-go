@@ -24,6 +24,7 @@ type Circuit struct {
 // StoreValueResponse model
 type StoreValueResponse struct {
 	Errors   []*api.Error           `json:"errors,omitempty"`
+	Length   *int                   `json:"length,omitempty"`
 	Root     *string                `json:"root,omitempty"`
 	Value    *string                `json:"value"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
