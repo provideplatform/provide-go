@@ -15,6 +15,7 @@ type Circuit struct {
 	Provider      *string `json:"provider"`
 	ProvingScheme *string `json:"proving_scheme"`
 	Curve         *string `json:"curve"`
+	Status        *string `json:"status"`
 
 	StoreID          *uuid.UUID             `json:"store_id"`
 	Artifacts        map[string]interface{} `json:"artifacts,omitempty"`
