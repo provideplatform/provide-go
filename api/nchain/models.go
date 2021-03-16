@@ -139,8 +139,9 @@ type EthereumTxTraceResponse struct {
 
 // ContractExecutionResponse is a response from the contract execution call
 type ContractExecutionResponse struct {
-	Confidence float64 `json:"confidence"`
-	Reference  *string `json:"ref"`
+	Confidence float64     `json:"confidence"`
+	Reference  *string     `json:"ref"`
+	Response   interface{} `json:"response,omitempty"`
 }
 
 // EthereumJsonRpcResponseError is a generic error representation for ethereum JSON-RPC responses
