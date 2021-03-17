@@ -237,6 +237,20 @@ func (c *Client) GetWithTLSClientConfig(uri string, params map[string]interface{
 	return c.parseResponse(resp)
 }
 
+// Patch constructs and synchronously sends an API PATCH request
+func (c *Client) Patch(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	resp, err := c.sendRequest("PATCH", url, defaultContentType, params)
+	return c.parseResponse(resp)
+}
+
+// PatchWithTLSClientConfig constructs and synchronously sends an API PATCH request
+func (c *Client) PatchWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
+	url := c.buildURL(uri)
+	resp, err := c.sendRequestWithTLSClientConfig("PATCH", url, defaultContentType, params, tlsClientConfig)
+	return c.parseResponse(resp)
+}
+
 // Post constructs and synchronously sends an API POST request
 func (c *Client) Post(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
