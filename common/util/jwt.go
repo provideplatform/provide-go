@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/ed25519"
-	"golang.org/x/crypto/ssh"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/gin-gonic/gin"
+	"github.com/kthomas/go-auth0"
 	"github.com/kthomas/go-pgputil"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -297,8 +299,28 @@ func RequireJWTVerifiers() {
 		fingerprint: fingerprint,
 		publicKey:   *publicKey,
 	}
+	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
-	common.Log.Debugf("jwt keypair configured: %s", fingerprint)
+	if os.Getenv("AUTH0_DOMAIN") != "" {
+		keys, err := auth0.GetJWKs()
+		if err != nil {
+			common.Log.Warningf("failed to resolve auth0 jwt keys; %s", err.Error())
+		} else {
+			for kid := range keys {
+				sshPublicKey, err := ssh.NewPublicKey(publicKey)
+				if err != nil {
+					common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+				}
+				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+				// auth0 keys are index by kid, not fingerprint
+				jwtKeypairs[kid] = &jwtKeypair{
+					fingerprint: fingerprint,
+					publicKey:   keys[kid].(rsa.PublicKey),
+				}
+			}
+		}
+	}
 }
 
 // ResolveJWTKeypair returns the configured public/private signing keypair and its
