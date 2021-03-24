@@ -301,13 +301,17 @@ func RequireJWTVerifiers() {
 	}
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
+	requireAuth0JWTVerifiers()
+}
+
+func requireAuth0JWTVerifiers() {
 	if os.Getenv("AUTH0_DOMAIN") != "" {
 		keys, err := auth0.GetJWKs()
 		if err != nil {
 			common.Log.Warningf("failed to resolve auth0 jwt keys; %s", err.Error())
 		} else {
 			for kid := range keys {
-				sshPublicKey, err := ssh.NewPublicKey(publicKey)
+				sshPublicKey, err := ssh.NewPublicKey(keys[kid])
 				if err != nil {
 					common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
 				}
@@ -377,6 +381,8 @@ func requireJWTKeypairs() {
 		publicKey:   *publicKey,
 		privateKey:  privateKey,
 	}
+
+	requireAuth0JWTVerifiers()
 }
 
 func resolveJWTFingerprints() []string {
