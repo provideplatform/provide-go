@@ -318,6 +318,8 @@ func RequireJWTVerifiers() {
 					fingerprint: fingerprint,
 					publicKey:   keys[kid].(rsa.PublicKey),
 				}
+
+				common.Log.Debugf("auth0 jwt public key configured for verification; kid: %s; fingerprint: %s", kid, fingerprint)
 			}
 		}
 	}
