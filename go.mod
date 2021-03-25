@@ -10,7 +10,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.22
 	github.com/gin-gonic/gin v1.6.3
 	github.com/jinzhu/gorm v1.9.16
-	github.com/kthomas/go-auth0 v0.0.0-20210325030745-c32876c9e2aa
+	github.com/kthomas/go-auth0 v0.0.0-20210325035251-e5ce67ed0c82
 	github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531
 	github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943
 	github.com/kthomas/go-self-signed-cert v0.0.0-20200602041729-f9878375d46e
