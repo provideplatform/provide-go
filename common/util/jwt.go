@@ -311,7 +311,8 @@ func requireAuth0JWTVerifiers() {
 			common.Log.Warningf("failed to resolve auth0 jwt keys; %s", err.Error())
 		} else {
 			for kid := range keys {
-				sshPublicKey, err := ssh.NewPublicKey(keys[kid])
+				publicKey := keys[kid].(rsa.PublicKey)
+				sshPublicKey, err := ssh.NewPublicKey(publicKey)
 				if err != nil {
 					common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
 				}
@@ -320,7 +321,7 @@ func requireAuth0JWTVerifiers() {
 				// auth0 keys are index by kid, not fingerprint
 				jwtKeypairs[kid] = &jwtKeypair{
 					fingerprint: fingerprint,
-					publicKey:   keys[kid].(rsa.PublicKey),
+					publicKey:   publicKey,
 				}
 
 				common.Log.Debugf("auth0 jwt public key configured for verification; kid: %s; fingerprint: %s", kid, fingerprint)
