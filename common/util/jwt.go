@@ -312,7 +312,7 @@ func requireAuth0JWTVerifiers() {
 		} else {
 			for kid := range keys {
 				publicKey := keys[kid].(rsa.PublicKey)
-				sshPublicKey, err := ssh.NewPublicKey(publicKey)
+				sshPublicKey, err := ssh.NewPublicKey(&publicKey)
 				if err != nil {
 					common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
 				}
