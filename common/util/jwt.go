@@ -19,6 +19,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/kthomas/go.uuid"
+	vault "github.com/provideservices/provide-go/api/vault"
 	common "github.com/provideservices/provide-go/common"
 )
 
@@ -30,6 +31,7 @@ const defaultJWTAuthorizationAudience = "https://provide.services/api/v1"
 const defaultJWTAuthorizationIssuer = "https://ident.provide.services"
 const defaultJWTAuthorizationTTL = time.Hour * 24
 const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
+const defaultTokenSigningKeyspec = "rsa-2048"
 
 // jwt configuration vars
 var (
@@ -57,16 +59,27 @@ var (
 	// JWTNatsAuthorizationAudience is the audience who will consume the NATS bearer authorization JWT; this will be set as the JWT "aud" claim
 	JWTNatsAuthorizationAudience string
 
+	// Vault is the vault instance
+	Vault *vault.Vault
+
+	// jwtSigningKey is the default JWT signing key
+	jwtSigningKey *vault.Key
+
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
 	jwtKeypairs     map[string]*jwtKeypair
 	jwtPublicKey    *rsa.PublicKey
 	jwtPublicKeyPEM string
 )
 
+func init() {
+	requireVault()
+}
+
 type jwtKeypair struct {
 	fingerprint string
 	publicKey   rsa.PublicKey
 	privateKey  *rsa.PrivateKey
+	vaultKey    *vault.Key
 }
 
 // SigningMethodEdDSA enables Ed25519
@@ -194,7 +207,7 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 			kid = &kidhdr
 		}
 
-		publicKey, _, _ := ResolveJWTKeypair(kid)
+		publicKey, _, _, _ := ResolveJWTKeypair(kid)
 		if publicKey == nil {
 			msg := "failed to resolve a valid JWT verification key"
 			if kid != nil {
@@ -333,9 +346,9 @@ func requireAuth0JWTVerifiers() {
 // ResolveJWTKeypair returns the configured public/private signing keypair and its
 // fingerprint, if one has been configured; this impl will be upgraded soon to allow
 // many key to be configured
-func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *string) {
+func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *vault.Key, *string) {
 	if jwtKeypairs == nil || len(jwtKeypairs) == 0 {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
 	var keypair *jwtKeypair
@@ -349,40 +362,48 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *s
 	}
 
 	if keypair == nil {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 
-	return &keypair.publicKey, keypair.privateKey, &keypair.fingerprint
+	return &keypair.publicKey, keypair.privateKey, keypair.vaultKey, &keypair.fingerprint
 }
 
 func requireJWTKeypairs() {
 	common.Log.Debug("attempting to read required RS256 keypair(s) from environment for signing JWT tokens")
 	jwtKeypairs = map[string]*jwtKeypair{}
 
-	jwtPrivateKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PRIVATE_KEY"), `\n`, "\n", -1)
-	privateKey, err := pgputil.DecodeRSAPrivateKeyFromPEM([]byte(jwtPrivateKeyPEM))
-	if err != nil {
-		common.Log.Panicf("failed to parse JWT private key; %s", err.Error())
+	var privateKey *rsa.PrivateKey // deprecated... only use the vault for signing...
+	var err error
+
+	if os.Getenv("JWT_SIGNER_PRIVATE_KEY") != "" {
+		jwtPrivateKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PRIVATE_KEY"), `\n`, "\n", -1)
+		privateKey, err = pgputil.DecodeRSAPrivateKeyFromPEM([]byte(jwtPrivateKeyPEM))
+		if err != nil {
+			common.Log.Panicf("failed to parse JWT private key; %s", err.Error())
+		}
 	}
 
-	jwtPublicKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
-	publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
-	if err != nil {
-		common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
+	if os.Getenv("JWT_SIGNER_PUBLIC_KEY") != "" {
+		jwtPublicKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
+		publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
+		if err != nil {
+			common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
+		}
+
+		sshPublicKey, err := ssh.NewPublicKey(publicKey)
+		if err != nil {
+			common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+		}
+		fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+		jwtKeypairs[fingerprint] = &jwtKeypair{
+			fingerprint: fingerprint,
+			publicKey:   *publicKey,
+			privateKey:  privateKey,
+		}
 	}
 
-	sshPublicKey, err := ssh.NewPublicKey(publicKey)
-	if err != nil {
-		common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
-	}
-	fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
-
-	jwtKeypairs[fingerprint] = &jwtKeypair{
-		fingerprint: fingerprint,
-		publicKey:   *publicKey,
-		privateKey:  privateKey,
-	}
-
+	requireJWTSigningKey()
 	requireAuth0JWTVerifiers()
 }
 
@@ -392,4 +413,76 @@ func resolveJWTFingerprints() []string {
 		fingerprints = append(fingerprints, k)
 	}
 	return fingerprints
+}
+
+func requireVault() {
+	RequireVault()
+
+	vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
+	if err != nil {
+		common.Log.Panicf("failed to fetch vaults for given token; %s", err.Error())
+	}
+
+	if len(vaults) > 0 {
+		// HACK
+		Vault = vaults[0]
+		common.Log.Debugf("resolved default vault instance for ident: %s", Vault.ID.String())
+	} else {
+		Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
+			"name":        fmt.Sprintf("ident vault %d", time.Now().Unix()),
+			"description": "default ident vault instance",
+		})
+		if err != nil {
+			common.Log.Panicf("failed to create default vault for ident instance; %s", err.Error())
+		}
+		common.Log.Debugf("created default vault for ident instance: %s", Vault.ID.String())
+	}
+}
+
+func requireJWTSigningKey() {
+	if Vault != nil {
+		// TODO? jwtVaultKeyID := os.Getenv("")
+
+		keys, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+			"spec": defaultTokenSigningKeyspec,
+		})
+
+		if err != nil {
+			common.Log.Panicf("failed to fetch keys for given vault access token; %s", err.Error())
+		}
+		if len(keys) > 0 {
+			jwtSigningKey = keys[0]
+		} else {
+			jwtSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+				"name":        fmt.Sprintf("ident %s signer", defaultTokenSigningKeyspec),
+				"description": fmt.Sprintf("ident %s signer", defaultTokenSigningKeyspec),
+				"spec":        defaultTokenSigningKeyspec,
+				"type":        "asymmetric",
+				"usage":       "sign/verify",
+			})
+			if err != nil {
+				common.Log.Panicf("failed to create default JWT signing key; %s", err.Error())
+			}
+
+			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
+			if err != nil {
+				common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
+			}
+
+			sshPublicKey, err := ssh.NewPublicKey(publicKey)
+			if err != nil {
+				common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+			}
+
+			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+			jwtKeypairs[fingerprint] = &jwtKeypair{
+				fingerprint: fingerprint,
+				publicKey:   *publicKey,
+				vaultKey:    jwtSigningKey,
+			}
+
+			common.Log.Debugf("created default ident token signing key: %s", jwtSigningKey.ID.String())
+		}
+	}
 }
