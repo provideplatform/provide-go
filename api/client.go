@@ -50,7 +50,13 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 	}
 
 	var reader io.ReadCloser
-	switch resp.Header.Get("Content-Encoding") {
+
+	headers := http.Header{}
+	if resp.Header != nil {
+		headers = resp.Header
+	}
+
+	switch headers.Get("Content-Encoding") {
 	case "gzip":
 		reader, err = gzip.NewReader(resp.Body)
 	default:
