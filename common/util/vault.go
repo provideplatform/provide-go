@@ -36,76 +36,78 @@ func RequireVault() {
 	timer := time.NewTicker(requireVaultTickerInterval)
 	defer timer.Stop()
 
-	select {
-	case <-timer.C:
-		if ident.Status() == nil {
-			defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
-			if defaultVaultRefreshJWT != "" {
-				accessToken, err := refreshVaultAccessToken()
-				if err != nil {
-					common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
-				}
-
-				DefaultVaultAccessJWT = *accessToken
-				if DefaultVaultAccessJWT == "" {
-					common.Log.Warning("failed to authorize vault access token for environment")
-				}
-
-				go func() {
-					timer := time.NewTicker(refreshTokenTickInterval)
-					for {
-						select {
-						case <-timer.C:
-							token, err := refreshVaultAccessToken()
-							if err != nil {
-								common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
-							} else {
-								DefaultVaultAccessJWT = *token
-							}
-						default:
-							time.Sleep(refreshTokenSleepInterval)
-						}
+	for {
+		select {
+		case <-timer.C:
+			if ident.Status() == nil {
+				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
+				if defaultVaultRefreshJWT != "" {
+					accessToken, err := refreshVaultAccessToken()
+					if err != nil {
+						common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
 					}
-				}()
-			}
 
-			defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
-			if defaultVaultSealUnsealKey == "" {
-				common.Log.Warning("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
-			}
+					DefaultVaultAccessJWT = *accessToken
+					if DefaultVaultAccessJWT == "" {
+						common.Log.Warning("failed to authorize vault access token for environment")
+					}
 
-			err := UnsealVault()
-			if err != nil {
-				common.Log.Warningf("failed to unseal vault; %s", err.Error())
-			}
-
-			vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
-			if err != nil {
-				common.Log.Warningf("failed to fetch vaults for given token; %s", err.Error())
-			}
-
-			if len(vaults) > 0 {
-				// HACK
-				Vault = vaults[0]
-				common.Log.Warningf("resolved default vault instance for ident: %s", Vault.ID.String())
-			} else {
-				Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
-					"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
-					"description": "jwt signing vault instance",
-				})
-				if err != nil {
-					common.Log.Warningf("failed to create default vault for jwt signing; %s", err.Error())
+					go func() {
+						timer := time.NewTicker(refreshTokenTickInterval)
+						for {
+							select {
+							case <-timer.C:
+								token, err := refreshVaultAccessToken()
+								if err != nil {
+									common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
+								} else {
+									DefaultVaultAccessJWT = *token
+								}
+							default:
+								time.Sleep(refreshTokenSleepInterval)
+							}
+						}
+					}()
 				}
-				common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
-			}
 
-			break
-		}
-	default:
-		if startTime.Add(requireVaultTimeout).Before(time.Now()) {
-			common.Log.Panicf("failed to require vault")
-		} else {
-			time.Sleep(requireVaultSleepInterval)
+				defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
+				if defaultVaultSealUnsealKey == "" {
+					common.Log.Warning("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
+				}
+
+				err := UnsealVault()
+				if err != nil {
+					common.Log.Warningf("failed to unseal vault; %s", err.Error())
+				}
+
+				vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
+				if err != nil {
+					common.Log.Warningf("failed to fetch vaults for given token; %s", err.Error())
+				}
+
+				if len(vaults) > 0 {
+					// HACK
+					Vault = vaults[0]
+					common.Log.Warningf("resolved default vault instance for ident: %s", Vault.ID.String())
+				} else {
+					Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
+						"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
+						"description": "jwt signing vault instance",
+					})
+					if err != nil {
+						common.Log.Warningf("failed to create default vault for jwt signing; %s", err.Error())
+					}
+					common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
+				}
+
+				return
+			}
+		default:
+			if startTime.Add(requireVaultTimeout).Before(time.Now()) {
+				common.Log.Panicf("failed to require vault")
+			} else {
+				time.Sleep(requireVaultSleepInterval)
+			}
 		}
 	}
 }
