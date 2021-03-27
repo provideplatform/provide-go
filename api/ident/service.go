@@ -710,7 +710,25 @@ func ResetPassword(token *string, resetPasswordToken, passwd string) error {
 
 // Status returns the status of the endpoint
 func Status() error {
-	status, _, err := InitIdentService(nil).Get("status", map[string]interface{}{})
+	host := defaultIdentHost
+	if os.Getenv("IDENT_API_HOST") != "" {
+		host = os.Getenv("IDENT_API_HOST")
+	}
+
+	scheme := defaultIdentScheme
+	if os.Getenv("IDENT_API_SCHEME") != "" {
+		scheme = os.Getenv("IDENT_API_SCHEME")
+	}
+
+	service := &Service{
+		api.Client{
+			Host:   host,
+			Path:   "",
+			Scheme: scheme,
+		},
+	}
+
+	status, _, err := service.Get("status", map[string]interface{}{})
 	if err != nil {
 		return fmt.Errorf("failed to fetch status; %s", err.Error())
 	}
