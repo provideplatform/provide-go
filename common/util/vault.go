@@ -79,9 +79,28 @@ func RequireVault() {
 				common.Log.Warningf("failed to unseal vault; %s", err.Error())
 			}
 
+			vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
+			if err != nil {
+				common.Log.Warningf("failed to fetch vaults for given token; %s", err.Error())
+			}
+
+			if len(vaults) > 0 {
+				// HACK
+				Vault = vaults[0]
+				common.Log.Warningf("resolved default vault instance for ident: %s", Vault.ID.String())
+			} else {
+				Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
+					"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
+					"description": "jwt signing vault instance",
+				})
+				if err != nil {
+					common.Log.Warningf("failed to create default vault for jwt signing; %s", err.Error())
+				}
+				common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
+			}
+
 			break
 		}
-
 	default:
 		if startTime.Add(requireVaultTimeout).Before(time.Now()) {
 			common.Log.Panicf("failed to require vault")

@@ -417,26 +417,6 @@ func resolveJWTFingerprints() []string {
 func requireJWTSigningKey() {
 	RequireVault()
 
-	vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
-	if err != nil {
-		common.Log.Panicf("failed to fetch vaults for given token; %s", err.Error())
-	}
-
-	if len(vaults) > 0 {
-		// HACK
-		Vault = vaults[0]
-		common.Log.Debugf("resolved default vault instance for ident: %s", Vault.ID.String())
-	} else {
-		Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
-			"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
-			"description": "jwt signing vault instance",
-		})
-		if err != nil {
-			common.Log.Panicf("failed to create default vault for jwt signing; %s", err.Error())
-		}
-		common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
-	}
-
 	timer := time.NewTicker(requireJWTSigningKeyTickerInterval)
 	defer timer.Stop()
 
