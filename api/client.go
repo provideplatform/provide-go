@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -41,7 +42,11 @@ type Client struct {
 }
 
 func (c *Client) parseResponse(resp *http.Response) (status int, response interface{}, err error) {
-	if resp != nil && resp.Body != nil {
+	if resp == nil {
+		return 0, nil, errors.New("nil response")
+	}
+
+	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
@@ -50,13 +55,7 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 	}
 
 	var reader io.ReadCloser
-
-	headers := http.Header{}
-	if resp.Header != nil {
-		headers = resp.Header
-	}
-
-	switch headers.Get("Content-Encoding") {
+	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
 		reader, err = gzip.NewReader(resp.Body)
 	default:
