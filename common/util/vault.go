@@ -43,12 +43,12 @@ func RequireVault() {
 			if defaultVaultRefreshJWT != "" {
 				accessToken, err := refreshVaultAccessToken()
 				if err != nil {
-					common.Log.Panicf("failed to refresh vault access token; %s", err.Error())
+					common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
 				}
 
 				DefaultVaultAccessJWT = *accessToken
 				if DefaultVaultAccessJWT == "" {
-					common.Log.Panicf("failed to authorize vault access token for environment")
+					common.Log.Warning("failed to authorize vault access token for environment")
 				}
 
 				go func() {
@@ -71,12 +71,12 @@ func RequireVault() {
 
 			defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
 			if defaultVaultSealUnsealKey == "" {
-				common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
+				common.Log.Warning("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
 			}
 
 			err := UnsealVault()
 			if err != nil {
-				common.Log.Panicf("failed to unseal vault; %s", err.Error())
+				common.Log.Warningf("failed to unseal vault; %s", err.Error())
 			}
 
 			break

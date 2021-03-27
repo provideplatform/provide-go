@@ -74,10 +74,6 @@ var (
 	jwtPublicKeyPEM string
 )
 
-func init() {
-	requireVault()
-}
-
 type jwtKeypair struct {
 	fingerprint string
 	publicKey   rsa.PublicKey
@@ -418,7 +414,7 @@ func resolveJWTFingerprints() []string {
 	return fingerprints
 }
 
-func requireVault() {
+func requireJWTSigningKey() {
 	RequireVault()
 
 	vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
@@ -432,17 +428,15 @@ func requireVault() {
 		common.Log.Debugf("resolved default vault instance for ident: %s", Vault.ID.String())
 	} else {
 		Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
-			"name":        fmt.Sprintf("ident vault %d", time.Now().Unix()),
-			"description": "default ident vault instance",
+			"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
+			"description": "jwt signing vault instance",
 		})
 		if err != nil {
-			common.Log.Panicf("failed to create default vault for ident instance; %s", err.Error())
+			common.Log.Panicf("failed to create default vault for jwt signing; %s", err.Error())
 		}
-		common.Log.Debugf("created default vault for ident instance: %s", Vault.ID.String())
+		common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
 	}
-}
 
-func requireJWTSigningKey() {
 	timer := time.NewTicker(requireJWTSigningKeyTickerInterval)
 	defer timer.Stop()
 
