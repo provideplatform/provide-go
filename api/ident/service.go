@@ -707,3 +707,16 @@ func ResetPassword(token *string, resetPasswordToken, passwd string) error {
 
 	return nil
 }
+
+// Status returns the status of the endpoint
+func Status() error {
+	status, _, err := InitIdentService(nil).Get("status", map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to fetch status; %s", err.Error())
+	}
+	if status != 200 {
+		return fmt.Errorf("status endpoint returned %d status code", status)
+	}
+
+	return nil
+}

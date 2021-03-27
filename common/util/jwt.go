@@ -406,7 +406,7 @@ func requireJWTKeypairs() {
 		}
 	}
 
-	requireJWTSigningKey()
+	go requireJWTSigningKey()
 	requireAuth0JWTVerifiers()
 }
 

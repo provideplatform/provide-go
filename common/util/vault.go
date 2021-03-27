@@ -13,6 +13,10 @@ import (
 const refreshTokenTickInterval = 60000 * 45 * time.Millisecond
 const refreshTokenSleepInterval = 60000 * 10 * time.Millisecond
 
+const requireVaultTickerInterval = time.Second * 5
+const requireVaultSleepInterval = time.Second * 1
+const requireVaultTimeout = time.Minute * 1
+
 var (
 	// DefaultVaultAccessJWT for the default vault context
 	DefaultVaultAccessJWT string
@@ -27,44 +31,63 @@ var (
 // RequireVault panics if the VAULT_REFRESH_TOKEN is not given or an access
 // token is otherwise unable to be obtained; attepts to unseal the vault if possible
 func RequireVault() {
-	defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
-	if defaultVaultRefreshJWT != "" {
-		accessToken, err := refreshVaultAccessToken()
-		if err != nil {
-			common.Log.Panicf("failed to refresh vault access token; %s", err.Error())
-		}
+	startTime := time.Now()
 
-		DefaultVaultAccessJWT = *accessToken
-		if DefaultVaultAccessJWT == "" {
-			common.Log.Panicf("failed to authorize vault access token for environment")
-		}
+	timer := time.NewTicker(requireVaultTickerInterval)
+	defer timer.Stop()
 
-		go func() {
-			timer := time.NewTicker(refreshTokenTickInterval)
-			for {
-				select {
-				case <-timer.C:
-					token, err := refreshVaultAccessToken()
-					if err != nil {
-						common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
-					} else {
-						DefaultVaultAccessJWT = *token
-					}
-				default:
-					time.Sleep(refreshTokenSleepInterval)
+	select {
+	case <-timer.C:
+		if ident.Status() == nil {
+			defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
+			if defaultVaultRefreshJWT != "" {
+				accessToken, err := refreshVaultAccessToken()
+				if err != nil {
+					common.Log.Panicf("failed to refresh vault access token; %s", err.Error())
 				}
+
+				DefaultVaultAccessJWT = *accessToken
+				if DefaultVaultAccessJWT == "" {
+					common.Log.Panicf("failed to authorize vault access token for environment")
+				}
+
+				go func() {
+					timer := time.NewTicker(refreshTokenTickInterval)
+					for {
+						select {
+						case <-timer.C:
+							token, err := refreshVaultAccessToken()
+							if err != nil {
+								common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
+							} else {
+								DefaultVaultAccessJWT = *token
+							}
+						default:
+							time.Sleep(refreshTokenSleepInterval)
+						}
+					}
+				}()
 			}
-		}()
-	}
 
-	defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
-	if defaultVaultSealUnsealKey == "" {
-		common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
-	}
+			defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
+			if defaultVaultSealUnsealKey == "" {
+				common.Log.Panicf("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
+			}
 
-	err := UnsealVault()
-	if err != nil {
-		common.Log.Panicf("failed to unseal vault; %s", err.Error())
+			err := UnsealVault()
+			if err != nil {
+				common.Log.Panicf("failed to unseal vault; %s", err.Error())
+			}
+
+			break
+		}
+
+	default:
+		if startTime.Add(requireVaultTimeout).After(time.Now()) {
+			common.Log.Panicf("failed to require vault")
+		} else {
+			time.Sleep(requireVaultSleepInterval)
+		}
 	}
 }
 
