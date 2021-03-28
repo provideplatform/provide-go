@@ -353,7 +353,8 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 	var keypair *jwtKeypair
 
 	if fingerprint == nil {
-		keypair = jwtKeypairs[resolveJWTFingerprints()[len(jwtKeypairs)-1]]
+		fingerprints := resolveJWTFingerprints()
+		keypair = jwtKeypairs[fingerprints[len(fingerprints)-1]]
 	} else {
 		if jwtKeypair, jwtKeypairOk := jwtKeypairs[*fingerprint]; jwtKeypairOk {
 			keypair = jwtKeypair
@@ -446,26 +447,27 @@ func requireJWTSigningKey() {
 					common.Log.Warningf("failed to create default JWT signing key; %s", err.Error())
 				}
 
-				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
-				if err != nil {
-					common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
-				}
-
-				sshPublicKey, err := ssh.NewPublicKey(publicKey)
-				if err != nil {
-					common.Log.Warningf("failed to resolve JWT public key fingerprint; %s", err.Error())
-				}
-
-				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
-
-				jwtKeypairs[fingerprint] = &jwtKeypair{
-					fingerprint: fingerprint,
-					publicKey:   *publicKey,
-					vaultKey:    jwtSigningKey,
-				}
-
 				common.Log.Debugf("created default ident token signing key: %s", jwtSigningKey.ID.String())
 			}
+
+			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
+			if err != nil {
+				common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
+			}
+
+			sshPublicKey, err := ssh.NewPublicKey(publicKey)
+			if err != nil {
+				common.Log.Warningf("failed to resolve JWT public key fingerprint; %s", err.Error())
+			}
+
+			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+			jwtKeypairs[fingerprint] = &jwtKeypair{
+				fingerprint: fingerprint,
+				publicKey:   *publicKey,
+				vaultKey:    jwtSigningKey,
+			}
+
 		}
 	default:
 		time.Sleep(requireJWTSigningKeySleepInterval)
