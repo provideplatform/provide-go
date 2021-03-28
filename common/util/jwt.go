@@ -35,6 +35,7 @@ const defaultTokenSigningKeyspec = "rsa-2048"
 
 const requireJWTSigningKeyTickerInterval = time.Second * 5
 const requireJWTSigningKeySleepInterval = time.Second * 1
+const requireJWTSigningKeyTimeout = time.Minute * 1
 
 // jwt configuration vars
 var (
@@ -418,57 +419,72 @@ func resolveJWTFingerprints() []string {
 func requireJWTSigningKey() {
 	RequireVault()
 
+	startTime := time.Now()
+
 	timer := time.NewTicker(requireJWTSigningKeyTickerInterval)
 	defer timer.Stop()
 
-	select {
-	case <-timer.C:
-		if Vault != nil {
-			// TODO? jwtVaultKeyID := os.Getenv("")
+	for {
+		select {
+		case <-timer.C:
+			if Vault != nil {
+				// TODO? jwtVaultKeyID := os.Getenv("")
 
-			keys, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
-				"spec": defaultTokenSigningKeyspec,
-			})
-			if err != nil {
-				common.Log.Warningf("failed to fetch keys for given vault access token; %s", err.Error())
-			}
-
-			if len(keys) > 0 {
-				jwtSigningKey = keys[0]
-			} else {
-				jwtSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
-					"name":        fmt.Sprintf("ident %s signer", defaultTokenSigningKeyspec),
-					"description": fmt.Sprintf("ident %s signer", defaultTokenSigningKeyspec),
-					"spec":        defaultTokenSigningKeyspec,
-					"type":        "asymmetric",
-					"usage":       "sign/verify",
+				keys, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+					"spec": defaultTokenSigningKeyspec,
 				})
 				if err != nil {
-					common.Log.Warningf("failed to create default JWT signing key; %s", err.Error())
+					common.Log.Warningf("failed to fetch keys for vault: %s; %s", Vault.ID.String(), err.Error())
+					continue
 				}
 
-				common.Log.Debugf("created default ident token signing key: %s", jwtSigningKey.ID.String())
+				if len(keys) > 0 {
+					jwtSigningKey = keys[0]
+				} else {
+					jwtSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+						"name":        fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
+						"description": fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
+						"spec":        defaultTokenSigningKeyspec,
+						"type":        "asymmetric",
+						"usage":       "sign/verify",
+					})
+					if err != nil {
+						common.Log.Warningf("failed to create default JWT signing key; %s", err.Error())
+						continue
+					}
+
+					common.Log.Debugf("created default ident token signing key: %s", jwtSigningKey.ID.String())
+				}
+
+				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
+				if err != nil {
+					common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
+					continue
+				}
+
+				sshPublicKey, err := ssh.NewPublicKey(publicKey)
+				if err != nil {
+					common.Log.Warningf("failed to resolve JWT public key fingerprint; %s", err.Error())
+					continue
+				}
+
+				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+				jwtKeypairs[fingerprint] = &jwtKeypair{
+					fingerprint: fingerprint,
+					publicKey:   *publicKey,
+					vaultKey:    jwtSigningKey,
+				}
+
+				common.Log.Debugf("resolved JWT signing key: %s", fingerprint)
+				return
 			}
-
-			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
-			if err != nil {
-				common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
-			}
-
-			sshPublicKey, err := ssh.NewPublicKey(publicKey)
-			if err != nil {
-				common.Log.Warningf("failed to resolve JWT public key fingerprint; %s", err.Error())
-			}
-
-			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
-
-			jwtKeypairs[fingerprint] = &jwtKeypair{
-				fingerprint: fingerprint,
-				publicKey:   *publicKey,
-				vaultKey:    jwtSigningKey,
+		default:
+			if startTime.Add(requireJWTSigningKeyTimeout).Before(time.Now()) {
+				common.Log.Panicf("failed to require JWT signing key")
+			} else {
+				time.Sleep(requireJWTSigningKeySleepInterval)
 			}
 		}
-	default:
-		time.Sleep(requireJWTSigningKeySleepInterval)
 	}
 }
