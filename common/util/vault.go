@@ -88,16 +88,16 @@ func RequireVault() {
 				if len(vaults) > 0 {
 					// HACK
 					Vault = vaults[0]
-					common.Log.Warningf("resolved default vault instance for ident: %s", Vault.ID.String())
+					common.Log.Debugf("resolved default vault instance: %s", Vault.ID.String())
 				} else {
 					Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
-						"name":        fmt.Sprintf("jwt signing vault %d", time.Now().Unix()),
-						"description": "jwt signing vault instance",
+						"name":        fmt.Sprintf("default vault %d", time.Now().Unix()),
+						"description": "default vault instance",
 					})
 					if err != nil {
-						common.Log.Warningf("failed to create default vault for jwt signing; %s", err.Error())
+						common.Log.Warningf("failed to create default vault instance; %s", err.Error())
 					}
-					common.Log.Debugf("created default vault for jwt siging instance: %s", Vault.ID.String())
+					common.Log.Debugf("created default vault instance: %s", Vault.ID.String())
 				}
 
 				return
