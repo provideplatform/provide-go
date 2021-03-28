@@ -467,7 +467,6 @@ func requireJWTSigningKey() {
 				publicKey:   *publicKey,
 				vaultKey:    jwtSigningKey,
 			}
-
 		}
 	default:
 		time.Sleep(requireJWTSigningKeySleepInterval)
