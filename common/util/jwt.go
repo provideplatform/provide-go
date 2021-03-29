@@ -31,7 +31,7 @@ const defaultJWTAuthorizationAudience = "https://provide.services/api/v1"
 const defaultJWTAuthorizationIssuer = "https://ident.provide.services"
 const defaultJWTAuthorizationTTL = time.Hour * 24
 const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
-const defaultTokenSigningKeyspec = "rsa-4096"
+const defaultTokenSigningKeyspec = "RSA-4096"
 
 const requireJWTSigningKeyTickerInterval = time.Second * 5
 const requireJWTSigningKeySleepInterval = time.Second * 1
