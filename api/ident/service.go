@@ -348,6 +348,28 @@ func CreateApplicationToken(token, applicationID string, params map[string]inter
 	return tkn, nil
 }
 
+// ListOrganizations retrieves a paginated list of organizations scoped to the given API token
+func ListOrganizations(token string, params map[string]interface{}) ([]*Organization, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("organizations", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list organizations; status: %v", status)
+	}
+
+	orgs := make([]*Organization, 0)
+	for _, item := range resp.([]interface{}) {
+		org := &Organization{}
+		orgraw, _ := json.Marshal(item)
+		json.Unmarshal(orgraw, &org)
+		orgs = append(orgs, org)
+	}
+
+	return orgs, nil
+}
+
 // CreateToken creates a new API token.
 func CreateToken(token string, params map[string]interface{}) (*Token, error) {
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("tokens", params)
