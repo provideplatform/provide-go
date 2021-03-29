@@ -453,7 +453,8 @@ func requireJWTSigningKey() {
 						continue
 					}
 
-					common.Log.Debugf("created default ident token signing key: %s", jwtSigningKey.ID.String())
+					common.Log.Debugf("created default JWT signing key: %s", jwtSigningKey.ID.String())
+					common.Log.Tracef("JWT signing key public key: %s", *jwtSigningKey.PublicKey)
 				}
 
 				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
