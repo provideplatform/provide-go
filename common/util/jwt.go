@@ -481,7 +481,7 @@ func requireJWTSigningKey() {
 				return
 			}
 		default:
-			if startTime.Add(requireJWTSigningKeyTimeout).Before(time.Now()) {
+			if startTime.Add(requireJWTSigningKeyTimeout).After(time.Now()) {
 				common.Log.Panicf("failed to require JWT signing key")
 			} else {
 				time.Sleep(requireJWTSigningKeySleepInterval)
