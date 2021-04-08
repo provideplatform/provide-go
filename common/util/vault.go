@@ -109,7 +109,7 @@ func RequireVault() {
 				return
 			}
 		default:
-			if startTime.Add(requireVaultTimeout).After(time.Now()) {
+			if startTime.Add(requireVaultTimeout).Before(time.Now()) {
 				common.Log.Panicf("failed to require vault")
 			} else {
 				time.Sleep(requireVaultSleepInterval)
