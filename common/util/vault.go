@@ -73,15 +73,14 @@ func RequireVault() {
 				}
 
 				defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
-				if defaultVaultSealUnsealKey == "" {
-					common.Log.Warning("failed to parse VAULT_SEAL_UNSEAL_KEY from environment")
-					continue
-				}
+				if defaultVaultSealUnsealKey != "" {
+					common.Log.Debug("parsed VAULT_SEAL_UNSEAL_KEY from environment")
 
-				err := UnsealVault()
-				if err != nil {
-					common.Log.Warningf("failed to unseal vault; %s", err.Error())
-					continue
+					err := UnsealVault()
+					if err != nil {
+						common.Log.Warningf("failed to unseal vault; %s", err.Error())
+						continue
+					}
 				}
 
 				vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
