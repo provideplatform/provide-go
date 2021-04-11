@@ -365,7 +365,7 @@ func requireAuth0JWTVerifiers() {
 func requireIdentJWTVerifiers() {
 	keys, err := ident.GetJWKs()
 	if err != nil {
-		common.Log.Warningf("failed to resolve auth0 jwt keys; %s", err.Error())
+		common.Log.Warningf("failed to resolve ident jwt keys; %s", err.Error())
 	} else {
 		for _, key := range keys {
 			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(key.PublicKey))
