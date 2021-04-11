@@ -379,6 +379,10 @@ func CreateToken(token string, params map[string]interface{}) (*Token, error) {
 		return nil, err
 	}
 
+	if status != 201 {
+		return nil, fmt.Errorf("failed to authorize token; status: %v", status)
+	}
+
 	// FIXME...
 	tkn := &Token{}
 	tknraw, _ := json.Marshal(resp)
