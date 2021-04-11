@@ -54,15 +54,15 @@ func CreateAccount(token string, params map[string]interface{}) (*Account, error
 		return nil, err
 	}
 
-	if status != 201 {
-		return nil, fmt.Errorf("failed to create account. status: %v", status)
-	}
-
 	account := &Account{}
 	accountRaw, _ := json.Marshal(resp)
 	err = json.Unmarshal(accountRaw, &account)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create account. status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create account. status: %v; %v", status, account.Errors)
 	}
 
 	return account, nil
@@ -219,15 +219,15 @@ func CreateContract(token string, params map[string]interface{}) (*Contract, err
 		return nil, err
 	}
 
-	if status != 201 {
-		return nil, fmt.Errorf("failed to create contract; status %v", status)
-	}
-
 	contract := &Contract{}
 	raw, _ := json.Marshal(resp)
 	err = json.Unmarshal(raw, &contract)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract; status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create account. status: %v; %v", status, contract.Errors)
 	}
 
 	return contract, nil
