@@ -178,8 +178,8 @@ github.com/kthomas/go-auth0 v0.0.0-20210325035251-e5ce67ed0c82/go.mod h1:5o9CD0v
 github.com/kthomas/go-logger v0.0.0-20200602041232-5c46e0cab608/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531 h1:8SnbaD9jO9OWBECn2X6IcCLz8RASFgB0bLbVNtt7yGE=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
-github.com/kthomas/go-logger v0.0.0-20210411034340-bafaa5283a17 h1:O/LWjCpptzhyxzk+BachJB+uXgedj2lAGqa6u8oThKY=
-github.com/kthomas/go-logger v0.0.0-20210411034340-bafaa5283a17/go.mod h1:TtVSBQILggONVgiZObhmzisbSxWrgnF+GYhwKbNDV8Y=
+github.com/kthomas/go-logger v0.0.0-20210411034702-66a0af9aee2c h1:M8vy2L8G7n2pVgc5PVuRo0h8Y502WdieAn4o5B+5eKc=
+github.com/kthomas/go-logger v0.0.0-20210411034702-66a0af9aee2c/go.mod h1:TtVSBQILggONVgiZObhmzisbSxWrgnF+GYhwKbNDV8Y=
 github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943 h1:cDp8m82Etk3UybAMLVTgUyvscBc54Yuy1MsoqXbo71c=
 github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943/go.mod h1:1wYaoVWP9k76g2FfW5U9NaJ6dELUDFt2J2XMzSbJAVg=
 github.com/kthomas/go-self-signed-cert v0.0.0-20200602041729-f9878375d46e h1:G//bQmubE/JtHY10bbiPnulIuDi1zHkjuP9QpcB4+8I=
