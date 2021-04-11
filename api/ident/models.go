@@ -45,6 +45,18 @@ type Invite struct {
 	Params           map[string]interface{} `json:"params,omitempty"`
 }
 
+// JSONWebKey represents the public part of a JWT
+type JSONWebKey struct {
+	Kid string   `json:"kid,omitempty"`
+	Use string   `json:"use,omitempty"`
+	N   string   `json:"n,omitempty"`
+	E   string   `json:"e,omitempty"`
+	X5c []string `json:"x5c,omitempty"`
+
+	Fingerprint string `json:"fingerprint,omitempty"`
+	PublicKey   string `json:"public_key,omitempty"`
+}
+
 // Organization model
 type Organization struct {
 	api.Model

@@ -19,6 +19,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/kthomas/go.uuid"
+	ident "github.com/provideservices/provide-go/api/ident"
 	vault "github.com/provideservices/provide-go/api/vault"
 	common "github.com/provideservices/provide-go/common"
 )
@@ -318,7 +319,7 @@ func RequireJWTVerifiers() map[string]*JWTKeypair {
 	}
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
-	go requireVaultJWTKeypairs()
+	requireIdentJWTVerifiers()
 	requireAuth0JWTVerifiers()
 
 	return jwtKeypairs
@@ -346,6 +347,33 @@ func requireAuth0JWTVerifiers() {
 
 				common.Log.Debugf("auth0 jwt public key configured for verification; kid: %s; fingerprint: %s", kid, fingerprint)
 			}
+		}
+	}
+}
+
+func requireIdentJWTVerifiers() {
+	keys, err := ident.GetJWKs()
+	if err != nil {
+		common.Log.Warningf("failed to resolve auth0 jwt keys; %s", err.Error())
+	} else {
+		for _, key := range keys {
+			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(key.PublicKey))
+			if err != nil {
+				common.Log.Panicf("failed to parse ident JWT public key; %s", err.Error())
+			}
+
+			sshPublicKey, err := ssh.NewPublicKey(publicKey)
+			if err != nil {
+				common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+			}
+			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+
+			jwtKeypairs[fingerprint] = &JWTKeypair{
+				fingerprint: fingerprint,
+				publicKey:   *publicKey,
+			}
+
+			common.Log.Debugf("ident jwt public key configured for verification; fingerprint: %s", fingerprint)
 		}
 	}
 }

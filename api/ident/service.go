@@ -766,3 +766,43 @@ func Status() error {
 
 	return nil
 }
+
+// GetJWKs returns the set of keys containing the public keys used to verify JWTs
+func GetJWKs() ([]*JSONWebKey, error) {
+	host := defaultIdentHost
+	if os.Getenv("IDENT_API_HOST") != "" {
+		host = os.Getenv("IDENT_API_HOST")
+	}
+
+	scheme := defaultIdentScheme
+	if os.Getenv("IDENT_API_SCHEME") != "" {
+		scheme = os.Getenv("IDENT_API_SCHEME")
+	}
+
+	service := &Service{
+		api.Client{
+			Host:   host,
+			Path:   "",
+			Scheme: scheme,
+		},
+	}
+
+	status, resp, err := service.Get(".well-known/jwks.json", map[string]interface{}{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch well-known JWKs; %s", err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("well-known JWKs endpoint returned %d status code", status)
+	}
+
+	keys := make([]*JSONWebKey, 0)
+	for _, item := range resp.([]interface{}) {
+		key := &JSONWebKey{}
+		keyraw, _ := json.Marshal(item)
+		json.Unmarshal(keyraw, &key)
+		keys = append(keys, key)
+	}
+
+	return keys, nil
+}
