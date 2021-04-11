@@ -70,12 +70,13 @@ var (
 	jwtSigningKey *vault.Key
 
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
-	jwtKeypairs     map[string]*jwtKeypair
+	jwtKeypairs     map[string]*JWTKeypair
 	jwtPublicKey    *rsa.PublicKey
 	jwtPublicKeyPEM string
 )
 
-type jwtKeypair struct {
+// JWTKeypair enables private key or vault-based JWT signing and verification
+type JWTKeypair struct {
 	fingerprint string
 	publicKey   rsa.PublicKey
 	privateKey  *rsa.PrivateKey
@@ -229,7 +230,7 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 // RequireJWT allows a package to conditionally require a valid JWT configuration
 // in the ident environment; at least one RS256 keypair must be configured using
 // the JWT_SIGNER_PRIVATE_KEY and JWT_SIGNER_PUBLIC_KEY environment variables
-func RequireJWT() {
+func RequireJWT() map[string]*JWTKeypair {
 	common.Log.Debug("attempting to read required JWT configuration environment for signing JWT tokens")
 
 	if os.Getenv("JWT_APPLICATION_CLAIMS_KEY") != "" {
@@ -283,17 +284,17 @@ func RequireJWT() {
 		JWTAuthorizationTTL = defaultJWTAuthorizationTTL
 	}
 
-	requireJWTKeypairs()
+	return requireJWTKeypairs()
 }
 
 // RequireJWTVerifiers allows a package to conditionally require RS256 signature
 // verification in the configured environment via JWT_SIGNER_PUBLIC_KEY; the
 // use-case for this support is when another microservice is depending on the
 // token authorization middleware provided in this package
-func RequireJWTVerifiers() {
+func RequireJWTVerifiers() map[string]*JWTKeypair {
 	common.Log.Debug("attempting to read required public key from environment for verifying signed JWT")
 	if jwtKeypairs == nil {
-		jwtKeypairs = map[string]*jwtKeypair{}
+		jwtKeypairs = map[string]*JWTKeypair{}
 	}
 
 	jwtPublicKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
@@ -308,13 +309,15 @@ func RequireJWTVerifiers() {
 	}
 	fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
-	jwtKeypairs[fingerprint] = &jwtKeypair{
+	jwtKeypairs[fingerprint] = &JWTKeypair{
 		fingerprint: fingerprint,
 		publicKey:   *publicKey,
 	}
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
 	requireAuth0JWTVerifiers()
+
+	return jwtKeypairs
 }
 
 func requireAuth0JWTVerifiers() {
@@ -332,7 +335,7 @@ func requireAuth0JWTVerifiers() {
 				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
 				// auth0 keys are index by kid, not fingerprint
-				jwtKeypairs[kid] = &jwtKeypair{
+				jwtKeypairs[kid] = &JWTKeypair{
 					fingerprint: fingerprint,
 					publicKey:   publicKey,
 				}
@@ -351,7 +354,7 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 		return nil, nil, nil, nil
 	}
 
-	var keypair *jwtKeypair
+	var keypair *JWTKeypair
 
 	if fingerprint == nil {
 		fingerprints := resolveJWTFingerprints()
@@ -369,9 +372,9 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 	return &keypair.publicKey, keypair.privateKey, keypair.vaultKey, &keypair.fingerprint
 }
 
-func requireJWTKeypairs() {
+func requireJWTKeypairs() map[string]*JWTKeypair {
 	common.Log.Debug("attempting to read required RS256 keypair(s) from environment for signing JWT tokens")
-	jwtKeypairs = map[string]*jwtKeypair{}
+	jwtKeypairs = map[string]*JWTKeypair{}
 
 	var privateKey *rsa.PrivateKey // deprecated... only use the vault for signing...
 	var err error
@@ -397,15 +400,19 @@ func requireJWTKeypairs() {
 		}
 		fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
-		jwtKeypairs[fingerprint] = &jwtKeypair{
+		jwtKeypairs[fingerprint] = &JWTKeypair{
 			fingerprint: fingerprint,
 			publicKey:   *publicKey,
 			privateKey:  privateKey,
 		}
+
+		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
 	}
 
 	go requireJWTSigningKey()
 	requireAuth0JWTVerifiers()
+
+	return jwtKeypairs
 }
 
 func resolveJWTFingerprints() []string {
@@ -428,8 +435,6 @@ func requireJWTSigningKey() {
 		select {
 		case <-timer.C:
 			if Vault != nil {
-				// TODO? jwtVaultKeyID := os.Getenv("")
-
 				keys, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
 					"spec": defaultTokenSigningKeyspec,
 				})
@@ -471,13 +476,13 @@ func requireJWTSigningKey() {
 
 				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
-				jwtKeypairs[fingerprint] = &jwtKeypair{
+				jwtKeypairs[fingerprint] = &JWTKeypair{
 					fingerprint: fingerprint,
 					publicKey:   *publicKey,
 					vaultKey:    jwtSigningKey,
 				}
 
-				common.Log.Debugf("resolved JWT signing key: %s", fingerprint)
+				common.Log.Debugf("resolved JWT signing key from vault: %s", fingerprint)
 				return
 			}
 		default:
