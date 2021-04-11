@@ -62,7 +62,7 @@ func CreateAccount(token string, params map[string]interface{}) (*Account, error
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to create account. status: %v; %v", status, account.Errors)
+		return nil, fmt.Errorf("failed to create account; status: %v; %s", status, *account.Errors[0].Message)
 	}
 
 	return account, nil
@@ -227,7 +227,7 @@ func CreateContract(token string, params map[string]interface{}) (*Contract, err
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to create account. status: %v; %v", status, contract.Errors)
+		return nil, fmt.Errorf("failed to create contract; status: %v; %s", status, *contract.Errors[0].Message)
 	}
 
 	return contract, nil
