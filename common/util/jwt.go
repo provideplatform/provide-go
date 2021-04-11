@@ -69,6 +69,9 @@ var (
 	// jwtSigningKey is the default JWT signing key
 	jwtSigningKey *vault.Key
 
+	// jwtSigningFingerprint is the default JWT signing key fingerprint
+	jwtSigningKeyFingerprint *string
+
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
 	jwtKeypairs     map[string]*JWTKeypair
 	jwtPublicKey    *rsa.PublicKey
@@ -315,6 +318,7 @@ func RequireJWTVerifiers() map[string]*JWTKeypair {
 	}
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
+	go requireVaultJWTKeypairs()
 	requireAuth0JWTVerifiers()
 
 	return jwtKeypairs
@@ -358,7 +362,11 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 
 	if fingerprint == nil {
 		fingerprints := resolveJWTFingerprints()
-		keypair = jwtKeypairs[fingerprints[len(fingerprints)-1]]
+		if jwtSigningKeyFingerprint != nil {
+			keypair = jwtKeypairs[*jwtSigningKeyFingerprint]
+		} else {
+			keypair = jwtKeypairs[fingerprints[len(fingerprints)-1]]
+		}
 	} else {
 		if jwtKeypair, jwtKeypairOk := jwtKeypairs[*fingerprint]; jwtKeypairOk {
 			keypair = jwtKeypair
@@ -409,7 +417,7 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
 	}
 
-	go requireJWTSigningKey()
+	go requireVaultJWTKeypairs()
 	requireAuth0JWTVerifiers()
 
 	return jwtKeypairs
@@ -423,7 +431,7 @@ func resolveJWTFingerprints() []string {
 	return fingerprints
 }
 
-func requireJWTSigningKey() {
+func requireVaultJWTKeypairs() {
 	RequireVault()
 
 	startTime := time.Now()
@@ -474,15 +482,15 @@ func requireJWTSigningKey() {
 					continue
 				}
 
-				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
+				jwtSigningKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
 
-				jwtKeypairs[fingerprint] = &JWTKeypair{
-					fingerprint: fingerprint,
+				jwtKeypairs[*jwtSigningKeyFingerprint] = &JWTKeypair{
+					fingerprint: *jwtSigningKeyFingerprint,
 					publicKey:   *publicKey,
 					vaultKey:    jwtSigningKey,
 				}
 
-				common.Log.Debugf("resolved JWT signing key from vault: %s", fingerprint)
+				common.Log.Debugf("resolved JWT signing key from vault: %s", *jwtSigningKeyFingerprint)
 				return
 			}
 		default:
