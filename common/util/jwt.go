@@ -2,7 +2,9 @@ package util
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
@@ -81,10 +83,11 @@ var (
 
 // JWTKeypair enables private key or vault-based JWT signing and verification
 type JWTKeypair struct {
-	Fingerprint string
-	PublicKey   rsa.PublicKey
-	PrivateKey  *rsa.PrivateKey
-	VaultKey    *vault.Key
+	Fingerprint  string
+	PublicKey    rsa.PublicKey
+	PublicKeyPEM *string
+	PrivateKey   *rsa.PrivateKey
+	VaultKey     *vault.Key
 }
 
 // SigningMethodEdDSA enables Ed25519
@@ -314,8 +317,9 @@ func RequireJWTVerifiers() map[string]*JWTKeypair {
 	fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
 	jwtKeypairs[fingerprint] = &JWTKeypair{
-		Fingerprint: fingerprint,
-		PublicKey:   *publicKey,
+		Fingerprint:  fingerprint,
+		PublicKey:    *publicKey,
+		PublicKeyPEM: &jwtPublicKeyPEM,
 	}
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
@@ -339,10 +343,17 @@ func requireAuth0JWTVerifiers() {
 				}
 				fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
+				encodedPublicKeyBytes, _ := x509.MarshalPKIXPublicKey(&publicKey)
+				pkixPublicKey := pem.EncodeToMemory(&pem.Block{
+					Type:  "PUBLIC KEY",
+					Bytes: encodedPublicKeyBytes,
+				})
+
 				// auth0 keys are index by kid, not fingerprint
 				jwtKeypairs[kid] = &JWTKeypair{
-					Fingerprint: fingerprint,
-					PublicKey:   publicKey,
+					Fingerprint:  fingerprint,
+					PublicKey:    publicKey,
+					PublicKeyPEM: common.StringOrNil(string(pkixPublicKey)),
 				}
 
 				common.Log.Debugf("auth0 jwt public key configured for verification; kid: %s; fingerprint: %s", kid, fingerprint)
@@ -359,18 +370,19 @@ func requireIdentJWTVerifiers() {
 		for _, key := range keys {
 			publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(key.PublicKey))
 			if err != nil {
-				common.Log.Panicf("failed to parse ident JWT public key; %s", err.Error())
+				common.Log.Warningf("failed to parse ident JWT public key; %s", err.Error())
 			}
 
 			sshPublicKey, err := ssh.NewPublicKey(publicKey)
 			if err != nil {
-				common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+				common.Log.Warningf("failed to resolve JWT public key fingerprint; %s", err.Error())
 			}
 			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
 			jwtKeypairs[fingerprint] = &JWTKeypair{
-				Fingerprint: fingerprint,
-				PublicKey:   *publicKey,
+				Fingerprint:  fingerprint,
+				PublicKey:    *publicKey,
+				PublicKeyPEM: &key.PublicKey,
 			}
 
 			common.Log.Debugf("ident jwt public key configured for verification; fingerprint: %s", fingerprint)
@@ -437,9 +449,10 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 		fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
 		jwtKeypairs[fingerprint] = &JWTKeypair{
-			Fingerprint: fingerprint,
-			PublicKey:   *publicKey,
-			PrivateKey:  privateKey,
+			Fingerprint:  fingerprint,
+			PublicKey:    *publicKey,
+			PublicKeyPEM: &jwtPublicKeyPEM,
+			PrivateKey:   privateKey,
 		}
 
 		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
@@ -513,9 +526,10 @@ func requireVaultJWTKeypairs() {
 				jwtSigningKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
 
 				jwtKeypairs[*jwtSigningKeyFingerprint] = &JWTKeypair{
-					Fingerprint: *jwtSigningKeyFingerprint,
-					PublicKey:   *publicKey,
-					VaultKey:    jwtSigningKey,
+					Fingerprint:  *jwtSigningKeyFingerprint,
+					PublicKey:    *publicKey,
+					PublicKeyPEM: jwtSigningKey.PublicKey,
+					VaultKey:     jwtSigningKey,
 				}
 
 				common.Log.Debugf("resolved JWT signing key from vault: %s", *jwtSigningKeyFingerprint)
