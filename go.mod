@@ -11,7 +11,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/jinzhu/gorm v1.9.16
 	github.com/kthomas/go-auth0 v0.0.0-20210325035251-e5ce67ed0c82
-	github.com/kthomas/go-logger v0.0.0-20210411032719-5e13458854e7
+	github.com/kthomas/go-logger v0.0.0-20210411033328-1283da563236
 	github.com/kthomas/go-pgputil v0.0.0-20200602073402-784e96083943
 	github.com/kthomas/go-self-signed-cert v0.0.0-20200602041729-f9878375d46e
 	github.com/kthomas/go.uuid v1.2.1-0.20190324131420-28d1fa77e9a4
