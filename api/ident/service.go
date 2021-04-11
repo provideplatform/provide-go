@@ -74,7 +74,9 @@ func Authenticate(email, passwd string) (*AuthenticationResponse, error) {
 	err = json.Unmarshal(raw, &authresp)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate user; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to authenticate user; status: %d; %s", status, err.Error())
+	} else if status != 201 {
+		return nil, fmt.Errorf("failed to authenticate user; status: %d", status)
 	}
 
 	return authresp, nil
