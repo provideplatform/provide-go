@@ -395,9 +395,11 @@ func requireIdentJWTVerifiers() {
 // many key to be configured
 func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *vault.Key, *string) {
 	if jwtKeypairs == nil || len(jwtKeypairs) == 0 {
+		common.Log.Debugf("no jwt keypairs found!")
 		return nil, nil, nil, nil
 	}
 
+	common.Log.Debugf("jwt key pairs: %+v", jwtKeypairs)
 	var keypair *JWTKeypair
 
 	if fingerprint == nil {
