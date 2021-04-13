@@ -75,9 +75,6 @@ var (
 	// jwtSigningFingerprint is the default JWT signing key fingerprint
 	jwtSigningKeyFingerprint *string
 
-	// vaultSigningKeyActive is true when the signing key has been activated in vault
-	vaultSigningKeyActive bool
-
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
 	jwtKeypairs     map[string]*JWTKeypair
 	jwtPublicKey    *rsa.PublicKey
@@ -92,6 +89,9 @@ type JWTKeypair struct {
 	PrivateKey   *rsa.PrivateKey
 	VaultKey     *vault.Key
 }
+
+// vaultSigningKeyActive is true when the signing key has been activated in vault
+var VaultSigningKeyActive bool
 
 // SigningMethodEdDSA enables Ed25519
 type SigningMethodEdDSA struct{}
@@ -537,7 +537,7 @@ func requireVaultJWTKeypairs() {
 					VaultKey:     jwtSigningKey,
 				}
 
-				vaultSigningKeyActive = true
+				VaultSigningKeyActive = true
 				common.Log.Debugf("resolved JWT signing key from vault: %s", *jwtSigningKeyFingerprint)
 				return
 			}
