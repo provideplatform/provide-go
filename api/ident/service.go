@@ -224,8 +224,8 @@ func ListApplicationInvitations(token, applicationID string, params map[string]i
 	return users, nil
 }
 
-// ListApplicationOrganizations retrieves a paginated list of users scoped to the given API token
-func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+// ListApplicationOrganizations retrieves a paginated list of organizations scoped to the given API token
+func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*Organization, error) {
 	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
@@ -236,18 +236,18 @@ func ListApplicationOrganizations(token, applicationID string, params map[string
 		return nil, fmt.Errorf("failed to list application organizations; status: %v", status)
 	}
 
-	users := make([]*User, 0)
+	orgs := make([]*Organization, 0)
 	for _, item := range resp.([]interface{}) {
-		usr := &User{}
-		usrraw, _ := json.Marshal(item)
-		json.Unmarshal(usrraw, &usr)
-		users = append(users, usr)
+		org := &Organization{}
+		orgraw, _ := json.Marshal(item)
+		json.Unmarshal(orgraw, &org)
+		orgs = append(orgs, org)
 	}
 
-	return users, nil
+	return orgs, nil
 }
 
-// CreateApplicationOrganization associates a user with an application
+// CreateApplicationOrganization associates an organization with an application
 func CreateApplicationOrganization(token, applicationID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
 	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
