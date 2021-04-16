@@ -42,6 +42,12 @@ const requireJWTSigningKeyTimeout = time.Minute * 1
 
 // jwt configuration vars
 var (
+	// defaultJWTSigningKey is the default JWT signing key
+	defaultJWTSigningKey *vault.Key
+
+	// defaultJWTKeyFingerprint is the default JWT signing/verifying key fingerprint
+	defaultJWTKeyFingerprint *string
+
 	// EdDSA signing method for Ed25519 jwt
 	edDSASigningMethod SigningMethodEdDSA
 
@@ -68,12 +74,6 @@ var (
 
 	// Vault is the vault instance
 	Vault *vault.Vault
-
-	// jwtSigningKey is the default JWT signing key
-	jwtSigningKey *vault.Key
-
-	// jwtSigningFingerprint is the default JWT signing key fingerprint
-	jwtSigningKeyFingerprint *string
 
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
 	jwtKeypairs     map[string]*JWTKeypair
@@ -321,6 +321,8 @@ func RequireJWTVerifiers() map[string]*JWTKeypair {
 		PublicKey:    *publicKey,
 		PublicKeyPEM: &jwtPublicKeyPEM,
 	}
+
+	defaultJWTKeyFingerprint = &fingerprint
 	common.Log.Debugf("JWT_SIGNER_PUBLIC_KEY keypair configured: %s", fingerprint)
 
 	requireIdentJWTVerifiers()
@@ -402,8 +404,8 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 
 	if fingerprint == nil {
 		fingerprints := resolveJWTFingerprints()
-		if jwtSigningKeyFingerprint != nil {
-			keypair = jwtKeypairs[*jwtSigningKeyFingerprint]
+		if defaultJWTKeyFingerprint != nil {
+			keypair = jwtKeypairs[*defaultJWTKeyFingerprint]
 		} else {
 			keypair = jwtKeypairs[fingerprints[len(fingerprints)-1]]
 		}
@@ -455,7 +457,7 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 			PrivateKey:   privateKey,
 		}
 
-		jwtSigningKeyFingerprint = &fingerprint
+		defaultJWTKeyFingerprint = &fingerprint
 		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
 	}
 
@@ -494,9 +496,9 @@ func requireVaultJWTKeypairs() {
 				}
 
 				if len(keys) > 0 {
-					jwtSigningKey = keys[0]
+					defaultJWTSigningKey = keys[0]
 				} else {
-					jwtSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+					defaultJWTSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
 						"name":        fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
 						"description": fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
 						"spec":        defaultTokenSigningKeyspec,
@@ -508,11 +510,11 @@ func requireVaultJWTKeypairs() {
 						continue
 					}
 
-					common.Log.Debugf("created default JWT signing key: %s", jwtSigningKey.ID.String())
-					common.Log.Tracef("JWT signing key public key: %s", *jwtSigningKey.PublicKey)
+					common.Log.Debugf("created default JWT signing key: %s", defaultJWTSigningKey.ID.String())
+					common.Log.Tracef("JWT signing key public key: %s", *defaultJWTSigningKey.PublicKey)
 				}
 
-				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
+				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*defaultJWTSigningKey.PublicKey))
 				if err != nil {
 					common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
 					continue
@@ -524,16 +526,15 @@ func requireVaultJWTKeypairs() {
 					continue
 				}
 
-				jwtKeypairs[*jwtSigningKeyFingerprint] = &JWTKeypair{
-					Fingerprint:  *jwtSigningKeyFingerprint,
+				jwtKeypairs[*defaultJWTKeyFingerprint] = &JWTKeypair{
+					Fingerprint:  *defaultJWTKeyFingerprint,
 					PublicKey:    *publicKey,
-					PublicKeyPEM: jwtSigningKey.PublicKey,
-					VaultKey:     jwtSigningKey,
+					PublicKeyPEM: defaultJWTSigningKey.PublicKey,
+					VaultKey:     defaultJWTSigningKey,
 				}
 
-				jwtSigningKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
-
-				common.Log.Debugf("resolved JWT signing key from vault: %s", *jwtSigningKeyFingerprint)
+				defaultJWTKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
+				common.Log.Debugf("resolved JWT signing key from vault: %s", *defaultJWTKeyFingerprint)
 				return
 			}
 		default:
