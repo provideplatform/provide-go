@@ -81,9 +81,6 @@ var (
 	jwtPublicKeyPEM string
 )
 
-// vaultSigningKeyActive is true when the signing key has been activated in vault
-var VaultSigningKeyActive bool
-
 // JWTKeypair enables private key or vault-based JWT signing and verification
 type JWTKeypair struct {
 	Fingerprint  string
@@ -458,6 +455,7 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 			PrivateKey:   privateKey,
 		}
 
+		jwtSigningKeyFingerprint = &fingerprint
 		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
 	}
 
@@ -526,8 +524,6 @@ func requireVaultJWTKeypairs() {
 					continue
 				}
 
-				jwtSigningKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
-
 				jwtKeypairs[*jwtSigningKeyFingerprint] = &JWTKeypair{
 					Fingerprint:  *jwtSigningKeyFingerprint,
 					PublicKey:    *publicKey,
@@ -535,8 +531,7 @@ func requireVaultJWTKeypairs() {
 					VaultKey:     jwtSigningKey,
 				}
 
-				// set the flag to say we have the vault signing key activated
-				VaultSigningKeyActive = true
+				jwtSigningKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
 
 				common.Log.Debugf("resolved JWT signing key from vault: %s", *jwtSigningKeyFingerprint)
 				return
