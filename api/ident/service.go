@@ -761,12 +761,11 @@ func Status() error {
 		return fmt.Errorf("failed to fetch status; %s", err.Error())
 	}
 
-	// ident can return 200 (up and integrated with vault) or 204 (awaiting vault integration)
-	if status == 200 || status == 204 {
-		return nil
-	} else {
+	if status != 200 {
 		return fmt.Errorf("status endpoint returned %d status code", status)
 	}
+
+	return nil
 }
 
 // GetJWKs returns the set of keys containing the public keys used to verify JWTs
