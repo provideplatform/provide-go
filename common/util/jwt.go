@@ -40,11 +40,7 @@ const requireJWTSigningKeyTickerInterval = time.Millisecond * 2500
 const requireJWTSigningKeySleepInterval = time.Second * 1
 const requireJWTSigningKeyTimeout = time.Second * 10
 
-// jwt configuration vars
 var (
-	// defaultJWTSigningKey is the default JWT signing key
-	defaultJWTSigningKey *vault.Key
-
 	// defaultJWTKeyFingerprint is the default JWT signing/verifying key fingerprint
 	defaultJWTKeyFingerprint *string
 
@@ -75,10 +71,9 @@ var (
 	// Vault is the vault instance
 	Vault *vault.Vault
 
-	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification, keyed by fingerprint
-	jwtKeypairs     map[string]*JWTKeypair
-	jwtPublicKey    *rsa.PublicKey
-	jwtPublicKeyPEM string
+	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification,
+	// keyed by kid, which in the case of ident-native keypairs, is the fingerprint of the public key
+	jwtKeypairs map[string]*JWTKeypair
 )
 
 // JWTKeypair enables private key or vault-based JWT signing and verification
@@ -140,19 +135,6 @@ func (m *SigningMethodEdDSA) Sign(signingString string, key interface{}) (str st
 	// Sign the string and return the encoded result
 	sig := ed25519.Sign(ed25519Key, []byte(signingString))
 	return jwt.EncodeSegment(sig), nil
-}
-
-func init() {
-	jwtPublicKeyPEM = strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
-	if jwtPublicKeyPEM != "" {
-		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
-		if err != nil {
-			common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
-		}
-		jwtPublicKey = publicKey
-	}
-
-	jwt.RegisterSigningMethod(edDSASigningMethod.Alg(), func() jwt.SigningMethod { return &edDSASigningMethod })
 }
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
@@ -424,7 +406,9 @@ func ResolveJWTKeypair(fingerprint *string) (*rsa.PublicKey, *rsa.PrivateKey, *v
 
 func requireJWTKeypairs() map[string]*JWTKeypair {
 	common.Log.Debug("attempting to read required RS256 keypair(s) from environment for signing JWT tokens")
-	jwtKeypairs = map[string]*JWTKeypair{}
+	if jwtKeypairs == nil {
+		jwtKeypairs = map[string]*JWTKeypair{}
+	}
 
 	var privateKey *rsa.PrivateKey // deprecated... only use the vault for signing...
 	var err error
@@ -495,10 +479,12 @@ func requireVaultJWTKeypairs() {
 					continue
 				}
 
+				var jwtSigningKey *vault.Key
+
 				if len(keys) > 0 {
-					defaultJWTSigningKey = keys[0]
+					jwtSigningKey = keys[0]
 				} else {
-					defaultJWTSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+					jwtSigningKey, err = vault.CreateKey(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
 						"name":        fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
 						"description": fmt.Sprintf("JWT %s signer", defaultTokenSigningKeyspec),
 						"spec":        defaultTokenSigningKeyspec,
@@ -510,11 +496,11 @@ func requireVaultJWTKeypairs() {
 						continue
 					}
 
-					common.Log.Debugf("created default JWT signing key: %s", defaultJWTSigningKey.ID.String())
-					common.Log.Tracef("JWT signing key public key: %s", *defaultJWTSigningKey.PublicKey)
+					common.Log.Debugf("created default JWT signing key: %s", jwtSigningKey.ID.String())
+					common.Log.Tracef("JWT signing key public key: %s", *jwtSigningKey.PublicKey)
 				}
 
-				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*defaultJWTSigningKey.PublicKey))
+				publicKey, err := pgputil.DecodeRSAPublicKeyFromPEM([]byte(*jwtSigningKey.PublicKey))
 				if err != nil {
 					common.Log.Warningf("failed to parse JWT public key; %s", err.Error())
 					continue
@@ -529,10 +515,10 @@ func requireVaultJWTKeypairs() {
 				fingerprint := common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
 
 				jwtKeypairs[*fingerprint] = &JWTKeypair{
-					Fingerprint:  *defaultJWTKeyFingerprint,
+					Fingerprint:  *fingerprint,
 					PublicKey:    *publicKey,
-					PublicKeyPEM: defaultJWTSigningKey.PublicKey,
-					VaultKey:     defaultJWTSigningKey,
+					PublicKeyPEM: jwtSigningKey.PublicKey,
+					VaultKey:     jwtSigningKey,
 				}
 
 				defaultJWTKeyFingerprint = fingerprint
