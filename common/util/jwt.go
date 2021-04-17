@@ -526,14 +526,16 @@ func requireVaultJWTKeypairs() {
 					continue
 				}
 
-				jwtKeypairs[*defaultJWTKeyFingerprint] = &JWTKeypair{
+				fingerprint := common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
+
+				jwtKeypairs[*fingerprint] = &JWTKeypair{
 					Fingerprint:  *defaultJWTKeyFingerprint,
 					PublicKey:    *publicKey,
 					PublicKeyPEM: defaultJWTSigningKey.PublicKey,
 					VaultKey:     defaultJWTSigningKey,
 				}
 
-				defaultJWTKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
+				defaultJWTKeyFingerprint = fingerprint
 				common.Log.Debugf("resolved JWT signing key from vault: %s", *defaultJWTKeyFingerprint)
 				return
 			}
