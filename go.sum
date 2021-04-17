@@ -173,8 +173,8 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/kthomas/go-auth0 v0.0.0-20210325035251-e5ce67ed0c82 h1:GusMsITayNSULOxVpXgROTXPLxp9D5AzW/u5PbksrQQ=
-github.com/kthomas/go-auth0 v0.0.0-20210325035251-e5ce67ed0c82/go.mod h1:5o9CD0v7+NFL4+2diOZIqQ0gZIFZepkl5XRXHQt0zN8=
+github.com/kthomas/go-auth0 v0.0.0-20210417040958-1bc08b5654a7 h1:WREPwG1PNjdW8vgGnV6zQFIydmREASi28phPNYASpqU=
+github.com/kthomas/go-auth0 v0.0.0-20210417040958-1bc08b5654a7/go.mod h1:5o9CD0v7+NFL4+2diOZIqQ0gZIFZepkl5XRXHQt0zN8=
 github.com/kthomas/go-logger v0.0.0-20200602041232-5c46e0cab608/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531 h1:8SnbaD9jO9OWBECn2X6IcCLz8RASFgB0bLbVNtt7yGE=
 github.com/kthomas/go-logger v0.0.0-20200602072946-d7d72dfc2531/go.mod h1:sXRQB767yNz+melLbxSNF+yu0H7kxguvoJHqa47Mxh4=
