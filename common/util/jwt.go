@@ -137,6 +137,25 @@ func (m *SigningMethodEdDSA) Sign(signingString string, key interface{}) (str st
 	return jwt.EncodeSegment(sig), nil
 }
 
+func init() {
+	jwtPublicKeyPEM := strings.Replace(os.Getenv("JWT_SIGNER_PUBLIC_KEY"), `\n`, "\n", -1)
+	if jwtPublicKeyPEM != "" {
+		publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPublicKeyPEM))
+		if err != nil {
+			common.Log.Panicf("failed to parse JWT public key; %s", err.Error())
+		}
+
+		sshPublicKey, err := ssh.NewPublicKey(publicKey)
+		if err != nil {
+			common.Log.Panicf("failed to resolve JWT public key fingerprint; %s", err.Error())
+		}
+
+		defaultJWTKeyFingerprint = common.StringOrNil(ssh.FingerprintLegacyMD5(sshPublicKey))
+	}
+
+	jwt.RegisterSigningMethod(edDSASigningMethod.Alg(), func() jwt.SigningMethod { return &edDSASigningMethod })
+}
+
 // AuthorizedSubjectID returns the requested JWT subject if it matches
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 	token, err := ParseBearerAuthorizationHeader(c, nil)
