@@ -36,9 +36,9 @@ const defaultJWTAuthorizationTTL = time.Hour * 24
 const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
 const defaultTokenSigningKeyspec = "RSA-4096"
 
-const requireJWTSigningKeyTickerInterval = time.Second * 5
+const requireJWTSigningKeyTickerInterval = time.Millisecond * 2500
 const requireJWTSigningKeySleepInterval = time.Second * 1
-const requireJWTSigningKeyTimeout = time.Minute * 1
+const requireJWTSigningKeyTimeout = time.Second * 10
 
 // jwt configuration vars
 var (
