@@ -258,7 +258,7 @@ func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]int
 		return nil, err
 	}
 
-	if status != 201 {
+	if status != 200 {
 		return nil, fmt.Errorf("failed to verify message signature; status: %v; %s", status, resp)
 	}
 
@@ -543,7 +543,7 @@ func VerifyAggregateSignatures(token *string, params map[string]interface{}) (*V
 		return nil, err
 	}
 
-	if status != 201 {
+	if status != 200 {
 		return nil, fmt.Errorf("failed to aggregate bls signatures. status: %v", status)
 	}
 
@@ -571,7 +571,7 @@ func VerifyDetachedSignature(token, spec, msg, sig, publicKey string, opts map[s
 		return nil, err
 	}
 
-	if status != 201 {
+	if status != 200 {
 		return nil, fmt.Errorf("failed to verify message signature; status: %v; %s", status, resp)
 	}
 
