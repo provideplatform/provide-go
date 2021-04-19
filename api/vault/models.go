@@ -71,14 +71,14 @@ type VerifyResponse struct {
 	Verified bool `json:"verified"`
 }
 
-// SealUnsealRequestResponse provides the unseal information
-type SealUnsealRequestResponse struct {
-	UnsealerKey    *string `json:"key,omitempty"`
-	ValidationHash *string `json:"validation_hash,omitempty"`
-}
-
 // BLSAggregateRequestResponse provides the BLS sig information to aggregate n BLS signatures into one BLS signature
 type BLSAggregateRequestResponse struct {
 	Signatures         []*string `json:"signatures,omitempty"`
 	AggregateSignature *string   `json:"aggregate_signature,omitempty"`
+}
+
+// SealUnsealRequestResponse provides the unseal information
+type SealUnsealRequestResponse struct {
+	UnsealerKey    *string `json:"key,omitempty"`
+	ValidationHash *string `json:"validation_hash,omitempty"`
 }

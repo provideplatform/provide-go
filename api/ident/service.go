@@ -74,7 +74,9 @@ func Authenticate(email, passwd string) (*AuthenticationResponse, error) {
 	err = json.Unmarshal(raw, &authresp)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate user; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to authenticate user; status: %d; %s", status, err.Error())
+	} else if status != 201 {
+		return nil, fmt.Errorf("failed to authenticate user; status: %d", status)
 	}
 
 	return authresp, nil
@@ -222,8 +224,8 @@ func ListApplicationInvitations(token, applicationID string, params map[string]i
 	return users, nil
 }
 
-// ListApplicationOrganizations retrieves a paginated list of users scoped to the given API token
-func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+// ListApplicationOrganizations retrieves a paginated list of organizations scoped to the given API token
+func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*Organization, error) {
 	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
 	if err != nil {
@@ -234,18 +236,18 @@ func ListApplicationOrganizations(token, applicationID string, params map[string
 		return nil, fmt.Errorf("failed to list application organizations; status: %v", status)
 	}
 
-	users := make([]*User, 0)
+	orgs := make([]*Organization, 0)
 	for _, item := range resp.([]interface{}) {
-		usr := &User{}
-		usrraw, _ := json.Marshal(item)
-		json.Unmarshal(usrraw, &usr)
-		users = append(users, usr)
+		org := &Organization{}
+		orgraw, _ := json.Marshal(item)
+		json.Unmarshal(orgraw, &org)
+		orgs = append(orgs, org)
 	}
 
-	return users, nil
+	return orgs, nil
 }
 
-// CreateApplicationOrganization associates a user with an application
+// CreateApplicationOrganization associates an organization with an application
 func CreateApplicationOrganization(token, applicationID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
 	status, _, err := InitIdentService(common.StringOrNil(token)).Post(uri, params)
@@ -348,11 +350,37 @@ func CreateApplicationToken(token, applicationID string, params map[string]inter
 	return tkn, nil
 }
 
+// ListOrganizations retrieves a paginated list of organizations scoped to the given API token
+func ListOrganizations(token string, params map[string]interface{}) ([]*Organization, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("organizations", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list organizations; status: %v", status)
+	}
+
+	orgs := make([]*Organization, 0)
+	for _, item := range resp.([]interface{}) {
+		org := &Organization{}
+		orgraw, _ := json.Marshal(item)
+		json.Unmarshal(orgraw, &org)
+		orgs = append(orgs, org)
+	}
+
+	return orgs, nil
+}
+
 // CreateToken creates a new API token.
 func CreateToken(token string, params map[string]interface{}) (*Token, error) {
 	status, resp, err := InitIdentService(common.StringOrNil(token)).Post("tokens", params)
 	if err != nil {
 		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to authorize token; status: %v", status)
 	}
 
 	// FIXME...
@@ -706,4 +734,76 @@ func ResetPassword(token *string, resetPasswordToken, passwd string) error {
 	}
 
 	return nil
+}
+
+// Status returns the status of the endpoint
+func Status() error {
+	host := defaultIdentHost
+	if os.Getenv("IDENT_API_HOST") != "" {
+		host = os.Getenv("IDENT_API_HOST")
+	}
+
+	scheme := defaultIdentScheme
+	if os.Getenv("IDENT_API_SCHEME") != "" {
+		scheme = os.Getenv("IDENT_API_SCHEME")
+	}
+
+	service := &Service{
+		api.Client{
+			Host:   host,
+			Path:   "",
+			Scheme: scheme,
+		},
+	}
+
+	status, _, err := service.Get("status", map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to fetch status; %s", err.Error())
+	}
+
+	if status != 200 {
+		return fmt.Errorf("status endpoint returned %d status code", status)
+	}
+
+	return nil
+}
+
+// GetJWKs returns the set of keys containing the public keys used to verify JWTs
+func GetJWKs() ([]*JSONWebKey, error) {
+	host := defaultIdentHost
+	if os.Getenv("IDENT_API_HOST") != "" {
+		host = os.Getenv("IDENT_API_HOST")
+	}
+
+	scheme := defaultIdentScheme
+	if os.Getenv("IDENT_API_SCHEME") != "" {
+		scheme = os.Getenv("IDENT_API_SCHEME")
+	}
+
+	service := &Service{
+		api.Client{
+			Host:   host,
+			Path:   "",
+			Scheme: scheme,
+		},
+	}
+
+	status, resp, err := service.Get(".well-known/jwks.json", map[string]interface{}{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch well-known JWKs; %s", err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("well-known JWKs endpoint returned %d status code", status)
+	}
+
+	keys := make([]*JSONWebKey, 0)
+	for _, item := range resp.([]interface{}) {
+		key := &JSONWebKey{}
+		keyraw, _ := json.Marshal(item)
+		json.Unmarshal(keyraw, &key)
+		keys = append(keys, key)
+	}
+
+	return keys, nil
 }
