@@ -233,6 +233,31 @@ func CreateContract(token string, params map[string]interface{}) (*Contract, err
 	return contract, nil
 }
 
+// CreatePublicContract loads an already deployed contract into nchain
+// for arbitrary transaction execution
+// this can be used for org registries, erc20 etc.
+func CreatePublicContract(token string, params map[string]interface{}) (*Contract, error) {
+	uri := "public/contracts"
+	status, resp, err := InitNChainService(token).Post(uri, params)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create public contract. status: %v", status)
+	}
+
+	contract := &Contract{}
+	contractRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(contractRaw, &contract)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create public contract. status: %v; %s", status, err.Error())
+	}
+
+	return contract, nil
+}
+
 // ExecuteContract
 func ExecuteContract(token, contractID string, params map[string]interface{}) (*ContractExecutionResponse, error) {
 	uri := fmt.Sprintf("contracts/%s/execute", contractID)

@@ -420,8 +420,9 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 	case params.YoloV1ChainConfig.ChainID.Uint64():
 		return params.YoloV1ChainConfig
 	case kovanChainID: // HACK
-		cfg := params.GoerliChainConfig
-		cfg.ChainID = chainID
+		kovanConfig := params.GoerliChainConfig
+		kovanConfig.ChainID = chainID
+		return kovanConfig
 	}
 
 	return params.MainnetChainConfig
@@ -518,6 +519,25 @@ func EVMTxFactory(
 			return nil, nil, nil, err
 		}
 		prvdcommon.Log.Debugf("estimated gas for %d-byte tx: %d", len(_data), gasLimit)
+	}
+
+	// check account balance
+	if gasLimit > 0 {
+		balance, err := client.BalanceAt(context.TODO(), common.HexToAddress(from), nil)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		// cost = gaslimit * gasprice
+		limit := new(big.Int).SetUint64(gasLimit)
+		price := new(big.Int).SetUint64(*gasPrice)
+		cost := new(big.Int)
+		cost = cost.Mul(limit, price)
+		// compare the balance to the cost
+		cmp := balance.Cmp(cost)
+		if cmp == -1 {
+			// there is not enough wei in the account to pay for the transaction (balance < gaslimit)
+			return nil, nil, nil, fmt.Errorf("insufficient balance in account")
+		}
 	}
 
 	if to != nil {
