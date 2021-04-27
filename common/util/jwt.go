@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
@@ -74,6 +75,8 @@ var (
 	// JWTKeypairs is a map of JWTKeypair instances which contains the configured RSA public/private keypairs for JWT signing and/or verification,
 	// keyed by kid, which in the case of ident-native keypairs, is the fingerprint of the public key
 	jwtKeypairs map[string]*JWTKeypair
+
+	jwtVerifiersMutex *sync.Mutex
 )
 
 // JWTKeypair enables private key or vault-based JWT signing and verification
@@ -154,6 +157,7 @@ func init() {
 	}
 
 	jwt.RegisterSigningMethod(edDSASigningMethod.Alg(), func() jwt.SigningMethod { return &edDSASigningMethod })
+	jwtVerifiersMutex = &sync.Mutex{}
 }
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
@@ -303,6 +307,9 @@ func RequireJWT() map[string]*JWTKeypair {
 // use-case for this support is when another microservice is depending on the
 // token authorization middleware provided in this package
 func RequireJWTVerifiers() map[string]*JWTKeypair {
+	jwtVerifiersMutex.Lock()
+	defer jwtVerifiersMutex.Unlock()
+
 	common.Log.Debug("attempting to read required public key from environment for verifying signed JWT")
 	if jwtKeypairs == nil {
 		jwtKeypairs = map[string]*JWTKeypair{}
