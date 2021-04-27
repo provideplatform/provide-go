@@ -193,9 +193,12 @@ func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt
 		return nil, errors.New("no authorization header provided")
 	}
 
-	hdrprts := strings.Split(authorization, "bearer ")
+	hdrprts := strings.Split(authorization, "Bearer ")
 	if len(hdrprts) != 2 {
-		return nil, fmt.Errorf("failed to parse bearer authorization header: %s", authorization)
+		hdrprts = strings.Split(authorization, "bearer ")
+		if len(hdrprts) != 2 {
+			return nil, fmt.Errorf("failed to parse bearer authorization header: %s", authorization)
+		}
 	}
 
 	authorization = hdrprts[1]
