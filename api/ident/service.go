@@ -788,7 +788,7 @@ func GetJWKs() ([]*JSONWebKey, error) {
 		},
 	}
 
-	status, resp, err := service.Get(".well-known/jwks.json", map[string]interface{}{})
+	status, resp, err := service.Get(".well-known/keys", map[string]interface{}{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch well-known JWKs; %s", err.Error())
 	}
