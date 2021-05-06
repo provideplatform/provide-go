@@ -474,7 +474,7 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 		common.Log.Debugf("resolved JWT signing key from environment: %s", fingerprint)
 	}
 
-	requireVaultJWTKeypairs()
+	go requireVaultJWTKeypairs()
 	requireAuth0JWTVerifiers()
 
 	return jwtKeypairs
