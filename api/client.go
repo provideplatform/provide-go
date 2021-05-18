@@ -69,6 +69,7 @@ func getRequestTimeout() time.Duration {
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
 	//set custom timeout and return custom timeout
+	common.Log.Debugf("Using custom timeout of %v for requests", timeout)
 	customRequestTimeout = &timeoutInSeconds
 
 	return *customRequestTimeout
