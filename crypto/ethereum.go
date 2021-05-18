@@ -15,6 +15,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -52,6 +53,39 @@ var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of rpc cli
 var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of rpc client keys to *ethrpc.Client instances
 
 var evmMutex = &sync.Mutex{}
+
+const defaultRpcTimeout = time.Second * 60
+
+var customRpcTimeout *time.Duration
+
+func getRpcTimeout() time.Duration {
+	// check for custom timeout
+	if customRpcTimeout != nil {
+		return *customRpcTimeout
+	}
+
+	// if nil check for env var
+	envRpcTimeout := os.Getenv("RPC_TIMEOUT")
+	if envRpcTimeout == "" {
+		return defaultRpcTimeout
+	}
+
+	// convert string to int64
+	timeout, err := strconv.ParseInt(envRpcTimeout, 10, 64)
+	if err != nil {
+		prvdcommon.Log.Debugf("Error parsing custom rpc timeout. using default rpc timeout. Error: %s", err.Error())
+		return defaultRpcTimeout
+	}
+
+	//convert to time.Duration
+	timeoutInSeconds := time.Duration(timeout) * time.Second
+
+	//set custom timeout and return custom timeout
+	prvdcommon.Log.Debugf("Using custom rpc timeout of %v for rpc requests", timeout)
+	customRpcTimeout = &timeoutInSeconds
+
+	return *customRpcTimeout
+}
 
 func evmClearCachedClients(rpcClientKey string) {
 	evmMutex.Lock()
@@ -101,7 +135,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
 		},
-		Timeout: time.Second * 60,
+		Timeout: getRpcTimeout(),
 	}
 	id, err := uuid.NewV4()
 	if err != nil {
