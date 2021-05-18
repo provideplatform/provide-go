@@ -58,7 +58,11 @@ const defaultRpcTimeout = time.Second * 60
 
 var customRpcTimeout *time.Duration
 
-func getRpcTimeout() time.Duration {
+const defaultEvmSyncTimeout = time.Second * 5
+
+var customEvmSyncTimeout *time.Duration
+
+func rpcTimeout() time.Duration {
 	// check for custom timeout
 	if customRpcTimeout != nil {
 		return *customRpcTimeout
@@ -85,6 +89,36 @@ func getRpcTimeout() time.Duration {
 	customRpcTimeout = &timeoutInSeconds
 
 	return *customRpcTimeout
+}
+
+func evmSyncTimeout() time.Duration {
+	// check for custom timeout
+	if customEvmSyncTimeout != nil {
+		return *customEvmSyncTimeout
+	}
+
+	// if nil check for env var
+	envEvmSyncTimeout := os.Getenv("EVM_SYNC_TIMEOUT")
+	if envEvmSyncTimeout == "" {
+		prvdcommon.Log.Debugf("Using default EVM Sync timeout of %v seconds", defaultEvmSyncTimeout)
+		return defaultEvmSyncTimeout
+	}
+
+	// convert string to int64
+	timeout, err := strconv.ParseInt(envEvmSyncTimeout, 10, 64)
+	if err != nil {
+		prvdcommon.Log.Debugf("Error parsing custom EVM sync timeout. using default(%v seconds). Error: %s", defaultEvmSyncTimeout, err.Error())
+		return defaultEvmSyncTimeout
+	}
+
+	//convert to time.Duration
+	timeoutInSeconds := time.Duration(timeout) * time.Second
+
+	//set custom timeout and return custom timeout
+	prvdcommon.Log.Debugf("Using custom EVM sync timeout of %v seconds", timeout)
+	customEvmSyncTimeout = &timeoutInSeconds
+
+	return *customEvmSyncTimeout
 }
 
 func evmClearCachedClients(rpcClientKey string) {
@@ -135,7 +169,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
 		},
-		Timeout: getRpcTimeout(),
+		Timeout: rpcTimeout(),
 	}
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -1239,7 +1273,7 @@ func EVMGetCode(rpcClientKey, rpcURL, addr, scope string) (*string, error) {
 
 // EVMGetSyncProgress retrieves the status of the current network sync
 func EVMGetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.TODO(), evmSyncTimeout())
 	progress, err := client.SyncProgress(ctx)
 	if err != nil {
 		prvdcommon.Log.Warningf("Error obtaining sync progress for *ethclient.Client instance; %s", err.Error())

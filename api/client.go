@@ -45,7 +45,7 @@ type Client struct {
 	Password *string
 }
 
-func getRequestTimeout() time.Duration {
+func requestTimeout() time.Duration {
 
 	// check for custom timeout
 	if customRequestTimeout != nil {
@@ -55,13 +55,14 @@ func getRequestTimeout() time.Duration {
 	// if nil check for env var
 	envRequestTimeout := os.Getenv("REQUEST_TIMEOUT")
 	if envRequestTimeout == "" {
+		common.Log.Debugf("Using default request timeout of %v seconds", defaultRequestTimeout)
 		return defaultRequestTimeout
 	}
 
 	// convert string to int64
 	timeout, err := strconv.ParseInt(envRequestTimeout, 10, 64)
 	if err != nil {
-		common.Log.Debugf("Error parsing custom request timeout. using default timeout. Error: %s", err.Error())
+		common.Log.Debugf("Error parsing custom request timeout. using default timeout (%v seconds). Error: %s", defaultRequestTimeout, err.Error())
 		return defaultRequestTimeout
 	}
 
@@ -69,7 +70,7 @@ func getRequestTimeout() time.Duration {
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
 	//set custom timeout and return custom timeout
-	common.Log.Debugf("Using custom timeout of %v for requests", timeout)
+	common.Log.Debugf("Using custom timeout of %v seconds for requests", timeout)
 	customRequestTimeout = &timeoutInSeconds
 
 	return *customRequestTimeout
@@ -144,7 +145,7 @@ func (c *Client) sendRequestWithTLSClientConfig(
 			DisableKeepAlives: true,
 			TLSClientConfig:   tlsClientConfig,
 		},
-		Timeout: getRequestTimeout(),
+		Timeout: requestTimeout(),
 	}
 
 	mthd := strings.ToUpper(method)
