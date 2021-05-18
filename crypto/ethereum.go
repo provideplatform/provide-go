@@ -100,7 +100,6 @@ func evmSyncTimeout() time.Duration {
 	// if nil check for env var
 	envEvmSyncTimeout := os.Getenv("EVM_SYNC_TIMEOUT")
 	if envEvmSyncTimeout == "" {
-		prvdcommon.Log.Debugf("Using default EVM Sync timeout of %v seconds", defaultEvmSyncTimeout)
 		return defaultEvmSyncTimeout
 	}
 

@@ -55,7 +55,6 @@ func requestTimeout() time.Duration {
 	// if nil check for env var
 	envRequestTimeout := os.Getenv("REQUEST_TIMEOUT")
 	if envRequestTimeout == "" {
-		common.Log.Debugf("Using default request timeout of %v seconds", defaultRequestTimeout)
 		return defaultRequestTimeout
 	}
 
