@@ -54,66 +54,56 @@ var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of rpc cli
 
 var evmMutex = &sync.Mutex{}
 
+// default timeouts
 const defaultRpcTimeout = time.Second * 60
-
-var customRpcTimeout *time.Duration
-
 const defaultEvmSyncTimeout = time.Second * 5
 
+// custom timeout vars
+var customRpcTimeout *time.Duration
 var customEvmSyncTimeout *time.Duration
 
 func rpcTimeout() time.Duration {
-	// check for custom timeout
 	if customRpcTimeout != nil {
 		return *customRpcTimeout
 	}
 
-	// if nil check for env var
 	envRpcTimeout := os.Getenv("RPC_TIMEOUT")
 	if envRpcTimeout == "" {
 		return defaultRpcTimeout
 	}
 
-	// convert string to int64
 	timeout, err := strconv.ParseInt(envRpcTimeout, 10, 64)
 	if err != nil {
 		prvdcommon.Log.Debugf("Error parsing custom rpc timeout. using default rpc timeout. Error: %s", err.Error())
 		return defaultRpcTimeout
 	}
 
-	//convert to time.Duration
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
-	//set custom timeout and return custom timeout
-	prvdcommon.Log.Debugf("Using custom rpc timeout of %v for rpc requests", timeout)
+	prvdcommon.Log.Debugf("Using custom rpc timeout of %v seconds for rpc requests", timeout)
 	customRpcTimeout = &timeoutInSeconds
 
 	return *customRpcTimeout
 }
 
 func evmSyncTimeout() time.Duration {
-	// check for custom timeout
 	if customEvmSyncTimeout != nil {
 		return *customEvmSyncTimeout
 	}
 
-	// if nil check for env var
 	envEvmSyncTimeout := os.Getenv("EVM_SYNC_TIMEOUT")
 	if envEvmSyncTimeout == "" {
 		return defaultEvmSyncTimeout
 	}
 
-	// convert string to int64
 	timeout, err := strconv.ParseInt(envEvmSyncTimeout, 10, 64)
 	if err != nil {
 		prvdcommon.Log.Debugf("Error parsing custom EVM sync timeout. using default(%v seconds). Error: %s", defaultEvmSyncTimeout, err.Error())
 		return defaultEvmSyncTimeout
 	}
 
-	//convert to time.Duration
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
-	//set custom timeout and return custom timeout
 	prvdcommon.Log.Debugf("Using custom EVM sync timeout of %v seconds", timeout)
 	customEvmSyncTimeout = &timeoutInSeconds
 

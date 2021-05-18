@@ -46,29 +46,23 @@ type Client struct {
 }
 
 func requestTimeout() time.Duration {
-
-	// check for custom timeout
 	if customRequestTimeout != nil {
 		return *customRequestTimeout
 	}
 
-	// if nil check for env var
 	envRequestTimeout := os.Getenv("REQUEST_TIMEOUT")
 	if envRequestTimeout == "" {
 		return defaultRequestTimeout
 	}
 
-	// convert string to int64
 	timeout, err := strconv.ParseInt(envRequestTimeout, 10, 64)
 	if err != nil {
 		common.Log.Debugf("Error parsing custom request timeout. using default timeout (%v seconds). Error: %s", defaultRequestTimeout, err.Error())
 		return defaultRequestTimeout
 	}
 
-	//convert to time.Duration
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
-	//set custom timeout and return custom timeout
 	common.Log.Debugf("Using custom timeout of %v seconds for requests", timeout)
 	customRequestTimeout = &timeoutInSeconds
 
