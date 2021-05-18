@@ -12,6 +12,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,11 +24,13 @@ import (
 const defaultContentType = "application/json"
 const defaultRequestTimeout = time.Second * 10
 
+var customRequestTimeout *time.Duration
+
 // Client is a generic base class for calling a REST API; when a token is configured on an
 // Client instance it will be provided as a bearer authorization header; when a username and
 // password are configured on an Client instance, they will be used for HTTP basic authorization
 // but will be passed as the Authorization header instead of as part of the URL itself. When a token
-// is confgiured on an Client instance, the username and password supplied for basic auth are
+// is configured on an Client instance, the username and password supplied for basic auth are
 // currently discarded.
 type Client struct {
 	Host   string
@@ -39,6 +43,30 @@ type Client struct {
 
 	Username *string
 	Password *string
+}
+
+func requestTimeout() time.Duration {
+	if customRequestTimeout != nil {
+		return *customRequestTimeout
+	}
+
+	envRequestTimeout := os.Getenv("REQUEST_TIMEOUT")
+	if envRequestTimeout == "" {
+		return defaultRequestTimeout
+	}
+
+	timeout, err := strconv.ParseInt(envRequestTimeout, 10, 64)
+	if err != nil {
+		common.Log.Debugf("Error parsing custom request timeout. using default timeout (%v seconds). Error: %s", defaultRequestTimeout, err.Error())
+		return defaultRequestTimeout
+	}
+
+	timeoutInSeconds := time.Duration(timeout) * time.Second
+
+	common.Log.Debugf("Using custom timeout of %v seconds for requests", timeout)
+	customRequestTimeout = &timeoutInSeconds
+
+	return *customRequestTimeout
 }
 
 func (c *Client) parseResponse(resp *http.Response) (status int, response interface{}, err error) {
@@ -110,7 +138,7 @@ func (c *Client) sendRequestWithTLSClientConfig(
 			DisableKeepAlives: true,
 			TLSClientConfig:   tlsClientConfig,
 		},
-		Timeout: defaultRequestTimeout,
+		Timeout: requestTimeout(),
 	}
 
 	mthd := strings.ToUpper(method)

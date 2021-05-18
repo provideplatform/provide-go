@@ -15,6 +15,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -52,6 +53,62 @@ var ethclientRpcClients = map[string][]*ethclient.Client{} // mapping of rpc cli
 var ethrpcClients = map[string][]*ethrpc.Client{}          // mapping of rpc client keys to *ethrpc.Client instances
 
 var evmMutex = &sync.Mutex{}
+
+// default timeouts
+const defaultRpcTimeout = time.Second * 60
+const defaultEvmSyncTimeout = time.Second * 5
+
+// custom timeout vars
+var customRpcTimeout *time.Duration
+var customEvmSyncTimeout *time.Duration
+
+func rpcTimeout() time.Duration {
+	if customRpcTimeout != nil {
+		return *customRpcTimeout
+	}
+
+	envRpcTimeout := os.Getenv("RPC_TIMEOUT")
+	if envRpcTimeout == "" {
+		return defaultRpcTimeout
+	}
+
+	timeout, err := strconv.ParseInt(envRpcTimeout, 10, 64)
+	if err != nil {
+		prvdcommon.Log.Debugf("Error parsing custom rpc timeout. using default rpc timeout. Error: %s", err.Error())
+		return defaultRpcTimeout
+	}
+
+	timeoutInSeconds := time.Duration(timeout) * time.Second
+
+	prvdcommon.Log.Debugf("Using custom rpc timeout of %v seconds for rpc requests", timeout)
+	customRpcTimeout = &timeoutInSeconds
+
+	return *customRpcTimeout
+}
+
+func evmSyncTimeout() time.Duration {
+	if customEvmSyncTimeout != nil {
+		return *customEvmSyncTimeout
+	}
+
+	envEvmSyncTimeout := os.Getenv("EVM_SYNC_TIMEOUT")
+	if envEvmSyncTimeout == "" {
+		return defaultEvmSyncTimeout
+	}
+
+	timeout, err := strconv.ParseInt(envEvmSyncTimeout, 10, 64)
+	if err != nil {
+		prvdcommon.Log.Debugf("Error parsing custom EVM sync timeout. using default(%v seconds). Error: %s", defaultEvmSyncTimeout, err.Error())
+		return defaultEvmSyncTimeout
+	}
+
+	timeoutInSeconds := time.Duration(timeout) * time.Second
+
+	prvdcommon.Log.Debugf("Using custom EVM sync timeout of %v seconds", timeout)
+	customEvmSyncTimeout = &timeoutInSeconds
+
+	return *customEvmSyncTimeout
+}
 
 func evmClearCachedClients(rpcClientKey string) {
 	evmMutex.Lock()
@@ -101,7 +158,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
 		},
-		Timeout: time.Second * 60,
+		Timeout: rpcTimeout(),
 	}
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -445,7 +502,11 @@ func EVMTxFactory(
 		return nil, nil, nil, err
 	}
 
-	chainID := EVMGetChainID(rpcClientKey, rpcURL)
+	chainID, err := EVMGetChainID(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	block, err := EVMGetLatestBlockNumber(rpcClientKey, rpcURL)
 	if err != nil {
 		return nil, nil, nil, err
@@ -937,9 +998,9 @@ func EVMGetBlockNumber(rpcClientKey, rpcURL string) *uint64 {
 
 // EVMGetChainConfig parses the cached network config mapped to the given
 // `rpcClientKey`, if one exists; otherwise, the mainnet chain config is returned.
-func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
+func EVMGetChainConfig(rpcClientKey, rpcURL string) (*params.ChainConfig, error) {
 	if cfg, ok := chainConfigs[rpcClientKey]; ok {
-		return cfg
+		return cfg, nil
 	}
 	cfg := params.MainnetChainConfig
 	chainID, err := strconv.ParseUint(rpcClientKey, 10, 64)
@@ -947,31 +1008,37 @@ func EVMGetChainConfig(rpcClientKey, rpcURL string) *params.ChainConfig {
 		cfg.ChainID = big.NewInt(int64(chainID))
 		chainConfigs[rpcClientKey] = cfg
 	} else {
-		cfg.ChainID = EVMGetChainID(rpcClientKey, rpcURL)
+		cfg.ChainID, err = EVMGetChainID(rpcClientKey, rpcURL)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting chain id. Error: %s", err.Error())
+		}
 	}
-	return cfg
+	return cfg, nil
 }
 
 // EVMGetChainID retrieves the current chainID via JSON-RPC
-func EVMGetChainID(rpcClientKey, rpcURL string) *big.Int {
+func EVMGetChainID(rpcClientKey, rpcURL string) (*big.Int, error) {
 	ethClient, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
 	if err != nil {
-		prvdcommon.Log.Warningf("failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
-		return nil
+		errmsg := fmt.Sprintf("Failed to obtain network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf(errmsg)
+		return nil, fmt.Errorf(errmsg)
 	}
 	if ethClient == nil {
-		prvdcommon.Log.Warningf("failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
-		return nil
+		errmsg := fmt.Sprintf("failed to read network id for unresolved *ethclient.Client instance; network id: %s; JSON-RPC URL: %s", rpcClientKey, rpcURL)
+		prvdcommon.Log.Warningf(errmsg)
+		return nil, fmt.Errorf(errmsg)
 	}
 	chainID, err := ethClient.NetworkID(context.TODO())
 	if err != nil {
-		prvdcommon.Log.Warningf("failed to read network id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
-		return nil
+		errmsg := fmt.Sprintf("failed to read chain id for *ethclient.Client instance with RPC URL: %s; %s", rpcURL, err.Error())
+		prvdcommon.Log.Warningf(errmsg)
+		return nil, fmt.Errorf(errmsg)
 	}
 	if chainID != nil {
 		prvdcommon.Log.Debugf("received chain id from *ethclient.Client instance with RPC URL: %s; %s", rpcURL, chainID)
 	}
-	return chainID
+	return chainID, nil
 }
 
 // EVMGetGasPrice returns the gas price
@@ -1091,7 +1158,10 @@ func EVMGetNetworkStatus(rpcClientKey, rpcURL string) (*api.NetworkStatus, error
 	var block uint64        // current block; will be less than height while syncing in progress
 	var height *uint64      // total number of blocks
 	var lastBlockAt *uint64 // unix timestamp of last block
-	chainID := EVMGetChainID(rpcClientKey, rpcURL)
+	chainID, err := EVMGetChainID(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, err
+	}
 	peers := EVMGetPeerCount(rpcClientKey, rpcURL)
 	protocolVersion := EVMGetProtocolVersion(rpcClientKey, rpcURL)
 	meta := map[string]interface{}{}
@@ -1192,10 +1262,10 @@ func EVMGetCode(rpcClientKey, rpcURL, addr, scope string) (*string, error) {
 
 // EVMGetSyncProgress retrieves the status of the current network sync
 func EVMGetSyncProgress(client *ethclient.Client) (*ethereum.SyncProgress, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.TODO(), evmSyncTimeout())
 	progress, err := client.SyncProgress(ctx)
 	if err != nil {
-		prvdcommon.Log.Warningf("Failed to read sync progress for *ethclient.Client instance; %s", err.Error())
+		prvdcommon.Log.Warningf("Error obtaining sync progress for *ethclient.Client instance; %s", err.Error())
 		cancel()
 		return nil, err
 	}
