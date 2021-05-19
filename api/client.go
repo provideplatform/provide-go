@@ -102,6 +102,7 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 		case "application/json":
 			err = json.Unmarshal(buf.Bytes(), &response)
 			if err != nil {
+                                common.Log.Debugf("parsed data url parameter: %s", string(buf.Bytes()))
 				err = fmt.Errorf("failed to unmarshal %v-byte HTTP %s response from %s; %s", len(buf.Bytes()), resp.Request.Method, resp.Request.URL.String(), err.Error())
 				return resp.StatusCode, nil, err
 			}
