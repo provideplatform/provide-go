@@ -76,7 +76,7 @@ func CreateNode(token string, params map[string]interface{}) (*Node, error) {
 		return nil, err
 	}
 
-	if status != 200 {
+	if status != 201 { // correct response is 201 Created
 		return nil, fmt.Errorf("failed to create node; status: %v", status)
 	}
 
