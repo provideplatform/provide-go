@@ -9,9 +9,9 @@ import (
 	"github.com/provideservices/provide-go/common"
 )
 
-const defaultBaselineHost = "baseline.provide.services"
+const defaultBaselineHost = "localhost:8080"
 const defaultBaselinePath = "api/v1"
-const defaultBaselineScheme = "https"
+const defaultBaselineScheme = "http"
 
 // Service for the baseline api
 type Service struct {
