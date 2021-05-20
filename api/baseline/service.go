@@ -121,7 +121,7 @@ func CreateBusinessObject(token string, params map[string]interface{}) (interfac
 		return nil, fmt.Errorf("failed to create business object; status: %v; %s", status, err.Error())
 	}
 
-	if status != 200 {
+	if status != 202 {
 		return nil, fmt.Errorf("failed to create business object; status: %v", status)
 	}
 
@@ -136,7 +136,7 @@ func UpdateBusinessObject(token, id string, params map[string]interface{}) error
 		return fmt.Errorf("failed to update business object; status: %v; %s", status, err.Error())
 	}
 
-	if status != 200 {
+	if status != 202 {
 		return fmt.Errorf("failed to update business object; status: %v", status)
 	}
 
