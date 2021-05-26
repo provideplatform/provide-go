@@ -5,6 +5,63 @@ import (
 	"github.com/provideservices/provide-go/api"
 )
 
+// MaxHDIteration is the maximum HD account index
+const MaxHDIteration = 4294967295
+
+// KeyTypeAsymmetric asymmetric key type
+const KeyTypeAsymmetric = "asymmetric"
+
+// KeyTypeSymmetric symmetric key type
+const KeyTypeSymmetric = "symmetric"
+
+// KeyUsageEncryptDecrypt encrypt/decrypt usage
+const KeyUsageEncryptDecrypt = "encrypt/decrypt"
+
+// KeyUsageSignVerify sign/verify usage
+const KeyUsageSignVerify = "sign/verify"
+
+// KeySpecAES256GCM AES-256-GCM key spec
+const KeySpecAES256GCM = "AES-256-GCM"
+
+// KeySpecChaCha20 ChaCha20 key spec
+const KeySpecChaCha20 = "ChaCha20"
+
+// KeySpecECCBabyJubJub babyJubJub key spec
+const KeySpecECCBabyJubJub = "babyJubJub"
+
+// KeySpecECCBIP39 BIP39 key spec
+const KeySpecECCBIP39 = "BIP39"
+
+// KeySpecECCC25519 C25519 key spec
+const KeySpecECCC25519 = "C25519"
+
+// KeySpecECCEd25519 Ed25519 key spec
+const KeySpecECCEd25519 = "Ed25519"
+
+// KeySpecECCSecp256k1 secp256k1 key spec
+const KeySpecECCSecp256k1 = "secp256k1"
+
+// NonceSizeSymmetric chacha20 & aes256 encrypt/decrypt nonce size
+const NonceSizeSymmetric = 12
+
+// KeySpecRSA2048 rsa 2048 key spec
+const KeySpecRSA2048 = "RSA-2048"
+
+// KeyBits2048 is the bit length for 2048-bit keys
+const KeyBits2048 = 2048
+
+// KeyBits3072 is the bit length for 3072-bit keys
+const KeyBits3072 = 3072
+
+// KeyBits4096 is the bit length for 4096-bit keys
+const KeyBits4096 = 4096
+
+// KeySpecRSA3072 rsa 3072 key spec
+const KeySpecRSA3072 = "RSA-3072"
+
+// KeySpecRSA4096 rsa 4096 key spec
+const KeySpecRSA4096 = "RSA-4096"
+
 // Vault provides secure key management
 type Vault struct {
 	api.Model
