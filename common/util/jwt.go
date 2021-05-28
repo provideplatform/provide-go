@@ -392,13 +392,19 @@ func requireIdentJWTVerifiers() {
 			}
 			fingerprint := ssh.FingerprintLegacyMD5(sshPublicKey)
 
+			new := jwtKeypairs[fingerprint] == nil
+
 			jwtKeypairs[fingerprint] = &JWTKeypair{
 				Fingerprint:  fingerprint,
 				PublicKey:    *publicKey,
 				PublicKeyPEM: &key.PublicKey,
 			}
 
-			common.Log.Debugf("ident jwt public key configured for verification; fingerprint: %s", fingerprint)
+			if new {
+				common.Log.Debugf("ident jwt public key configured for verification; fingerprint: %s", fingerprint)
+			} else {
+				common.Log.Tracef("ident jwt public key configured for verification; fingerprint: %s", fingerprint)
+			}
 		}
 	}
 }
