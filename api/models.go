@@ -34,3 +34,20 @@ type Error struct {
 	Message *string `json:"message"`
 	Status  *int    `json:"status,omitempty"`
 }
+
+// Manifest defines the contents of a Provide release
+type Manifest struct {
+	Name       string             `json:"name"`
+	Version    string             `json:"version"`
+	Repository string             `json:"repository"`
+	Packages   []*ManifestPackage `json:"packages"`
+}
+
+// ManifestPackage defines a single Manifest package
+type ManifestPackage struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Source  string `json:"source"`
+	Image   string `json:"docker_image"`
+	Type    string `json:"type"`
+}
