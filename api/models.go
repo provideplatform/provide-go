@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	uuid "github.com/kthomas/go.uuid"
@@ -50,4 +52,14 @@ type ManifestPackage struct {
 	Source  string `json:"source"`
 	Image   string `json:"docker_image"`
 	Type    string `json:"type"`
+}
+
+func (m *Manifest) GetImageVersion(image string) (*string, error) {
+	for _, pkg := range m.Packages {
+		if pkg.Image == strings.ToLower(image) {
+			return &pkg.Version, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to resolve image version for package: %s", image)
 }
