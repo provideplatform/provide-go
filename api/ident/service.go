@@ -63,6 +63,7 @@ func Authenticate(email, passwd string) (*AuthenticationResponse, error) {
 	status, resp, err := prvd.Post("authenticate", map[string]interface{}{
 		"email":    email,
 		"password": passwd,
+		"scope":    "offline_access",
 	})
 	if err != nil {
 		return nil, err
