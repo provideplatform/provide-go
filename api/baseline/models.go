@@ -22,7 +22,7 @@ type BaselineContext struct {
 // BaselineRecord represents a link between an object in the internal system of record
 // and the external BaselineContext
 type BaselineRecord struct {
-	ID         *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	ID         *string          `sql:"-" json:"id,omitempty"`
 	BaselineID *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"`
 	Context    *BaselineContext `sql:"-" json:"-"`
 	ContextID  *uuid.UUID       `sql:"-" json:"context_id"`
