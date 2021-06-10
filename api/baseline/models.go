@@ -10,14 +10,23 @@ const ProtocolMessageOpcodeBaseline = "BLINE"
 const ProtocolMessageOpcodeJoin = "JOIN"
 const ProtocolMessageOpcodeSync = "SYNC"
 
+// BaselineContext represents a collection of BaselineRecord instances in the context of a workflow
+type BaselineContext struct {
+	ID         *uuid.UUID        `sql:"-" json:"id,omitempty"`
+	BaselineID *uuid.UUID        `sql:"-" json:"baseline_id,omitempty"`
+	Records    []*BaselineRecord `sql:"-" json:"records,omitempty"`
+	Workflow   *Workflow         `sql:"-" json:"-"`
+	WorkflowID *uuid.UUID        `sql:"-" json:"workflow_id"`
+}
+
 // BaselineRecord represents a link between an object in the internal system of record
-// and the external baseline workflow context
+// and the external BaselineContext
 type BaselineRecord struct {
-	BaselineID *uuid.UUID `sql:"-" json:"baseline_id,omitempty"`
-	ID         *string    `sql:"-" json:"id,omitempty"`
-	Type       *string    `sql:"-" json:"type,omitempty"`
-	Workflow   *Workflow  `sql:"-" json:"-"`
-	WorkflowID *uuid.UUID `sql:"-" json:"identifier"`
+	ID         *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	BaselineID *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"`
+	Context    *BaselineContext `sql:"-" json:"-"`
+	ContextID  *uuid.UUID       `sql:"-" json:"context_id"`
+	Type       *string          `sql:"-" json:"type"`
 }
 
 // Config represents the proxy configuration
@@ -47,9 +56,9 @@ type IssueVerifiableCredentialResponse struct {
 
 // Message is a proxy-internal wrapper for protocol message handling
 type Message struct {
+	ID              *uuid.UUID       `sql:"-" json:"id,omitempty"`
 	BaselineID      *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"` // optional; when included, can be used to map outbound message just-in-time
 	Errors          []*api.Error     `sql:"-" json:"errors,omitempty"`
-	ID              *string          `sql:"-" json:"id,omitempty"`
 	MessageID       *string          `sql:"-" json:"message_id,omitempty"`
 	Payload         interface{}      `sql:"-" json:"payload,omitempty"`
 	ProtocolMessage *ProtocolMessage `sql:"-" json:"protocol_message,omitempty"`
@@ -91,6 +100,7 @@ type ProtocolMessagePayload struct {
 // Workgroup is a baseline workgroup context
 type Workgroup struct {
 	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
+	Errors       []*api.Error   `sql:"-" json:"errors,omitempty"`
 	Participants []*Participant `sql:"-" json:"participants"`
 	Workflows    []*Workflow    `json:"workflows,omitempty"`
 
@@ -102,6 +112,7 @@ type Workgroup struct {
 // Workflow is a baseline workflow context
 type Workflow struct {
 	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
+	Errors       []*api.Error   `sql:"-" json:"errors,omitempty"`
 	Participants []*Participant `sql:"-" json:"participants"`
 	Shield       *string        `sql:"-" json:"shield,omitempty"`
 	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
@@ -109,7 +120,11 @@ type Workflow struct {
 
 // Workstep is a baseline workflow context
 type Workstep struct {
-	ID           *uuid.UUID       `sql:"-" json:"id,omitempty"`
-	Circuit      *privacy.Circuit `sql:"-" json:"circuit,omitempty"`
-	Participants []*Participant   `sql:"-" json:"participants"`
+	ID              *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	Circuit         *privacy.Circuit `sql:"-" json:"circuit,omitempty"`
+	CircuitID       *uuid.UUID       `sql:"-" json:"circuit_id"`
+	Errors          []*api.Error     `sql:"-" json:"errors,omitempty"`
+	Participants    []*Participant   `sql:"-" json:"participants"`
+	RequireFinality bool             `sql:"-" json:"require_finality"`
+	WorkflowID      *uuid.UUID       `sql:"-" json:"workflow_id,omitempty"`
 }

@@ -59,6 +59,28 @@ func ConfigureStack(token string, params map[string]interface{}) error {
 	return nil
 }
 
+// ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
+func ListWorkgroups(token, applicationID string, params map[string]interface{}) ([]*Workgroup, error) {
+	status, resp, err := InitBaselineService(token).Get("workgroups", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list baseline workgroups; status: %v", status)
+	}
+
+	workgroups := make([]*Workgroup, 0)
+	for _, item := range resp.([]interface{}) {
+		workgroup := &Workgroup{}
+		workgroupraw, _ := json.Marshal(item)
+		json.Unmarshal(workgroupraw, &workgroup)
+		workgroups = append(workgroups, workgroup)
+	}
+
+	return workgroups, nil
+}
+
 // CreateWorkgroup initializes a new or previously-joined workgroup on the local baseline stack
 func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, error) {
 	status, resp, err := InitBaselineService(token).Post("workgroups", params)
@@ -92,52 +114,110 @@ func UpdateWorkgroup(id, token string, params map[string]interface{}) error {
 	return nil
 }
 
-// ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
-func ListWorkgroups(token, applicationID string, params map[string]interface{}) ([]*Workgroup, error) {
-	status, resp, err := InitBaselineService(token).Get("workgroups", params)
+// ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
+func ListWorkflows(token, applicationID string, params map[string]interface{}) ([]*Workflow, error) {
+	status, resp, err := InitBaselineService(token).Get("workflows", params)
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workgroups; status: %v", status)
+		return nil, fmt.Errorf("failed to list baseline workflows; status: %v", status)
 	}
 
-	workgroups := make([]*Workgroup, 0)
+	workflows := make([]*Workflow, 0)
 	for _, item := range resp.([]interface{}) {
-		workgroup := &Workgroup{}
-		workgroupraw, _ := json.Marshal(item)
-		json.Unmarshal(workgroupraw, &workgroup)
-		workgroups = append(workgroups, workgroup)
+		workflow := &Workflow{}
+		workflowraw, _ := json.Marshal(item)
+		json.Unmarshal(workflowraw, &workflow)
+		workflows = append(workflows, workflow)
 	}
 
-	return workgroups, nil
+	return workflows, nil
 }
 
-// CreateBusinessObject is a generic way to baseline a business object
-func CreateBusinessObject(token string, params map[string]interface{}) (interface{}, error) {
-	status, resp, err := InitBaselineService(token).Post("business_objects", params)
+// CreateWorkflow initializes a new workflow on the local baseline stack
+func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, error) {
+	status, resp, err := InitBaselineService(token).Post("workflows", params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create business object; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to create workflow; status: %v; %s", status, err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to create workflow; status: %v", status)
+	}
+
+	workflow := &Workflow{}
+	workflowraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(workflowraw, &workflow)
+
+	return workflow, nil
+}
+
+// ListWorksteps retrieves a paginated list of baseline worksteps scoped to the given API token
+func ListWorksteps(token, applicationID string, params map[string]interface{}) ([]*Workstep, error) {
+	status, resp, err := InitBaselineService(token).Get("worksteps", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list baseline worksteps; status: %v", status)
+	}
+
+	worksteps := make([]*Workstep, 0)
+	for _, item := range resp.([]interface{}) {
+		workstep := &Workstep{}
+		workstepraw, _ := json.Marshal(item)
+		json.Unmarshal(workstepraw, &workstep)
+		worksteps = append(worksteps, workstep)
+	}
+
+	return worksteps, nil
+}
+
+// CreateWorkstep initializes a new workstep on the local baseline stack
+func CreateWorkstep(token string, params map[string]interface{}) (*Workstep, error) {
+	status, resp, err := InitBaselineService(token).Post("worksteps", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to create workstep; status: %v", status)
+	}
+
+	workstep := &Workstep{}
+	workstepraw, _ := json.Marshal(resp)
+	err = json.Unmarshal(workstepraw, &workstep)
+
+	return workstep, nil
+}
+
+// CreateObject is a generic way to baseline a business object
+func CreateObject(token string, params map[string]interface{}) (interface{}, error) {
+	status, resp, err := InitBaselineService(token).Post("objects", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create baseline object; status: %v; %s", status, err.Error())
 	}
 
 	if status != 202 {
-		return nil, fmt.Errorf("failed to create business object; status: %v", status)
+		return nil, fmt.Errorf("failed to create baseline object; status: %v", status)
 	}
 
 	return resp, nil
 }
 
-// UpdateBusinessObject updates a business object
-func UpdateBusinessObject(token, id string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("business_objects/%s", id)
+// UpdateObject updates a business object
+func UpdateObject(token, id string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("objects/%s", id)
 	status, _, err := InitBaselineService(token).Put(uri, params)
 	if err != nil {
-		return fmt.Errorf("failed to update business object; status: %v; %s", status, err.Error())
+		return fmt.Errorf("failed to update baseline state; status: %v; %s", status, err.Error())
 	}
 
 	if status != 202 {
-		return fmt.Errorf("failed to update business object; status: %v", status)
+		return fmt.Errorf("failed to update baseline state; status: %v", status)
 	}
 
 	return nil
