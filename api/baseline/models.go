@@ -56,7 +56,7 @@ type IssueVerifiableCredentialResponse struct {
 
 // Message is a proxy-internal wrapper for protocol message handling
 type Message struct {
-	ID              *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	ID              *string          `sql:"-" json:"id,omitempty"`
 	BaselineID      *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"` // optional; when included, can be used to map outbound message just-in-time
 	Errors          []*api.Error     `sql:"-" json:"errors,omitempty"`
 	MessageID       *string          `sql:"-" json:"message_id,omitempty"`
