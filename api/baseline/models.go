@@ -1,7 +1,6 @@
 package baseline
 
 import (
-	"github.com/dgrijalva/jwt-go"
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideservices/provide-go/api"
 	"github.com/provideservices/provide-go/api/privacy"
@@ -11,21 +10,14 @@ const ProtocolMessageOpcodeBaseline = "BLINE"
 const ProtocolMessageOpcodeJoin = "JOIN"
 const ProtocolMessageOpcodeSync = "SYNC"
 
-// BaselineClaims represent JWT claims encoded within the invite token
-type BaselineClaims struct {
-	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
-	RegistryContractAddress    *string `json:"registry_contract_address"`
-	WorkgroupID                *string `json:"workgroup_id"`
-}
-
 // BaselineRecord represents a link between an object in the internal system of record
 // and the external baseline workflow context
 type BaselineRecord struct {
 	BaselineID *uuid.UUID `sql:"-" json:"baseline_id,omitempty"`
 	ID         *string    `sql:"-" json:"id,omitempty"`
 	Type       *string    `sql:"-" json:"type,omitempty"`
-	WorkflowID *uuid.UUID `sql:"-" json:"workflow_id"`
 	Workflow   *Workflow  `sql:"-" json:"-"`
+	WorkflowID *uuid.UUID `sql:"-" json:"identifier"`
 }
 
 // Config represents the proxy configuration
@@ -40,10 +32,17 @@ type Config struct {
 	RegistryContractAddress  *string           `sql:"-" json:"registry_contract_address,omitempty"`
 }
 
-// InviteClaims represent JWT invitation claims
-type InviteClaims struct {
-	jwt.MapClaims
-	Baseline *BaselineClaims `json:"baseline"`
+// IssueVerifiableCredentialRequest represents a request to issue a verifiable credential
+type IssueVerifiableCredentialRequest struct {
+	Address        *string    `json:"address,omitempty"`
+	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+	PublicKey      *string    `json:"public_key,omitempty"`
+	Signature      *string    `json:"signature"`
+}
+
+// IssueVerifiableCredentialResponse represents a response to a VC issuance request
+type IssueVerifiableCredentialResponse struct {
+	VC *string `json:"credential"`
 }
 
 // Message is a proxy-internal wrapper for protocol message handling
@@ -61,9 +60,10 @@ type Message struct {
 
 // Participant is a party to a baseline workgroup or workflow context
 type Participant struct {
-	Address  *string                `sql:"-" json:"address"`
-	Metadata map[string]interface{} `sql:"-" json:"metadata,omitempty"`
-	URL      *string                `sql:"-" json:"url,omitempty"`
+	Address           *string                `sql:"-" json:"address"`
+	Metadata          map[string]interface{} `sql:"-" json:"metadata,omitempty"`
+	APIEndpoint       *string                `sql:"-" json:"api_endpoint,omitempty"`
+	MessagingEndpoint *string                `sql:"-" json:"messaging_endpoint,omitempty"`
 }
 
 // ProtocolMessage is a baseline protocol message
@@ -90,14 +90,26 @@ type ProtocolMessagePayload struct {
 
 // Workgroup is a baseline workgroup context
 type Workgroup struct {
-	Workflows []*Workflow `json:"workflows,omitempty"`
+	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
+	Participants []*Participant `sql:"-" json:"participants"`
+	Workflows    []*Workflow    `json:"workflows,omitempty"`
+
+	PrivacyPolicy      interface{} `json:"privacy_policy"`      // outlines data visibility rules for each participant
+	SecurityPolicy     interface{} `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
+	TokenizationPolicy interface{} `json:"tokenization_policy"` // consists of policies governing tokenization of workflow outputs
 }
 
 // Workflow is a baseline workflow context
 type Workflow struct {
-	Circuits      []*privacy.Circuit `sql:"-" json:"circuits,omitempty"`
-	Identifier    *uuid.UUID         `sql:"-" json:"identifier,omitempty"`
-	Participants  []*Participant     `sql:"-" json:"participants"`
-	Shield        *string            `sql:"-" json:"shield,omitempty"`
-	WorkstepIndex uint64             `sql:"-" json:"workstep_index,omitempty"`
+	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
+	Participants []*Participant `sql:"-" json:"participants"`
+	Shield       *string        `sql:"-" json:"shield,omitempty"`
+	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
+}
+
+// Workstep is a baseline workflow context
+type Workstep struct {
+	IUD          *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	Circuit      *privacy.Circuit `sql:"-" json:"circuit,omitempty"`
+	Participants []*Participant   `sql:"-" json:"participants"`
 }
