@@ -109,7 +109,7 @@ type Workflow struct {
 
 // Workstep is a baseline workflow context
 type Workstep struct {
-	IUD          *uuid.UUID       `sql:"-" json:"id,omitempty"`
+	ID           *uuid.UUID       `sql:"-" json:"id,omitempty"`
 	Circuit      *privacy.Circuit `sql:"-" json:"circuit,omitempty"`
 	Participants []*Participant   `sql:"-" json:"participants"`
 }
