@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -85,7 +86,33 @@ type JWTKeypair struct {
 	PublicKey    rsa.PublicKey
 	PublicKeyPEM *string
 	PrivateKey   *rsa.PrivateKey
+	SSHPublicKey *ssh.PublicKey
 	VaultKey     *vault.Key
+}
+
+// PublicKey returns an associated PublicKey instance.
+func (j *JWTKeypair) SSHSigner() ssh.Signer {
+	return &JWTKeypairSSHSigner{
+		keypair: j,
+	}
+}
+
+type JWTKeypairSSHSigner struct {
+	keypair *JWTKeypair
+}
+
+// PublicKey returns an associated PublicKey instance.
+func (j *JWTKeypairSSHSigner) PublicKey() ssh.PublicKey {
+	if j.keypair != nil && j.keypair.SSHPublicKey != nil {
+		return *j.keypair.SSHPublicKey
+	}
+	return nil
+}
+
+// Sign returns raw signature for the given data. This method
+// will apply the hash specified for the keytype to the data.
+func (j *JWTKeypairSSHSigner) Sign(rand io.Reader, data []byte) (*ssh.Signature, error) {
+	return nil, errors.New("not implemented")
 }
 
 // SigningMethodEdDSA enables Ed25519
@@ -331,6 +358,7 @@ func RequireJWTVerifiers() map[string]*JWTKeypair {
 		Fingerprint:  fingerprint,
 		PublicKey:    *publicKey,
 		PublicKeyPEM: &jwtPublicKeyPEM,
+		SSHPublicKey: &sshPublicKey,
 	}
 
 	defaultJWTKeyFingerprint = &fingerprint
@@ -367,6 +395,7 @@ func requireAuth0JWTVerifiers() {
 					Fingerprint:  fingerprint,
 					PublicKey:    publicKey,
 					PublicKeyPEM: common.StringOrNil(string(pkixPublicKey)),
+					SSHPublicKey: &sshPublicKey,
 				}
 
 				common.Log.Debugf("auth0 jwt public key configured for verification; kid: %s; fingerprint: %s", kid, fingerprint)
@@ -398,6 +427,7 @@ func requireIdentJWTVerifiers() {
 				Fingerprint:  fingerprint,
 				PublicKey:    *publicKey,
 				PublicKeyPEM: &key.PublicKey,
+				SSHPublicKey: &sshPublicKey,
 			}
 
 			if new {
@@ -474,6 +504,7 @@ func requireJWTKeypairs() map[string]*JWTKeypair {
 			PublicKey:    *publicKey,
 			PublicKeyPEM: &jwtPublicKeyPEM,
 			PrivateKey:   privateKey,
+			SSHPublicKey: &sshPublicKey,
 		}
 
 		defaultJWTKeyFingerprint = &fingerprint
@@ -553,6 +584,7 @@ func requireVaultJWTKeypairs() {
 					Fingerprint:  *fingerprint,
 					PublicKey:    *publicKey,
 					PublicKeyPEM: jwtSigningKey.PublicKey,
+					SSHPublicKey: &sshPublicKey,
 					VaultKey:     jwtSigningKey,
 				}
 
