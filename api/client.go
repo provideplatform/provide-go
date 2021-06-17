@@ -57,13 +57,13 @@ func requestTimeout() time.Duration {
 
 	timeout, err := strconv.ParseInt(envRequestTimeout, 10, 64)
 	if err != nil {
-		common.Log.Debugf("Error parsing custom request timeout. using default timeout (%v seconds). Error: %s", defaultRequestTimeout, err.Error())
+		common.Log.Debugf("error parsing custom request timeout; using default timeout of %v seconds; %s", defaultRequestTimeout, err.Error())
 		return defaultRequestTimeout
 	}
 
 	timeoutInSeconds := time.Duration(timeout) * time.Second
 
-	common.Log.Debugf("Using custom timeout of %v seconds for requests", timeout)
+	common.Log.Debugf("using custom timeout of %v seconds for requests", timeout)
 	customRequestTimeout = &timeoutInSeconds
 
 	return *customRequestTimeout
@@ -93,7 +93,20 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 	buf := new(bytes.Buffer)
 	if reader != nil {
 		defer reader.Close()
-		buf.ReadFrom(reader)
+
+		var n int
+		buffer := make([]byte, 256)
+		if n, err = reader.Read(buffer); err != nil && err != io.EOF {
+			common.Log.Warningf("failed to read HTTP response stream; %s", err.Error())
+		} else if n > 0 {
+			common.Log.Tracef("read %d bytes from HTTP response stream", n)
+			i, err := buf.Write(buffer[0:n])
+			if err != nil {
+				common.Log.Warningf("failed to write HTTP response to internal client buffer; %s", err.Error())
+			} else {
+				common.Log.Tracef("wrote %d bytes from HTTP response to internal client buffer", i)
+			}
+		}
 	}
 
 	if buf.Len() > 0 {
@@ -210,7 +223,7 @@ func (c *Client) sendRequestWithTLSClientConfig(
 				if valStr, valStrOk := val.(string); valStrOk {
 					dURL, err := dataurl.DecodeString(valStr)
 					if err == nil {
-						common.Log.Debugf("parsed data url parameter: %s", key)
+						common.Log.Tracef("parsed data url parameter: %s", key)
 						part, err := writer.CreateFormFile(key, key)
 						if err != nil {
 							return nil, err
