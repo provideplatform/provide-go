@@ -95,7 +95,7 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 		defer reader.Close()
 
 		for {
-			buffer := make([]byte, resp.ContentLength)
+			buffer := make([]byte, 256)
 			n, err := reader.Read(buffer)
 			if n > 0 {
 				common.Log.Tracef("read %d bytes from HTTP response stream", n)
@@ -111,6 +111,7 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 					common.Log.Warningf("failed to read HTTP response stream; %s", err.Error())
 					return resp.StatusCode, nil, err
 				}
+				break
 			}
 		}
 	}
