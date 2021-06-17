@@ -95,24 +95,23 @@ func (c *Client) parseResponse(resp *http.Response) (status int, response interf
 		defer reader.Close()
 
 		for {
-			var n int
 			buffer := make([]byte, 256)
-			if n, err = reader.Read(buffer); err != nil && err != io.EOF {
-				common.Log.Warningf("failed to read HTTP response stream; %s", err.Error())
-				break
-			} else if n > 0 {
+			n, err := reader.Read(buffer)
+			if n > 0 {
 				common.Log.Tracef("read %d bytes from HTTP response stream", n)
-				eof := err != nil && err == io.EOF
 				i, err := buf.Write(buffer[0:n])
 				if err != nil {
 					common.Log.Warningf("failed to write HTTP response to internal client buffer; %s", err.Error())
-					break
+					return resp.StatusCode, nil, err
 				} else {
 					common.Log.Tracef("wrote %d bytes from HTTP response to internal client buffer", i)
-					if eof {
-						break
-					}
 				}
+			} else if err != nil {
+				if err != io.EOF {
+					common.Log.Warningf("failed to read HTTP response stream; %s", err.Error())
+					return resp.StatusCode, nil, err
+				}
+				break
 			}
 		}
 	}
