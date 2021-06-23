@@ -19,7 +19,7 @@ func Factory() (*Client, error) {
 }
 
 // TunnelFactory initializes a new pgrok client Tunnel
-func (c *Client) TunnelFactory(name, localAddr string, serverAddr, protocol, jwt *string) (*Tunnel, error) {
+func (c *Client) TunnelFactory(name, localAddr string, serverAddr, protocol, jwt *string, shutdownFn func(*string)) (*Tunnel, error) {
 	proto := pgrokDefaultTunnelProtocol
 	if protocol != nil {
 		proto = *protocol
@@ -39,6 +39,10 @@ func (c *Client) TunnelFactory(name, localAddr string, serverAddr, protocol, jwt
 		tun.ServerAddr = serverAddr
 	} else {
 		tun.ServerAddr = common.StringOrNil(fmt.Sprintf("%s:%d", pgrokDefaultServerHost, pgrokDefaultServerPort))
+	}
+
+	if shutdownFn != nil {
+		tun.shutdownFn = shutdownFn
 	}
 
 	return tun, nil

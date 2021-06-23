@@ -45,6 +45,7 @@ type Tunnel struct {
 	cancelF     context.CancelFunc
 	closing     uint32
 	shutdownCtx context.Context
+	shutdownFn  func(reason *string)
 
 	client    *ssh.Client
 	channel   ssh.Channel
@@ -269,9 +270,12 @@ func (t *Tunnel) initChannel() error {
 			switch req.Type {
 			case pgrokClientRequestTypeTunnelExpiration:
 				req.Reply(true, nil)
-				common.Log.Info("pgrok tunnel client expired;\n\n\tPurchase additional subscription capacity 🥳 🎉")
+				msg := "pgrok tunnel client expired;\n\n\tPurchase additional subscription capacity 🥳 🎉"
+				common.Log.Info(msg)
 				t.shutdown()
-				break
+				if t.shutdownFn != nil {
+					t.shutdownFn(&msg)
+				}
 			case pgrokClientRequestTypeForwardAddr:
 				common.Log.Debugf("pgrok tunnel client received response to %s request: %s", pgrokClientRequestTypeForwardAddr, string(req.Payload))
 				payload := map[string]interface{}{}
