@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/provideservices/provide-go/common"
+	"github.com/provideplatform/provide-go/common"
 )
 
 func TestTECGenerateKeyPair(t *testing.T) {

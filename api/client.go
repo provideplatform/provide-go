@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/provideservices/provide-go/common"
+	"github.com/provideplatform/provide-go/common"
 	"github.com/vincent-petithory/dataurl"
 )
 

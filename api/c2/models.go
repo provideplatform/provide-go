@@ -7,7 +7,7 @@ import (
 
 	uuid "github.com/kthomas/go.uuid"
 
-	"github.com/provideservices/provide-go/api"
+	"github.com/provideplatform/provide-go/api"
 )
 
 const nodeReachabilityTimeout = time.Millisecond * 2500

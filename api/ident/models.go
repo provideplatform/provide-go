@@ -5,7 +5,7 @@ import (
 
 	uuid "github.com/kthomas/go.uuid"
 
-	"github.com/provideservices/provide-go/api"
+	"github.com/provideplatform/provide-go/api"
 )
 
 // Application model which is initially owned by the user who created it

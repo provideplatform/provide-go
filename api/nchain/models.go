@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	uuid "github.com/kthomas/go.uuid"
-	"github.com/provideservices/provide-go/api"
+	"github.com/provideplatform/provide-go/api"
 )
 
 // Account contains the specific account user details

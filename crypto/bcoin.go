@@ -15,8 +15,8 @@ import (
 
 	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/btcsuite/btcutil/base58"
-	api "github.com/provideservices/provide-go/api/nchain"
-	"github.com/provideservices/provide-go/common"
+	api "github.com/provideplatform/provide-go/api/nchain"
+	"github.com/provideplatform/provide-go/common"
 	"golang.org/x/crypto/ripemd160"
 )
 

@@ -1,4 +1,4 @@
-module github.com/provideservices/provide-go
+module github.com/provideplatform/provide-go
 
 go 1.13
 

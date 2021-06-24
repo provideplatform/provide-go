@@ -3,7 +3,7 @@ package pgrok
 import (
 	"fmt"
 
-	"github.com/provideservices/provide-go/common"
+	"github.com/provideplatform/provide-go/common"
 )
 
 // Client is the pgrok tunnel client

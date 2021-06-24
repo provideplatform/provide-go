@@ -36,8 +36,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
-	api "github.com/provideservices/provide-go/api/nchain"
-	prvdcommon "github.com/provideservices/provide-go/common"
+	api "github.com/provideplatform/provide-go/api/nchain"
+	prvdcommon "github.com/provideplatform/provide-go/common"
 )
 
 // The purpose of this class is to expose generic transactional and ABI-related helper

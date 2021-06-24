@@ -8,7 +8,7 @@ import (
 	abstractcrypto "gopkg.in/dedis/crypto.v0/abstract"
 	"gopkg.in/dedis/kyber.v0/random"
 
-	"github.com/provideservices/provide-go/common"
+	"github.com/provideplatform/provide-go/common"
 )
 
 // TECGenerateKeyPair - creates and returns an Twisted Edwards Curve (TEC) keypair;

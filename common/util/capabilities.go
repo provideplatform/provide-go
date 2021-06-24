@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/provideservices/provide-go/api"
-	common "github.com/provideservices/provide-go/common"
+	"github.com/provideplatform/provide-go/api"
+	common "github.com/provideplatform/provide-go/common"
 )
 
 const maxManifestRetryCount = 10

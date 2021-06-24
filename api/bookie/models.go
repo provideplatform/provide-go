@@ -2,10 +2,11 @@ package bookie
 
 import (
 	"encoding/json"
-	uuid "github.com/kthomas/go.uuid"
 	"math/big"
 
-	"github.com/provideservices/provide-go/api"
+	uuid "github.com/kthomas/go.uuid"
+
+	"github.com/provideplatform/provide-go/api"
 )
 
 // BillingAccount instances represent a virtual account with which payment methods can be

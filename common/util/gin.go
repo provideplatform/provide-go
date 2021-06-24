@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	selfsignedcert "github.com/kthomas/go-self-signed-cert"
-	common "github.com/provideservices/provide-go/common"
+	common "github.com/provideplatform/provide-go/common"
 )
 
 // gin configuration vars

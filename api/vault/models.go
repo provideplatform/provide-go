@@ -2,7 +2,7 @@ package vault
 
 import (
 	uuid "github.com/kthomas/go.uuid"
-	"github.com/provideservices/provide-go/api"
+	"github.com/provideplatform/provide-go/api"
 )
 
 // MaxHDIteration is the maximum HD account index

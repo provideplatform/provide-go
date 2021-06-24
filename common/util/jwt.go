@@ -23,9 +23,9 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	uuid "github.com/kthomas/go.uuid"
-	ident "github.com/provideservices/provide-go/api/ident"
-	vault "github.com/provideservices/provide-go/api/vault"
-	common "github.com/provideservices/provide-go/common"
+	ident "github.com/provideplatform/provide-go/api/ident"
+	vault "github.com/provideplatform/provide-go/api/vault"
+	common "github.com/provideplatform/provide-go/common"
 )
 
 const authorizationHeader = "authorization"

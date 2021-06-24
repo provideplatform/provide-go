@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	ident "github.com/provideservices/provide-go/api/ident"
-	vault "github.com/provideservices/provide-go/api/vault"
-	common "github.com/provideservices/provide-go/common"
+	ident "github.com/provideplatform/provide-go/api/ident"
+	vault "github.com/provideplatform/provide-go/api/vault"
+	common "github.com/provideplatform/provide-go/common"
 )
 
 const refreshTokenTickInterval = 60000 * 45 * time.Millisecond
