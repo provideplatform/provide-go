@@ -138,7 +138,7 @@ func GetNodeLogs(token, nodeID string, params map[string]interface{}) (*NodeLogs
 }
 
 // DeleteNode undeploys and deletes the given node
-func DeleteNode(token, nodeID string) error {
+func DeleteNode(token, nodeID string) (*Node, error) {
 	uri := fmt.Sprintf("nodes/%s", nodeID)
 	status, resp, err := InitC2Service(token).Delete(uri)
 	if err != nil {
