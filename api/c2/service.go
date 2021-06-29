@@ -140,16 +140,23 @@ func GetNodeLogs(token, nodeID string, params map[string]interface{}) (*NodeLogs
 // DeleteNode undeploys and deletes the given node
 func DeleteNode(token, nodeID string) error {
 	uri := fmt.Sprintf("nodes/%s", nodeID)
-	status, _, err := InitC2Service(token).Delete(uri)
+	status, resp, err := InitC2Service(token).Delete(uri)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if status != 204 {
-		return fmt.Errorf("failed to delete node; status: %v", status)
+	if status != 200 {
+		return nil, fmt.Errorf("failed to delete node; status: %v", status)
 	}
 
-	return nil
+	node := &Node{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &node)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch node after delete; status: %v; %s", status, err.Error())
+	}
+
+	return node, nil
 }
 
 // ListLoadBalancers list load balancers for the given authorization scope
