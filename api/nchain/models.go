@@ -91,6 +91,7 @@ type Contract struct {
 	Params       *json.RawMessage `json:"params,omitempty"`
 	AccessedAt   *time.Time       `json:"accessed_at"`
 	PubsubPrefix *string          `json:"pubsub_prefix,omitempty"`
+	Ref          *string          `json:"ref,omitempty"`
 }
 
 // TxReceipt is generalized transaction receipt model
