@@ -112,6 +112,7 @@ type Node struct {
 	Status         *string                `json:"status"`
 	Config         map[string]interface{} `json:"config"`
 	ResourceGroupName *uuid.UUID          `json:"resource_group_name"`
+	ProviderDetails   map[string]interface{} `sql:"-" json:"provider_details,omitempty"`
 }
 
 // ReachableOnPort returns true if the given node port is reachable via TCP
