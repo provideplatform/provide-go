@@ -114,6 +114,29 @@ func GetNodeDetails(token, nodeID string, params map[string]interface{}) (*Node,
 	return node, nil
 }
 
+// EnrichNode fetches provider (aws/azure) details for the given node
+func EnrichNode(token, nodeID string, params map[string]interface{}) (*Node, error) {
+	uri := fmt.Sprintf("nodes/%s/enrich", nodeID)
+	status, resp, err := InitC2Service(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to enrich node details; status: %v", status)
+	}
+
+	// FIXME...
+	node := &Node{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &node)
+	if err != nil {
+		return nil, fmt.Errorf("failed to enrich node details; status: %v; %s", status, err.Error())
+	}
+
+	return node, nil
+}
+
 // GetNodeLogs fetches the logs for the given node
 func GetNodeLogs(token, nodeID string, params map[string]interface{}) (*NodeLogsResponse, error) {
 	uri := fmt.Sprintf("nodes/%s/logs", nodeID)
