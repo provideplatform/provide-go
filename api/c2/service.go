@@ -168,7 +168,7 @@ func DeleteNode(token, nodeID string) (*Node, error) {
 		return nil, err
 	}
 
-	if status != 204 {
+	if !(status == 200 || status == 204) {
 		return nil, fmt.Errorf("failed to delete node; status: %v", status)
 	}
 
