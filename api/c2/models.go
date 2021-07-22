@@ -111,7 +111,6 @@ type Node struct {
 	Role           *string                `json:"role"`
 	Status         *string                `json:"status"`
 	Config         map[string]interface{} `json:"config"`
-	ResourceGroupName *uuid.UUID          `json:"resource_group_name"`
 	ProviderDetails   map[string]interface{} `sql:"-" json:"provider_details,omitempty"`
 }
 
