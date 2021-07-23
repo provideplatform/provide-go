@@ -39,6 +39,7 @@ func RequireVault() {
 	for {
 		select {
 		case <-timer.C:
+			common.Log.Warningf("Test commitworking")
 			if ident.Status() == nil {
 				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
 				if defaultVaultRefreshJWT != "" {
@@ -109,7 +110,7 @@ func RequireVault() {
 			}
 		default:
 			if startTime.Add(requireVaultTimeout).Before(time.Now()) {
-				common.Log.Panicf("failed to require vault")
+				common.Log.Panicf("failed to require vaults is not ")
 			} else {
 				time.Sleep(requireVaultSleepInterval)
 			}
