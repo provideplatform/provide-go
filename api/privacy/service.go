@@ -151,7 +151,7 @@ func GetNoteValue(token, circuitID string, index uint64) (*StoreValueResponse, e
 	}
 
 	if status != 200 && status != 202 {
-		return nil, fmt.Errorf("failed to fetch stored circuit proof; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch note value at index %d; status: %v", index, status)
 	}
 
 	val := &StoreValueResponse{}
@@ -161,16 +161,16 @@ func GetNoteValue(token, circuitID string, index uint64) (*StoreValueResponse, e
 	return val, nil
 }
 
-// GetNullifierValue fetches the value in the nullifier store at a specified index
-func GetNullifierValue(token, circuitID string, index uint64) (*StoreValueResponse, error) {
-	uri := fmt.Sprintf("circuits/%s/nullifiers/%d", circuitID, index)
+// GetNullifierValue fetches the value in the nullifier store at the specified key
+func GetNullifierValue(token, circuitID, key string) (*StoreValueResponse, error) {
+	uri := fmt.Sprintf("circuits/%s/nullifiers/%s", circuitID, key)
 	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 200 && status != 202 {
-		return nil, fmt.Errorf("failed to fetch stored circuit proof; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch note nullifier with key %s; status: %v", key, status)
 	}
 
 	val := &StoreValueResponse{}
