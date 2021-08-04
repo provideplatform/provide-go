@@ -29,19 +29,24 @@ var (
 )
 
 // RequireVault panics if the VAULT_REFRESH_TOKEN is not given or an access
-// token is otherwise unable to be obtained; attepts to unseal the vault if possible
+// token is otherwise unable to be obtained; attempts to unseal the vault if possible
 func RequireVault() {
 	startTime := time.Now()
 
+	common.Log.Warningf("Starting RequireVault timer")
 	timer := time.NewTicker(requireVaultTickerInterval)
 	defer timer.Stop()
 
 	for {
 		select {
 		case <-timer.C:
-			common.Log.Warningf("Test commitworking")
-			if ident.Status() == nil {
+			common.Log.Warningf("TIMER")
+			stat := ident.Status()
+			common.Log.Warningf("Ident Status: %s", stat)
+			if stat == nil {
 				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
+				common.Log.Warningf("defaultVaultRefreshJWT: %s", defaultVaultRefreshJWT)
+
 				if defaultVaultRefreshJWT != "" {
 					accessToken, err := refreshVaultAccessToken()
 					if err != nil {
@@ -74,6 +79,7 @@ func RequireVault() {
 				}
 
 				defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
+				common.Log.Warningf("defaultVaultSealUnsealKey: %s", defaultVaultSealUnsealKey)
 				if defaultVaultSealUnsealKey != "" {
 					common.Log.Debug("parsed VAULT_SEAL_UNSEAL_KEY from environment")
 
@@ -85,6 +91,7 @@ func RequireVault() {
 				}
 
 				vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
+				common.Log.Warningf("Num Vaults: %d", len(vaults))
 				if err != nil {
 					common.Log.Warningf("failed to fetch vaults for given token; %s", err.Error())
 					continue
@@ -92,9 +99,11 @@ func RequireVault() {
 
 				if len(vaults) > 0 {
 					// HACK
+					common.Log.Warningf("HACK")
 					Vault = vaults[0]
 					common.Log.Debugf("resolved default vault instance: %s", Vault.ID.String())
 				} else {
+					common.Log.Warningf("Getting Vault")
 					Vault, err = vault.CreateVault(DefaultVaultAccessJWT, map[string]interface{}{
 						"name":        fmt.Sprintf("default vault %d", time.Now().Unix()),
 						"description": "default vault instance",
@@ -109,8 +118,10 @@ func RequireVault() {
 				return
 			}
 		default:
+			common.Log.Warningf("DEFAULT")
+			common.Log.Warningf("Timed out? %d", startTime.Add(requireVaultTimeout).Before(time.Now()))
 			if startTime.Add(requireVaultTimeout).Before(time.Now()) {
-				common.Log.Panicf("failed to require vaults is not ")
+				common.Log.Panicf("failed to require vaults is not working")
 			} else {
 				time.Sleep(requireVaultSleepInterval)
 			}
