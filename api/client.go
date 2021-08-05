@@ -161,6 +161,9 @@ func (c *Client) sendRequestWithTLSClientConfig(
 		Timeout: requestTimeout(),
 	}
 
+	common.Log.Warningf("SendReqTLS url: '%s'", urlString)
+	common.Log.Warningf("SendReqTLS method: '%s'", method)
+
 	mthd := strings.ToUpper(method)
 	reqURL, err := url.Parse(urlString)
 	if err != nil {
@@ -269,7 +272,7 @@ func (c *Client) sendRequestWithTLSClientConfig(
 // Get constructs and synchronously sends an API GET request
 func (c *Client) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
-	common.Log.Warningf(uri)
+	common.Log.Warningf("GET url: '%s'", url)
 	resp, err := c.sendRequest("GET", url, defaultContentType, params)
 	return c.parseResponse(resp)
 }
@@ -277,6 +280,7 @@ func (c *Client) Get(uri string, params map[string]interface{}) (status int, res
 // Head constructs and synchronously sends an API HEAD request; returns the headers
 func (c *Client) Head(uri string, params map[string]interface{}) (status int, response map[string][]string, err error) {
 	url := c.buildURL(uri)
+	common.Log.Warningf("HEAD url: '%s'", url)
 	resp, err := c.sendRequest("HEAD", url, defaultContentType, params)
 	if err != nil {
 		return resp.StatusCode, nil, err
@@ -287,6 +291,7 @@ func (c *Client) Head(uri string, params map[string]interface{}) (status int, re
 // GetWithTLSClientConfig constructs and synchronously sends an API GET request
 func (c *Client) GetWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
+	common.Log.Warningf("TLS GET url: '%s'", url)
 	resp, err := c.sendRequestWithTLSClientConfig("GET", url, defaultContentType, params, tlsClientConfig)
 	return c.parseResponse(resp)
 }
@@ -294,6 +299,7 @@ func (c *Client) GetWithTLSClientConfig(uri string, params map[string]interface{
 // Patch constructs and synchronously sends an API PATCH request
 func (c *Client) Patch(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
+	common.Log.Warningf("PATCH url: '%s'", url)
 	resp, err := c.sendRequest("PATCH", url, defaultContentType, params)
 	return c.parseResponse(resp)
 }
@@ -301,6 +307,7 @@ func (c *Client) Patch(uri string, params map[string]interface{}) (status int, r
 // PatchWithTLSClientConfig constructs and synchronously sends an API PATCH request
 func (c *Client) PatchWithTLSClientConfig(uri string, params map[string]interface{}, tlsClientConfig *tls.Config) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
+	common.Log.Warningf("TLS PATCH url: '%s'", url)
 	resp, err := c.sendRequestWithTLSClientConfig("PATCH", url, defaultContentType, params, tlsClientConfig)
 	return c.parseResponse(resp)
 }
