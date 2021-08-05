@@ -269,6 +269,7 @@ func (c *Client) sendRequestWithTLSClientConfig(
 // Get constructs and synchronously sends an API GET request
 func (c *Client) Get(uri string, params map[string]interface{}) (status int, response interface{}, err error) {
 	url := c.buildURL(uri)
+	common.Log.Warningf(uri)
 	resp, err := c.sendRequest("GET", url, defaultContentType, params)
 	return c.parseResponse(resp)
 }

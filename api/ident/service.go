@@ -758,6 +758,8 @@ func Status() error {
 	}
 
 	status, _, err := service.Get("status", map[string]interface{}{})
+	common.Log.Warningf("status: %d", status)
+
 	if err != nil {
 		return fmt.Errorf("failed to fetch status; %s", err.Error())
 	}
