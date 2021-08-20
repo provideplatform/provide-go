@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideplatform/provide-go/api"
 )
@@ -95,17 +94,17 @@ type Contract struct {
 
 // TxReceipt is generalized transaction receipt model
 type TxReceipt struct {
-	TxHash            common.Hash    `json:"hash"`
-	ContractAddress   common.Address `json:"contract_address"`
-	GasUsed           uint64         `json:"gas_used"`
-	BlockHash         common.Hash    `json:"block_hash,omitempty"`
-	BlockNumber       *big.Int       `json:"block,omitempty"`
-	TransactionIndex  uint           `json:"transaction_index"`
-	PostState         []byte         `json:"root"`
-	Status            uint64         `json:"status"`
-	CumulativeGasUsed uint64         `json:"cumulative_gas_used"`
-	Bloom             interface{}    `json:"logs_bloom"`
-	Logs              []interface{}  `json:"logs"`
+	TxHash            []byte        `json:"hash"`
+	ContractAddress   []byte        `json:"contract_address"`
+	GasUsed           uint64        `json:"gas_used"`
+	BlockHash         []byte        `json:"block_hash,omitempty"`
+	BlockNumber       *big.Int      `json:"block,omitempty"`
+	TransactionIndex  uint          `json:"transaction_index"`
+	PostState         []byte        `json:"root"`
+	Status            uint64        `json:"status"`
+	CumulativeGasUsed uint64        `json:"cumulative_gas_used"`
+	Bloom             interface{}   `json:"logs_bloom"`
+	Logs              []interface{} `json:"logs"`
 }
 
 // EthereumTxTraceResponse is returned upon successful contract execution
@@ -352,4 +351,36 @@ type Wallet struct {
 
 	PublicKey  *string `json:"public_key,omitempty"`
 	PrivateKey *string `json:"private_key,omitempty"`
+}
+
+// Current response struct for baseledger events, might revisit in future
+type BaseledgerSubscriptionResponse struct {
+	ID      interface{}            `json:"id"`
+	Jsonrpc string                 `json:"jsonrpc"`
+	Result  map[string]interface{} `json:"result"`
+}
+type BaseledgerBlockHeader struct {
+	AppHash       string `json:"app_hash"`
+	ChainID       string `json:"chain_id"`
+	ConsensusHash string `json:"consensus_hash"`
+	DataHash      string `json:"data_hash"`
+	EvidenceHash  string `json:"evidence_hash"`
+	Height        string `json:"height"`
+	LastBlockID   struct {
+		Hash  string `json:"hash"`
+		Parts struct {
+			Hash  string `json:"hash"`
+			Total int    `json:"total"`
+		} `json:"parts"`
+	} `json:"last_block_id"`
+	LastCommitHash     string    `json:"last_commit_hash"`
+	LastResultsHash    string    `json:"last_results_hash"`
+	NextValidatorsHash string    `json:"next_validators_hash"`
+	ProposerAddress    string    `json:"proposer_address"`
+	Time               time.Time `json:"time"`
+	ValidatorsHash     string    `json:"validators_hash"`
+	Version            struct {
+		App   string `json:"app"`
+		Block string `json:"block"`
+	} `json:"version"`
 }

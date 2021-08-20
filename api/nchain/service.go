@@ -362,7 +362,7 @@ func UpdateNetwork(token, networkID string, params map[string]interface{}) error
 
 // ListNetworks
 func ListNetworks(token string, params map[string]interface{}) ([]*Network, error) {
-	uri := fmt.Sprintf("networks")
+	uri := "networks"
 	status, resp, err := InitNChainService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
