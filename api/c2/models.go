@@ -97,21 +97,21 @@ type NetworkInterface struct {
 type Node struct {
 	api.Model
 
-	NetworkID      uuid.UUID              `json:"network_id"`
-	UserID         *uuid.UUID             `json:"user_id"`
-	ApplicationID  *uuid.UUID             `json:"application_id"`
-	OrganizationID *uuid.UUID             `json:"organization_id"`
-	Bootnode       bool                   `json:"-"`
-	Host           *string                `json:"host"`
-	IPv4           *string                `json:"ipv4"`
-	IPv6           *string                `json:"ipv6"`
-	PrivateIPv4    *string                `json:"private_ipv4"`
-	PrivateIPv6    *string                `json:"private_ipv6"`
-	Description    *string                `json:"description"`
-	Role           *string                `json:"role"`
-	Status         *string                `json:"status"`
-	Config         map[string]interface{} `json:"config"`
-	ProviderDetails   map[string]interface{} `sql:"-" json:"provider_details,omitempty"`
+	NetworkID       uuid.UUID              `json:"network_id"`
+	UserID          *uuid.UUID             `json:"user_id"`
+	ApplicationID   *uuid.UUID             `json:"application_id"`
+	OrganizationID  *uuid.UUID             `json:"organization_id"`
+	Bootnode        bool                   `json:"-"`
+	Host            *string                `json:"host"`
+	IPv4            *string                `json:"ipv4"`
+	IPv6            *string                `json:"ipv6"`
+	PrivateIPv4     *string                `json:"private_ipv4"`
+	PrivateIPv6     *string                `json:"private_ipv6"`
+	Description     *string                `json:"description"`
+	Role            *string                `json:"role"`
+	Status          *string                `json:"status"`
+	Config          map[string]interface{} `json:"config"`
+	ProviderDetails map[string]interface{} `sql:"-" json:"provider_details,omitempty"`
 }
 
 // ReachableOnPort returns true if the given node port is reachable via TCP

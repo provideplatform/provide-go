@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/provideplatform/provide-go/api"
+	"github.com/provideplatform/provide-go/api/ident"
 	"github.com/provideplatform/provide-go/common"
 )
 
@@ -321,6 +322,28 @@ func GetContractDetails(token, contractID string, params map[string]interface{})
 	}
 
 	return contract, nil
+}
+
+// VendContractSubscriptionToken
+func VendContractSubscriptionToken(token, contractID string, params map[string]interface{}) (*ident.Token, error) {
+	uri := fmt.Sprintf("contracts/%s/subscriptions", contractID)
+	status, resp, err := InitNChainService(token).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to vend contract subscription token; status %v", status)
+	}
+
+	tkn := &ident.Token{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &tkn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch contract subscription token; status: %v; %s", status, err.Error())
+	}
+
+	return tkn, nil
 }
 
 // CreateNetwork creates a new network
