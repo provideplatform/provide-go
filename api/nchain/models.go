@@ -92,21 +92,6 @@ type Contract struct {
 	PubsubPrefix *string          `json:"pubsub_prefix,omitempty"`
 }
 
-// TxReceipt is generalized transaction receipt model
-type TxReceipt struct {
-	TxHash            []byte        `json:"hash"`
-	ContractAddress   []byte        `json:"contract_address"`
-	GasUsed           uint64        `json:"gas_used"`
-	BlockHash         []byte        `json:"block_hash,omitempty"`
-	BlockNumber       *big.Int      `json:"block,omitempty"`
-	TransactionIndex  uint          `json:"transaction_index"`
-	PostState         []byte        `json:"root"`
-	Status            uint64        `json:"status"`
-	CumulativeGasUsed uint64        `json:"cumulative_gas_used"`
-	Bloom             interface{}   `json:"logs_bloom"`
-	Logs              []interface{} `json:"logs"`
-}
-
 // EthereumTxTraceResponse is returned upon successful contract execution
 type EthereumTxTraceResponse struct {
 	Result []struct {
@@ -143,26 +128,6 @@ type ContractExecutionResponse struct {
 	Response   interface{} `json:"response,omitempty"`
 }
 
-// EthereumJsonRpcResponseError is a generic error representation for ethereum JSON-RPC responses
-type EthereumJsonRpcResponseError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-}
-
-// EthereumJsonRpcResponse is a generic handler for ethereum JSON-RPC responses
-type EthereumJsonRpcResponse struct {
-	ID     interface{}                   `json:"id"`
-	Result interface{}                   `json:"result"`
-	Error  *EthereumJsonRpcResponseError `json:"error,omitempty"`
-}
-
-// EthereumWebsocketSubscriptionResponse is a generic handler for ethereum websocket subscription responses
-type EthereumWebsocketSubscriptionResponse struct {
-	ID     interface{}            `json:"id"`
-	Params map[string]interface{} `json:"params"`
-}
-
 // Network contains the specific Ethereum network details (mainnet, etc.)
 type Network struct {
 	api.Model
@@ -175,6 +140,21 @@ type Network struct {
 	ChainID       *string          `json:"chain_id"`             // protocol-specific chain id
 	NetworkID     *uuid.UUID       `json:"network_id,omitempty"` // network id used as the parent
 	Config        *json.RawMessage `json:"config,omitempty"`
+}
+
+// NetworkLogEvent is a network-agnostic log event
+type NetworkLog struct {
+	Address         *string                `json:"address,omitempty"`
+	Block           uint64                 `json:"block,omitempty"`
+	BlockHash       *string                `json:"blockhash,omitempty"`
+	Data            *string                `json:"data,omitempty"`
+	Index           *big.Int               `json:"log_index,omitempty"`
+	NetworkID       *string                `json:"network_id,omitempty"`
+	Timestamp       uint64                 `json:"timestamp,omitempty"`
+	Topics          []*string              `json:"topics,omitempty"`
+	TransactionHash *string                `json:"transaction_hash,omitempty"`
+	Type            *string                `json:"type,omitempty"`
+	Params          map[string]interface{} `json:"params,omitempty"`
 }
 
 // NetworkStatus provides network-agnostic status
@@ -263,33 +243,11 @@ type Transaction struct {
 	E2ELatency     *uint64    `json:"e2e_latency,omitempty"`     // finalized_at - published_at (in millis) -- the amount of time between when a message is published to the NATS broker and when it is finalized on-chain
 }
 
-// TxTrace is generalized transaction trace model
-type TxTrace struct {
-	Result []struct {
-		Action struct {
-			CallType *string `json:"callType"`
-			From     *string `json:"from"`
-			Gas      *string `json:"gas"`
-			Init     *string `json:"init"`
-			Input    *string `json:"input"`
-			To       *string `json:"to"`
-			Value    *string `json:"value"`
-		} `json:"action"`
-		BlockHash   *string `json:"blockHash"`
-		BlockNumber int     `json:"blockNumber"`
-		Result      struct {
-			Address *string `json:"address"`
-			Code    *string `json:"code"`
-			GasUsed *string `json:"gasUsed"`
-			Output  *string `json:"output"`
-		} `json:"result"`
-		Error               *string       `json:"error"`
-		Subtraces           int           `json:"subtraces"`
-		TraceAddress        []interface{} `json:"traceAddress"`
-		TransactionHash     *string       `json:"transactionHash"`
-		TransactionPosition int           `json:"transactionPosition"`
-		Type                *string       `json:"type"`
-	} `json:"result"`
+// RPCResponse represents a generic json-rpc response
+type RPCResponse struct {
+	ID      interface{}            `json:"id"`
+	Jsonrpc string                 `json:"jsonrpc"`
+	Result  map[string]interface{} `json:"result"`
 }
 
 // TxValue provides JSON marshaling and gorm driver support for wrapping/unwrapping big.Int
@@ -300,20 +258,6 @@ type TxValue struct {
 // NewTxValue is a convenience method to return a TxValue
 func NewTxValue(val int64) *TxValue {
 	return &TxValue{value: big.NewInt(val)}
-}
-
-// Value returns the underlying big.Int as a string for use by the gorm driver (psql)
-func (v *TxValue) Value() (driver.Value, error) {
-	return v.value.String(), nil
-}
-
-// Scan reads the persisted value using the gorm driver and marshals it into a TxValue
-func (v *TxValue) Scan(val interface{}) error {
-	v.value = new(big.Int)
-	if str, ok := val.(string); ok {
-		v.value.SetString(str, 10)
-	}
-	return nil
 }
 
 // BigInt returns the value represented as big.Int
@@ -330,6 +274,20 @@ func (v *TxValue) MarshalJSON() ([]byte, error) {
 func (v *TxValue) UnmarshalJSON(data []byte) error {
 	v.value = new(big.Int)
 	v.value.SetString(string(data), 10)
+	return nil
+}
+
+// Value returns the underlying big.Int as a string for use by the gorm driver (psql)
+func (v *TxValue) Value() (driver.Value, error) {
+	return v.value.String(), nil
+}
+
+// Scan reads the persisted value using the gorm driver and marshals it into a TxValue
+func (v *TxValue) Scan(val interface{}) error {
+	v.value = new(big.Int)
+	if str, ok := val.(string); ok {
+		v.value.SetString(str, 10)
+	}
 	return nil
 }
 
@@ -351,147 +309,4 @@ type Wallet struct {
 
 	PublicKey  *string `json:"public_key,omitempty"`
 	PrivateKey *string `json:"private_key,omitempty"`
-}
-
-// Current response struct for baseledger events, might revisit in future
-type BaseledgerSubscriptionResponse struct {
-	ID      interface{}            `json:"id"`
-	Jsonrpc string                 `json:"jsonrpc"`
-	Result  map[string]interface{} `json:"result"`
-}
-
-type BaseledgerBlockHeaderResponse struct {
-	Type  string `json:"type"`
-	Value struct {
-		Header struct {
-			AppHash       string `json:"app_hash"`
-			ChainID       string `json:"chain_id"`
-			ConsensusHash string `json:"consensus_hash"`
-			DataHash      string `json:"data_hash"`
-			EvidenceHash  string `json:"evidence_hash"`
-			Height        string `json:"height"`
-			LastBlockID   struct {
-				Hash  string `json:"hash"`
-				Parts struct {
-					Hash  string `json:"hash"`
-					Total int    `json:"total"`
-				} `json:"parts"`
-			} `json:"last_block_id"`
-			LastCommitHash     string    `json:"last_commit_hash"`
-			LastResultsHash    string    `json:"last_results_hash"`
-			NextValidatorsHash string    `json:"next_validators_hash"`
-			ProposerAddress    string    `json:"proposer_address"`
-			Time               time.Time `json:"time"`
-			ValidatorsHash     string    `json:"validators_hash"`
-			Version            struct {
-				App   string `json:"app"`
-				Block string `json:"block"`
-			} `json:"version"`
-		} `json:"header"`
-		NumTxs           string `json:"num_txs"`
-		ResultBeginBlock struct {
-			Events []struct {
-				Attributes []struct {
-					Index bool   `json:"index"`
-					Key   string `json:"key"`
-					Value string `json:"value"`
-				} `json:"attributes"`
-				Type string `json:"type"`
-			} `json:"events"`
-		} `json:"result_begin_block"`
-		ResultEndBlock struct {
-			ValidatorUpdates interface{} `json:"validator_updates"`
-		} `json:"result_end_block"`
-	} `json:"value"`
-}
-
-type TendermintTx struct {
-	Jsonrpc string `json:"jsonrpc"`
-	ID      int    `json:"id"`
-	Result  struct {
-		Hash     string `json:"hash"`
-		Height   string `json:"height"`
-		Index    int    `json:"index"`
-		TxResult struct {
-			Code      int    `json:"code"`
-			Data      string `json:"data"`
-			Log       string `json:"log"`
-			Info      string `json:"info"`
-			GasWanted string `json:"gas_wanted"`
-			GasUsed   string `json:"gas_used"`
-			Events    []struct {
-				Type       string `json:"type"`
-				Attributes []struct {
-					Key   string `json:"key"`
-					Value string `json:"value"`
-					Index bool   `json:"index"`
-				} `json:"attributes"`
-			} `json:"events"`
-			Codespace string `json:"codespace"`
-		} `json:"tx_result"`
-		Tx string `json:"tx"`
-	} `json:"result"`
-}
-
-type TendermintBlock struct {
-	Jsonrpc string `json:"jsonrpc"`
-	ID      int    `json:"id"`
-	Result  struct {
-		BlockID struct {
-			Hash  string `json:"hash"`
-			Parts struct {
-				Total int    `json:"total"`
-				Hash  string `json:"hash"`
-			} `json:"parts"`
-		} `json:"block_id"`
-		Block struct {
-			Header struct {
-				Version struct {
-					Block string `json:"block"`
-				} `json:"version"`
-				ChainID     string    `json:"chain_id"`
-				Height      string    `json:"height"`
-				Time        time.Time `json:"time"`
-				LastBlockID struct {
-					Hash  string `json:"hash"`
-					Parts struct {
-						Total int    `json:"total"`
-						Hash  string `json:"hash"`
-					} `json:"parts"`
-				} `json:"last_block_id"`
-				LastCommitHash     string `json:"last_commit_hash"`
-				DataHash           string `json:"data_hash"`
-				ValidatorsHash     string `json:"validators_hash"`
-				NextValidatorsHash string `json:"next_validators_hash"`
-				ConsensusHash      string `json:"consensus_hash"`
-				AppHash            string `json:"app_hash"`
-				LastResultsHash    string `json:"last_results_hash"`
-				EvidenceHash       string `json:"evidence_hash"`
-				ProposerAddress    string `json:"proposer_address"`
-			} `json:"header"`
-			Data struct {
-				Txs []string `json:"txs"`
-			} `json:"data"`
-			Evidence struct {
-				Evidence []interface{} `json:"evidence"`
-			} `json:"evidence"`
-			LastCommit struct {
-				Height  string `json:"height"`
-				Round   int    `json:"round"`
-				BlockID struct {
-					Hash  string `json:"hash"`
-					Parts struct {
-						Total int    `json:"total"`
-						Hash  string `json:"hash"`
-					} `json:"parts"`
-				} `json:"block_id"`
-				Signatures []struct {
-					BlockIDFlag      int       `json:"block_id_flag"`
-					ValidatorAddress string    `json:"validator_address"`
-					Timestamp        time.Time `json:"timestamp"`
-					Signature        string    `json:"signature"`
-				} `json:"signatures"`
-			} `json:"last_commit"`
-		} `json:"block"`
-	} `json:"result"`
 }
