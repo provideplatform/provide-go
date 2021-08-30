@@ -144,11 +144,11 @@ type Network struct {
 
 // NetworkLogEvent is a network-agnostic log event
 type NetworkLog struct {
-	Address         *string                `json:"address,omitempty"`
-	Block           uint64                 `json:"block,omitempty"`
-	BlockHash       *string                `json:"blockhash,omitempty"`
-	Data            *string                `json:"data,omitempty"`
-	Index           *big.Int               `json:"log_index,omitempty"`
+	Address   *string `json:"address,omitempty"`
+	Block     uint64  `json:"block,omitempty"`
+	BlockHash *string `json:"blockhash,omitempty"`
+	Data      *string `json:"data,omitempty"`
+	// Index           *big.Int               `json:"log_index,omitempty"`
 	NetworkID       *string                `json:"network_id,omitempty"`
 	Timestamp       uint64                 `json:"timestamp,omitempty"`
 	Topics          []*string              `json:"topics,omitempty"`
