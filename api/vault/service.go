@@ -18,6 +18,10 @@ type Service struct {
 	api.Client
 }
 
+type Response struct {
+	TotalCount string
+}
+
 // InitVaultService convenience method to initialize an `vault.Service` instance
 func InitVaultService(token *string) *Service {
 	host := defaultVaultHost
@@ -71,31 +75,34 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 }
 
 // ListVaults retrieves a paginated list of vaults scoped to the given API token
-func ListVaults(token string, params map[string]interface{}) ([]*Vault, error) {
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Get("vaults", params)
+func ListVaults(token string, params map[string]interface{}) ([]*Vault, *Response, error) {
+	status, resp, err := InitVaultService(common.StringOrNil(token)).GetPaginated("vaults", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, resp)
+		return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, resp)
 	}
 
 	vaults := make([]*Vault, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		vlt := &Vault{}
 		vltraw, err := json.Marshal(item)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
 		}
 		err = json.Unmarshal(vltraw, &vlt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
 		}
 		vaults = append(vaults, vlt)
 	}
 
-	return vaults, nil
+	response := &Response{
+		TotalCount: resp.TotalCount,
+	}
+	return vaults, response, nil
 }
 
 // ListKeys retrieves a paginated list of vault keys

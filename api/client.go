@@ -45,6 +45,11 @@ type Client struct {
 	Password *string
 }
 
+type PaginatedResponse struct {
+	Results    interface{}
+	TotalCount string
+}
+
 func requestTimeout() time.Duration {
 	if customRequestTimeout != nil {
 		return *customRequestTimeout
@@ -271,6 +276,18 @@ func (c *Client) Get(uri string, params map[string]interface{}) (status int, res
 	url := c.buildURL(uri)
 	resp, err := c.sendRequest("GET", url, defaultContentType, params)
 	return c.parseResponse(resp)
+}
+
+// Get paginated constructs and synchronously sends an API GET request
+func (c *Client) GetPaginated(uri string, params map[string]interface{}) (status int, response *PaginatedResponse, err error) {
+	url := c.buildURL(uri)
+	resp, err := c.sendRequest("GET", url, defaultContentType, params)
+	status, results, err := c.parseResponse(resp)
+	paginatedResponse := &PaginatedResponse{
+		Results:    results,
+		TotalCount: resp.Header.Get("x-total-results-count"),
+	}
+	return status, paginatedResponse, err
 }
 
 // Head constructs and synchronously sends an API HEAD request; returns the headers
