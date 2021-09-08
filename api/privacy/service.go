@@ -1,6 +1,7 @@
 package privacy
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -102,6 +103,24 @@ func CreateCeremony(token string, params map[string]interface{}) (*Ceremony, err
 	json.Unmarshal(raw, &ceremony)
 
 	return ceremony, nil
+}
+
+// SubmitCeremonyEntropy set entropy for a named party to a ceremony
+func SubmitCeremonyEntropy(token, ceremonyID, party string, entropy []byte) error {
+	uri := fmt.Sprintf("ceremonies/%s/entropy", ceremonyID)
+	status, _, err := InitPrivacyService(token).Post(uri, map[string]interface{}{
+		"party":   party,
+		"entropy": hex.EncodeToString(entropy),
+	})
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to submit party entropy to ceremony; status: %v", status)
+	}
+
+	return nil
 }
 
 // ListCircuits lists the circuits in the scope of the given bearer token
