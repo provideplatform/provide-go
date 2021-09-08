@@ -45,6 +45,65 @@ func InitPrivacyService(token string) *Service {
 	}
 }
 
+// ListCeremonys lists the ceremonies in the scope of the given bearer token
+func ListCeremonys(token string, params map[string]interface{}) ([]*Ceremony, error) {
+	status, resp, err := InitPrivacyService(token).Get("ceremonies", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list ceremonies; status: %v", status)
+	}
+
+	ceremonies := make([]*Ceremony, 0)
+	for _, item := range resp.([]interface{}) {
+		ceremony := &Ceremony{}
+		raw, _ := json.Marshal(item)
+		json.Unmarshal(raw, &ceremony)
+		ceremonies = append(ceremonies, ceremony)
+	}
+
+	return ceremonies, nil
+}
+
+// GetCeremonyDetails fetches details for the given ceremony
+func GetCeremonyDetails(token, ceremonyID string) (*Ceremony, error) {
+	uri := fmt.Sprintf("ceremonies/%s", ceremonyID)
+	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch ceremony; status: %v", status)
+	}
+
+	ceremony := &Ceremony{}
+	raw, _ := json.Marshal(resp)
+	json.Unmarshal(raw, &ceremony)
+
+	return ceremony, nil
+}
+
+// CreateCeremony creates a new ceremony in the registry
+func CreateCeremony(token string, params map[string]interface{}) (*Ceremony, error) {
+	status, resp, err := InitPrivacyService(token).Post("ceremonies", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create ceremony; status: %v", status)
+	}
+
+	ceremony := &Ceremony{}
+	raw, _ := json.Marshal(resp)
+	json.Unmarshal(raw, &ceremony)
+
+	return ceremony, nil
+}
+
 // ListCircuits lists the circuits in the scope of the given bearer token
 func ListCircuits(token string, params map[string]interface{}) ([]*Circuit, error) {
 	status, resp, err := InitPrivacyService(token).Get("circuits", params)

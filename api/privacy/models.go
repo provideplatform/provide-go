@@ -5,6 +5,21 @@ import (
 	"github.com/provideplatform/provide-go/api"
 )
 
+// CeremonyConfig model
+type CeremonyConfig struct {
+	BlockNumber *uint64 `json:"block"`     // optional block number for querying random beacon
+	WordSize    uint    `json:"word_size"` // number of entropy bytes per party
+}
+
+// Ceremony model
+type Ceremony struct {
+	*api.Model
+
+	Config  CeremonyConfig `json:"config"`
+	Parties []string       `json:"parties"`
+	Status  *string        `json:"status"`
+}
+
 // Circuit model
 type Circuit struct {
 	*api.Model
