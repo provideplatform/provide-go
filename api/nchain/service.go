@@ -70,24 +70,28 @@ func CreateAccount(token string, params map[string]interface{}) (*Account, error
 }
 
 // ListAccounts
-func ListAccounts(token string, params map[string]interface{}) ([]*Account, error) {
-	status, resp, err := InitNChainService(token).Get("accounts", params)
+func ListAccounts(token string, params map[string]interface{}) ([]*Account, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("accounts", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list accounts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list accounts; status: %v", status)
 	}
 
 	accounts := make([]*Account, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		account := &Account{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &account)
 		accounts = append(accounts, account)
 	}
-	return accounts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return accounts, response, nil
 }
 
 // GetAccountDetails
@@ -156,24 +160,28 @@ func CreateConnector(token string, params map[string]interface{}) (*Connector, e
 }
 
 // ListConnectors
-func ListConnectors(token string, params map[string]interface{}) ([]*Connector, error) {
-	status, resp, err := InitNChainService(token).Get("connectors", params)
+func ListConnectors(token string, params map[string]interface{}) ([]*Connector, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("connectors", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list connectors; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list connectors; status: %v", status)
 	}
 
 	connectors := make([]*Connector, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		connector := &Connector{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &connector)
 		connectors = append(connectors, connector)
 	}
-	return connectors, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return connectors, response, nil
 }
 
 // GetConnectorDetails
@@ -282,24 +290,28 @@ func ExecuteContract(token, contractID string, params map[string]interface{}) (*
 }
 
 // ListContracts
-func ListContracts(token string, params map[string]interface{}) ([]*Contract, error) {
-	status, resp, err := InitNChainService(token).Get("contracts", params)
+func ListContracts(token string, params map[string]interface{}) ([]*Contract, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("contracts", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list contracts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list contracts; status: %v", status)
 	}
 
 	contracts := make([]*Contract, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		contract := &Contract{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &contract)
 		contracts = append(contracts, contract)
 	}
-	return contracts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return contracts, response, nil
 }
 
 // GetContractDetails
@@ -384,25 +396,29 @@ func UpdateNetwork(token, networkID string, params map[string]interface{}) error
 }
 
 // ListNetworks
-func ListNetworks(token string, params map[string]interface{}) ([]*Network, error) {
+func ListNetworks(token string, params map[string]interface{}) ([]*Network, *common.Response, error) {
 	uri := "networks"
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list networks. status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list networks. status: %v", status)
 	}
 
 	networks := make([]*Network, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		netwrk := &Network{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &netwrk)
 		networks = append(networks, netwrk)
 	}
-	return networks, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return networks, response, nil
 }
 
 // GetNetworkDetails returns the details for the specified network id
@@ -428,25 +444,29 @@ func GetNetworkDetails(token, networkID string, params map[string]interface{}) (
 }
 
 // ListNetworkAccounts
-func ListNetworkAccounts(token, networkID string, params map[string]interface{}) ([]*Account, error) {
+func ListNetworkAccounts(token, networkID string, params map[string]interface{}) ([]*Account, *common.Response, error) {
 	uri := fmt.Sprintf("networks/%s/accounts", networkID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list accounts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list accounts; status: %v", status)
 	}
 
 	accounts := make([]*Account, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		account := &Account{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &account)
 		accounts = append(accounts, account)
 	}
-	return accounts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return accounts, response, nil
 }
 
 // ListNetworkBlocks
@@ -484,25 +504,29 @@ func ListNetworkConnectors(token, networkID string, params map[string]interface{
 }
 
 // ListNetworkContracts
-func ListNetworkContracts(token, networkID string, params map[string]interface{}) ([]*Contract, error) {
+func ListNetworkContracts(token, networkID string, params map[string]interface{}) ([]*Contract, *common.Response, error) {
 	uri := fmt.Sprintf("networks/%s/contracts", networkID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list contracts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list contracts; status: %v", status)
 	}
 
 	contracts := make([]*Contract, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		contract := &Contract{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &contract)
 		contracts = append(contracts, contract)
 	}
-	return contracts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return contracts, response, nil
 }
 
 // GetNetworkContractDetails
@@ -528,69 +552,81 @@ func GetNetworkContractDetails(token, networkID, contractID string, params map[s
 }
 
 // ListNetworkOracles
-func ListNetworkOracles(token, networkID string, params map[string]interface{}) ([]*Oracle, error) {
+func ListNetworkOracles(token, networkID string, params map[string]interface{}) ([]*Oracle, *common.Response, error) {
 	uri := fmt.Sprintf("networks/%s/oracles", networkID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list oracles; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list oracles; status: %v", status)
 	}
 
 	oracles := make([]*Oracle, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		oracle := &Oracle{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &oracle)
 		oracles = append(oracles, oracle)
 	}
-	return oracles, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return oracles, response, nil
 }
 
 // ListNetworkTokens
-func ListNetworkTokens(token, networkID string, params map[string]interface{}) ([]*Token, error) {
+func ListNetworkTokens(token, networkID string, params map[string]interface{}) ([]*Token, *common.Response, error) {
 	uri := fmt.Sprintf("networks/%s/tokens", networkID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list token contracts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list token contracts; status: %v", status)
 	}
 
 	tknContracts := make([]*Token, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tknContract := &Token{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &tknContract)
 		tknContracts = append(tknContracts, tknContract)
 	}
-	return tknContracts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return tknContracts, response, nil
 }
 
 // ListNetworkTransactions
-func ListNetworkTransactions(token, networkID string, params map[string]interface{}) ([]*Transaction, error) {
+func ListNetworkTransactions(token, networkID string, params map[string]interface{}) ([]*Transaction, *common.Response, error) {
 	uri := fmt.Sprintf("networks/%s/transactions", networkID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list transactions; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list transactions; status: %v", status)
 	}
 
 	txs := make([]*Transaction, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tx := &Transaction{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &tx)
 		txs = append(txs, tx)
 	}
-	return txs, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return txs, response, nil
 }
 
 // GetNetworkTransactionDetails
@@ -659,24 +695,28 @@ func CreateOracle(token string, params map[string]interface{}) (*Oracle, error) 
 }
 
 // ListOracles
-func ListOracles(token string, params map[string]interface{}) ([]*Oracle, error) {
-	status, resp, err := InitNChainService(token).Get("oracles", params)
+func ListOracles(token string, params map[string]interface{}) ([]*Oracle, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("oracles", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list oracles; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list oracles; status: %v", status)
 	}
 
 	oracles := make([]*Oracle, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		oracle := &Oracle{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &oracle)
 		oracles = append(oracles, oracle)
 	}
-	return oracles, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return oracles, response, nil
 }
 
 // GetOracleDetails
@@ -723,24 +763,28 @@ func CreateTokenContract(token string, params map[string]interface{}) (*Token, e
 }
 
 // ListTokenContracts
-func ListTokenContracts(token string, params map[string]interface{}) ([]*Token, error) {
-	status, resp, err := InitNChainService(token).Get("tokens", params)
+func ListTokenContracts(token string, params map[string]interface{}) ([]*Token, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("tokens", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list token contracts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list token contracts; status: %v", status)
 	}
 
 	tknContracts := make([]*Token, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tknContract := &Token{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &tknContract)
 		tknContracts = append(tknContracts, tknContract)
 	}
-	return tknContracts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return tknContracts, response, nil
 }
 
 // GetTokenContractDetails
@@ -787,24 +831,28 @@ func CreateTransaction(token string, params map[string]interface{}) (*Transactio
 }
 
 // ListTransactions
-func ListTransactions(token string, params map[string]interface{}) ([]*Transaction, error) {
-	status, resp, err := InitNChainService(token).Get("transactions", params)
+func ListTransactions(token string, params map[string]interface{}) ([]*Transaction, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("transactions", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list transactions; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list transactions; status: %v", status)
 	}
 
 	txs := make([]*Transaction, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tx := &Transaction{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &tx)
 		txs = append(txs, tx)
 	}
-	return txs, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return txs, response, nil
 }
 
 // GetTransactionDetails
@@ -851,24 +899,28 @@ func CreateWallet(token string, params map[string]interface{}) (*Wallet, error) 
 }
 
 // ListWallets
-func ListWallets(token string, params map[string]interface{}) ([]*Wallet, error) {
-	status, resp, err := InitNChainService(token).Get("wallets", params)
+func ListWallets(token string, params map[string]interface{}) ([]*Wallet, *common.Response, error) {
+	status, resp, err := InitNChainService(token).GetPaginated("wallets", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list wallets; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list wallets; status: %v", status)
 	}
 
 	wallets := make([]*Wallet, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		wallet := &Wallet{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &wallet)
 		wallets = append(wallets, wallet)
 	}
-	return wallets, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return wallets, response, nil
 }
 
 // GetWalletDetails
@@ -894,23 +946,27 @@ func GetWalletDetails(token, walletID string, params map[string]interface{}) (*W
 }
 
 // ListWalletAccounts
-func ListWalletAccounts(token, walletID string, params map[string]interface{}) ([]*Account, error) {
+func ListWalletAccounts(token, walletID string, params map[string]interface{}) ([]*Account, *common.Response, error) {
 	uri := fmt.Sprintf("wallets/%s/accounts", walletID)
-	status, resp, err := InitNChainService(token).Get(uri, params)
+	status, resp, err := InitNChainService(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list accounts; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list accounts; status: %v", status)
 	}
 
 	accounts := make([]*Account, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		account := &Account{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &account)
 		accounts = append(accounts, account)
 	}
-	return accounts, nil
+
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return accounts, response, nil
 }

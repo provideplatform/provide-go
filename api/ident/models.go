@@ -102,7 +102,7 @@ type User struct {
 	FirstName              string                 `json:"first_name"`
 	LastName               string                 `json:"last_name"`
 	Email                  string                 `json:"email"`
-	Permissions            uint32                 `json:"permissions,omitempty,omitempty"`
+	Permissions            uint32                 `json:"permissions,omitempty"`
 	PrivacyPolicyAgreedAt  *time.Time             `json:"privacy_policy_agreed_at,omitempty"`
 	TermsOfServiceAgreedAt *time.Time             `json:"terms_of_service_agreed_at,omitempty"`
 	Metadata               map[string]interface{} `json:"metadata,omitempty"`
