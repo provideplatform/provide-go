@@ -141,12 +141,6 @@ func EVMDialJsonRpc(rpcClientKey, rpcURL string) (*ethclient.Client, error) {
 		client = ethclientRpcClients[rpcClientKey][0]
 	}
 
-	_, err := EVMGetSyncProgress(client)
-	if err != nil {
-		evmClearCachedClients(rpcClientKey)
-		return nil, err
-	}
-
 	return client, nil
 }
 
