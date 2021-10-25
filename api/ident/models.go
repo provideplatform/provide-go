@@ -13,7 +13,7 @@ type Application struct {
 	api.Model
 
 	NetworkID   uuid.UUID              `json:"network_id,omitempty"`
-	UserID      uuid.UUID              `json:"user_id,omitempty"` // this is the user that initially created the app
+	UserID      *string                `json:"user_id,omitempty"` // this is the user that initially created the app
 	Name        *string                `json:"name"`
 	Description *string                `json:"description"`
 	Status      *string                `json:"status,omitempty"` // this is for enrichment purposes only
@@ -33,13 +33,13 @@ type Invite struct {
 	api.Model
 
 	ApplicationID    *uuid.UUID             `json:"application_id,omitempty"`
-	UserID           *uuid.UUID             `json:"user_id,omitempty"`
+	UserID           *string                `json:"user_id,omitempty"`
 	FirstName        *string                `json:"first_name,omitempty"`
 	LastName         *string                `json:"last_name,omitempty"`
 	Email            *string                `json:"email,omitempty"`
 	InvitorID        *uuid.UUID             `json:"invitor_id,omitempty"`
 	InvitorName      *string                `json:"invitor_name,omitempty"`
-	OrganizationID   *uuid.UUID             `json:"organization_id,omitempty"`
+	OrganizationID   *string                `json:"organization_id,omitempty"`
 	OrganizationName *string                `json:"organization_name,omitempty"`
 	Permissions      uint32                 `json:"permissions,omitempty"`
 	Params           map[string]interface{} `json:"params,omitempty"`
@@ -59,10 +59,10 @@ type JSONWebKey struct {
 
 // Organization model
 type Organization struct {
-	api.Model
+	api.ModelWithDID
 
 	Name        *string                `json:"name"`
-	UserID      *uuid.UUID             `json:"user_id,omitempty"`
+	UserID      *string                `json:"user_id,omitempty"`
 	Description *string                `json:"description"`
 	Permissions uint32                 `json:"permissions,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata"`
@@ -96,7 +96,7 @@ type Token struct {
 
 // User represents a user
 type User struct {
-	api.Model
+	api.ModelWithDID
 
 	Name                   string                 `json:"name"`
 	FirstName              string                 `json:"first_name"`

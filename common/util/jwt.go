@@ -26,6 +26,8 @@ import (
 	ident "github.com/provideplatform/provide-go/api/ident"
 	vault "github.com/provideplatform/provide-go/api/vault"
 	common "github.com/provideplatform/provide-go/common"
+
+	"github.com/ockam-network/did"
 )
 
 const authorizationHeader = "authorization"
@@ -214,6 +216,34 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 		return nil
 	}
 	return &uuidV4
+}
+
+func AuthorizedSubjectDID(c *gin.Context, subject string) *string {
+	token, err := ParseBearerAuthorizationHeader(c, nil)
+	if err != nil {
+		common.Log.Tracef("no %s subject claim parsed from bearer authorization header; %s", subject, err.Error())
+		return nil
+	}
+	var id string
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		if sub, subok := claims["sub"].(string); subok {
+			subprts := strings.Split(sub, "|")
+			if len(subprts) != 2 {
+				common.Log.Debugf("failed to parse %s subject claim from bearer authorization header; subject malformed: %s", subject, sub)
+				return nil
+			}
+			if subprts[0] != subject {
+				return nil
+			}
+			id = subprts[1]
+		}
+	}
+	_, err = did.Parse(id)
+	if err != nil {
+		common.Log.Debugf("failed to parse %s subject from bearer authorization header; %s", subject, err.Error())
+		return nil
+	}
+	return &id
 }
 
 // ParseBearerAuthorizationHeader parses a bearer authorization header

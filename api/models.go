@@ -23,6 +23,13 @@ type Model struct {
 	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
+// Model base class with text primary key id
+type ModelWithDID struct {
+	ID        *string   `sql:"primary_key" json:"id"`
+	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at,omitempty"`
+	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
+}
+
 // CRUD interface
 type CRUD interface {
 	Create(tx *gorm.DB) bool
