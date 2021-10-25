@@ -53,7 +53,7 @@ func TrackAPICalls() gin.HandlerFunc {
 			} else {
 				userID := AuthorizedSubjectID(c, "user")
 				if userID != nil {
-					subject = fmt.Sprintf("user:%s", userID)
+					subject = fmt.Sprintf("user|%s", userID)
 				}
 			}
 

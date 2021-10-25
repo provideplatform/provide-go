@@ -18,8 +18,8 @@ type Account struct {
 	NetworkID      *uuid.UUID `json:"network_id,omitempty"`
 	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
 	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
-	UserID         *uuid.UUID `json:"user_id,omitempty"`
-	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+	UserID         *string    `json:"user_id,omitempty"`
+	OrganizationID *string    `json:"organization_id,omitempty"`
 
 	VaultID *uuid.UUID `json:"vault_id,omitempty"`
 	KeyID   *uuid.UUID `json:"key_id,omitempty"`
@@ -55,7 +55,7 @@ type Connector struct {
 
 	ApplicationID  *uuid.UUID       `json:"application_id"`
 	NetworkID      uuid.UUID        `json:"network_id"`
-	OrganizationID *uuid.UUID       `json:"organization_id"`
+	OrganizationID *string          `json:"organization_id"`
 	Name           *string          `json:"name"`
 	Type           *string          `json:"type"`
 	Status         *string          `json:"status"`
@@ -133,7 +133,7 @@ type Network struct {
 	api.Model
 
 	ApplicationID *uuid.UUID       `json:"application_id,omitempty"`
-	UserID        *uuid.UUID       `json:"user_id,omitempty"`
+	UserID        *string          `json:"user_id,omitempty"`
 	Name          *string          `json:"name"`
 	Description   *string          `json:"description"`
 	Enabled       *bool            `json:"enabled"`
@@ -210,7 +210,7 @@ type Transaction struct {
 
 	// Application or user id, if populated, is the entity for which the transaction was custodially signed and broadcast
 	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
-	UserID        *uuid.UUID `json:"user_id,omitempty"`
+	UserID        *string    `json:"user_id,omitempty"`
 
 	// Account or HD wallet which custodially signed the transaction; when an HD wallet is used, if no HD derivation path is provided,
 	// the most recently derived non-zero account is used to sign
@@ -297,8 +297,8 @@ type Wallet struct {
 
 	WalletID       *uuid.UUID `json:"wallet_id,omitempty"`
 	ApplicationID  *uuid.UUID `json:"application_id,omitempty"`
-	UserID         *uuid.UUID `json:"user_id,omitempty"`
-	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
+	UserID         *string    `json:"user_id,omitempty"`
+	OrganizationID *string    `json:"organization_id,omitempty"`
 
 	VaultID *uuid.UUID `json:"vault_id,omitempty"`
 	KeyID   *uuid.UUID `json:"key_id,omitempty"`
