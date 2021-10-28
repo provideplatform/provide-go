@@ -97,34 +97,54 @@ type ProtocolMessagePayload struct {
 	Witness interface{}            `sql:"-" json:"witness,omitempty"`
 }
 
-// Workgroup is a baseline workgroup context
-type Workgroup struct {
-	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
-	Errors       []*api.Error   `sql:"-" json:"errors,omitempty"`
-	Participants []*Participant `sql:"-" json:"participants"`
-	Workflows    []*Workflow    `json:"workflows,omitempty"`
-
-	PrivacyPolicy      interface{} `json:"privacy_policy"`      // outlines data visibility rules for each participant
-	SecurityPolicy     interface{} `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
-	TokenizationPolicy interface{} `json:"tokenization_policy"` // consists of policies governing tokenization of workflow outputs
+// PublicWorkgroupInvitationRequest represents parameters for an anonymous request to a public workgroup
+type PublicWorkgroupInvitationRequest struct {
+	Email            *string `json:"email"`
+	FirstName        *string `json:"first_name"`
+	LastName         *string `json:"last_name"`
+	OrganizationName *string `json:"organization_name"`
 }
 
-// Workflow is a baseline workflow context
+// Workgroup is a baseline workgroup context
+type Workgroup struct {
+	api.Model
+	Participants       []*Participant `gorm:"many2many:workgroups_participants" json:"participants,omitempty"`
+	Workflows          []*Workflow    `gorm:"many2many:workgroups_workflows" json:"workflows,omitempty"`
+	PrivacyPolicy      interface{}    `json:"privacy_policy"`      // outlines data visibility rules for each participant
+	SecurityPolicy     interface{}    `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
+	TokenizationPolicy interface{}    `json:"tokenization_policy"` // consists of policies governing tokenization of workflow outputs
+}
+
+// Workflow is a baseline workflow prototype
 type Workflow struct {
-	ID           *uuid.UUID     `sql:"-" json:"id,omitempty"`
-	Errors       []*api.Error   `sql:"-" json:"errors,omitempty"`
-	Participants []*Participant `sql:"-" json:"participants"`
-	Shield       *string        `sql:"-" json:"shield,omitempty"`
-	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
+	api.Model
+	Participants []*Participant `gorm:"many2many:workflows_participants" json:"participants"`
+	Worksteps    []*Workstep    `gorm:"many2many:workflows_worksteps" json:"worksteps,omitempty"`
+	Version      *string        `json:"version"`
+}
+
+// WorkflowInstance is a baseline workflow instance
+type WorkflowInstance struct {
+	Workflow
+	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"`
+	Shield     *string             `json:"shield,omitempty"`
+	Status     *string             `json:"status"`
+	Worksteps  []*WorkstepInstance `gorm:"many2many:workflowinstances_worksteps" json:"worksteps,omitempty"`
 }
 
 // Workstep is a baseline workflow context
 type Workstep struct {
-	ID              *uuid.UUID       `sql:"-" json:"id,omitempty"`
-	Circuit         *privacy.Circuit `sql:"-" json:"circuit,omitempty"`
-	CircuitID       *uuid.UUID       `sql:"-" json:"circuit_id"`
-	Errors          []*api.Error     `sql:"-" json:"errors,omitempty"`
-	Participants    []*Participant   `sql:"-" json:"participants"`
-	RequireFinality bool             `sql:"-" json:"require_finality"`
-	WorkflowID      *uuid.UUID       `sql:"-" json:"workflow_id,omitempty"`
+	api.Model
+	Circuit         *privacy.Circuit `json:"circuit,omitempty"`
+	CircuitID       *uuid.UUID       `json:"circuit_id"`
+	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
+	RequireFinality bool             `json:"require_finality"`
+	WorkflowID      *uuid.UUID       `json:"workflow_id,omitempty"`
+}
+
+// WorkstepInstance is a baseline workstep instance
+type WorkstepInstance struct {
+	Workstep
+	WorkstepID         *uuid.UUID `json:"workstep_id,omitempty"`
+	WorkstepInstanceID *uuid.UUID `json:"workstep_instance_id,omitempty"`
 }
