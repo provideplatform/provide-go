@@ -41,8 +41,10 @@ func RequireVault() {
 		case <-timer.C:
 			if ident.Status() == nil {
 				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
+				common.Log.Debugf("defaultVaultRefreshJWT: %s", defaultVaultRefreshJWT)
 				if defaultVaultRefreshJWT != "" {
 					accessToken, err := refreshVaultAccessToken()
+					common.Log.Debugf("accessToken: %s", accessToken)
 					if err != nil {
 						common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
 						continue
@@ -60,6 +62,7 @@ func RequireVault() {
 							select {
 							case <-timer.C:
 								token, err := refreshVaultAccessToken()
+								common.Log.Debugf("token: %s", token)
 								if err != nil {
 									common.Log.Warningf("failed to refresh vault access token; %s", err.Error())
 								} else {
@@ -73,6 +76,7 @@ func RequireVault() {
 				}
 
 				defaultVaultSealUnsealKey = os.Getenv("VAULT_SEAL_UNSEAL_KEY")
+				common.Log.Debugf("defaultVaultSealUnsealKey: %s", defaultVaultSealUnsealKey)
 				if defaultVaultSealUnsealKey != "" {
 					common.Log.Debug("parsed VAULT_SEAL_UNSEAL_KEY from environment")
 
@@ -81,6 +85,7 @@ func RequireVault() {
 						common.Log.Warningf("failed to unseal vault; %s", err.Error())
 						continue
 					}
+					common.Log.Debug("vault unsealed")
 				}
 
 				vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
