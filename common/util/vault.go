@@ -39,6 +39,7 @@ func RequireVault() {
 	for {
 		select {
 		case <-timer.C:
+			common.Log.Debugf("timer received")
 			if ident.Status() == nil {
 				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
 				common.Log.Debugf("defaultVaultRefreshJWT: %s", defaultVaultRefreshJWT)
@@ -113,6 +114,7 @@ func RequireVault() {
 				return
 			}
 		default:
+			common.Log.Debugf("default case")
 			if startTime.Add(requireVaultTimeout).Before(time.Now()) {
 				common.Log.Panicf("failed to require vault")
 			} else {
