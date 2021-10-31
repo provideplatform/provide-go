@@ -40,7 +40,8 @@ func RequireVault() {
 		select {
 		case <-timer.C:
 			common.Log.Debugf("timer received")
-			if ident.Status() == nil {
+			identStatusError := ident.Status()
+			if identStatusError == nil {
 				defaultVaultRefreshJWT = os.Getenv("VAULT_REFRESH_TOKEN")
 				common.Log.Debugf("defaultVaultRefreshJWT: %s", defaultVaultRefreshJWT)
 				if defaultVaultRefreshJWT != "" {
@@ -112,6 +113,8 @@ func RequireVault() {
 				}
 
 				return
+			} else {
+				common.Log.Errorf("ident status error: %s", identStatusError.Error())
 			}
 		default:
 			common.Log.Debugf("default case")
