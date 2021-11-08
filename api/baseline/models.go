@@ -109,7 +109,7 @@ type PublicWorkgroupInvitationRequest struct {
 type Workgroup struct {
 	api.Model
 	Participants       []*Participant `gorm:"many2many:workgroups_participants" json:"participants,omitempty"`
-	Workflows          []*Workflow    `gorm:"many2many:workgroups_workflows" json:"workflows,omitempty"`
+	Workflows          []*Workflow    `sql:"-" json:"workflows,omitempty"`
 	PrivacyPolicy      interface{}    `json:"privacy_policy"`      // outlines data visibility rules for each participant
 	SecurityPolicy     interface{}    `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
 	TokenizationPolicy interface{}    `json:"tokenization_policy"` // consists of policies governing tokenization of workflow outputs
@@ -119,20 +119,20 @@ type Workgroup struct {
 type Workflow struct {
 	api.Model
 	Participants []*Participant `gorm:"many2many:workflows_participants" json:"participants"`
-	Worksteps    []*Workstep    `gorm:"many2many:workflows_worksteps" json:"worksteps,omitempty"`
 	Version      *string        `json:"version"`
+	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
 }
 
 // WorkflowInstance is a baseline workflow instance
 type WorkflowInstance struct {
 	Workflow
-	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"`
+	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"` // references the workflow prototype identifier
 	Shield     *string             `json:"shield,omitempty"`
 	Status     *string             `json:"status"`
-	Worksteps  []*WorkstepInstance `gorm:"many2many:workflowinstances_worksteps" json:"worksteps,omitempty"`
+	Worksteps  []*WorkstepInstance `sql:"-" json:"worksteps,omitempty"`
 }
 
-// Workstep is a baseline workflow context
+// Workstep is a baseline workstep context
 type Workstep struct {
 	api.Model
 	Circuit         *privacy.Circuit `json:"circuit,omitempty"`
@@ -145,6 +145,5 @@ type Workstep struct {
 // WorkstepInstance is a baseline workstep instance
 type WorkstepInstance struct {
 	Workstep
-	WorkstepID         *uuid.UUID `json:"workstep_id,omitempty"`
-	WorkstepInstanceID *uuid.UUID `json:"workstep_instance_id,omitempty"`
+	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
 }
