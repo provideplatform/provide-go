@@ -54,6 +54,28 @@ type IssueVerifiableCredentialResponse struct {
 	VC *string `json:"credential"`
 }
 
+// Mapping for arbitrary model transformations
+type Mapping struct {
+	Models   []*MappingModel        `json:"models"`
+	Metadata map[string]interface{} `json:"metadata"`
+	Type     *string                `json:"type"`
+}
+
+// MappingField for mapping
+type MappingField struct {
+	DefaultVault interface{} `json:"default_value,omitempty"`
+	IsPrimaryKey bool        `json:"is_primary_key"`
+	Name         string      `json:"name"`
+	Type         string      `json:"type"`
+}
+
+// MappingModel consists of fields for mapping
+type MappingModel struct {
+	Fields     []*MappingField `json:"fields"`
+	PrimaryKey *string         `json:"primary_key"`
+	Type       *string         `json:"type"`
+}
+
 // Message is a proxy-internal wrapper for protocol message handling
 type Message struct {
 	ID              *string          `sql:"-" json:"id,omitempty"`

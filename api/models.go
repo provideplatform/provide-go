@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	uuid "github.com/kthomas/go.uuid"
 )
 
@@ -22,12 +23,12 @@ type Model struct {
 	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
-// IModel interface
-// TODO-- this isn't actually used anywhere... decide if it should be or remove it.
-type IModel interface {
-	Create() bool
+// CRUD interface
+type CRUD interface {
+	Create(tx *gorm.DB) bool
+	Delete(tx *gorm.DB) bool
 	Reload()
-	Update() bool
+	Update(tx *gorm.DB) bool
 	Validate() bool
 }
 
