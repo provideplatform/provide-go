@@ -56,11 +56,10 @@ type IssueVerifiableCredentialResponse struct {
 
 // Mapping for arbitrary model transformations
 type Mapping struct {
-	Metadata    map[string]interface{} `json:"metadata"`
-	Models      []*MappingModel        `json:"models"`
-	Name        string                 `json:"name"`
-	Description *string                `json:"description"`
-	Type        *string                `json:"type"`
+	Models      []*MappingModel `json:"models"`
+	Name        string          `json:"name"`
+	Description *string         `json:"description"`
+	Type        *string         `json:"type"`
 }
 
 // MappingField for mapping
