@@ -134,6 +134,7 @@ type PublicWorkgroupInvitationRequest struct {
 type Workgroup struct {
 	api.Model
 	Participants       []*Participant `gorm:"many2many:workgroups_participants" json:"participants,omitempty"`
+	Shield             *string        `json:"shield,omitempty"`
 	Workflows          []*Workflow    `sql:"-" json:"workflows,omitempty"`
 	PrivacyPolicy      interface{}    `json:"privacy_policy"`      // outlines data visibility rules for each participant
 	SecurityPolicy     interface{}    `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
@@ -171,4 +172,6 @@ type Workstep struct {
 type WorkstepInstance struct {
 	Workstep
 	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
+	Shield     *string    `json:"shield,omitempty"`
+	Status     *string    `json:"status"`
 }
