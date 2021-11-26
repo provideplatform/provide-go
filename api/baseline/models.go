@@ -145,6 +145,8 @@ type Workgroup struct {
 type Workflow struct {
 	api.Model
 	Participants []*Participant `gorm:"many2many:workflows_participants" json:"participants"`
+	Shield       *string        `json:"shield,omitempty"`
+	Status       *string        `json:"status"`
 	Version      *string        `json:"version"`
 	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
 }
@@ -153,8 +155,6 @@ type Workflow struct {
 type WorkflowInstance struct {
 	Workflow
 	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"` // references the workflow prototype identifier
-	Shield     *string             `json:"shield,omitempty"`
-	Status     *string             `json:"status"`
 	Worksteps  []*WorkstepInstance `sql:"-" json:"worksteps,omitempty"`
 }
 
@@ -165,6 +165,8 @@ type Workstep struct {
 	CircuitID       *uuid.UUID       `json:"circuit_id"`
 	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
 	RequireFinality bool             `json:"require_finality"`
+	Shield          *string          `json:"shield,omitempty"`
+	Status          *string          `json:"status"`
 	WorkflowID      *uuid.UUID       `json:"workflow_id,omitempty"`
 }
 
@@ -172,6 +174,4 @@ type Workstep struct {
 type WorkstepInstance struct {
 	Workstep
 	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
-	Shield     *string    `json:"shield,omitempty"`
-	Status     *string    `json:"status"`
 }
