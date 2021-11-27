@@ -161,6 +161,7 @@ type WorkflowInstance struct {
 // Workstep is a baseline workstep context
 type Workstep struct {
 	api.Model
+	Name            *string          `json:"prover,omitempty"`
 	Prover          *privacy.Circuit `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
 	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
