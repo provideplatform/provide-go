@@ -162,6 +162,7 @@ type WorkflowInstance struct {
 type Workstep struct {
 	api.Model
 	Name            *string          `json:"name"`
+	Cardinality     int              `json:"cardinality"`
 	Prover          *privacy.Circuit `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
 	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
