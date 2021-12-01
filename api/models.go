@@ -55,6 +55,22 @@ type ManifestPackage struct {
 	Type    string `json:"type"`
 }
 
+// RequestResponseContext
+type RequestResponseContext interface {
+	Flush()
+	Get(key string) (value interface{}, exists bool)
+	GetRawData() ([]byte, error)
+	Header(key, value string)
+	Param(key string) string
+	Query(key string) string
+	Status() int
+	Size() int
+	Write([]byte) (int, error)
+	WriteHeader(statusCode int)
+	WriteHeaderNow()
+	WriteString(string) (int, error)
+}
+
 func (m *Manifest) GetImageVersion(image string) (*string, error) {
 	for _, pkg := range m.Packages {
 		if pkg.Image == strings.ToLower(image) {
