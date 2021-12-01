@@ -1,6 +1,8 @@
 package baseline
 
 import (
+	"encoding/json"
+
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideplatform/provide-go/api"
 	"github.com/provideplatform/provide-go/api/privacy"
@@ -144,11 +146,12 @@ type Workgroup struct {
 // Workflow is a baseline workflow prototype
 type Workflow struct {
 	api.Model
-	Participants []*Participant `gorm:"many2many:workflows_participants" json:"participants"`
-	Shield       *string        `json:"shield,omitempty"`
-	Status       *string        `json:"status"`
-	Version      *string        `json:"version"`
-	Worksteps    []*Workstep    `sql:"-" json:"worksteps,omitempty"`
+	Metadata     *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
+	Participants []*Participant   `gorm:"many2many:workflows_participants" json:"participants"`
+	Shield       *string          `json:"shield,omitempty"`
+	Status       *string          `json:"status"`
+	Version      *string          `json:"version"`
+	Worksteps    []*Workstep      `sql:"-" json:"worksteps,omitempty"`
 }
 
 // WorkflowInstance is a baseline workflow instance
@@ -163,6 +166,7 @@ type Workstep struct {
 	api.Model
 	Name            *string          `json:"name"`
 	Cardinality     int              `json:"cardinality"`
+	Metadata        *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
 	Prover          *privacy.Circuit `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
 	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
