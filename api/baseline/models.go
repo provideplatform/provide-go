@@ -2,6 +2,7 @@ package baseline
 
 import (
 	"encoding/json"
+	"time"
 
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideplatform/provide-go/api"
@@ -146,6 +147,7 @@ type Workgroup struct {
 // Workflow is a baseline workflow prototype
 type Workflow struct {
 	api.Model
+	DeployedAt   *time.Time       `json:"deployed_at"`
 	Metadata     *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
 	Participants []*Participant   `gorm:"many2many:workflows_participants" json:"participants"`
 	Shield       *string          `json:"shield,omitempty"`
@@ -166,6 +168,7 @@ type Workstep struct {
 	api.Model
 	Name            *string          `json:"name"`
 	Cardinality     int              `json:"cardinality"`
+	DeployedAt      *time.Time       `json:"deployed_at"`
 	Metadata        *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
 	Prover          *privacy.Circuit `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
