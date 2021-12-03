@@ -136,7 +136,7 @@ type PublicWorkgroupInvitationRequest struct {
 // Workgroup is a baseline workgroup context
 type Workgroup struct {
 	api.Model
-	Participants       []*Participant `gorm:"many2many:workgroups_participants" json:"participants,omitempty"`
+	Participants       []*Participant `sql:"-" json:"participants,omitempty"`
 	Shield             *string        `json:"shield,omitempty"`
 	Workflows          []*Workflow    `sql:"-" json:"workflows,omitempty"`
 	PrivacyPolicy      interface{}    `json:"privacy_policy"`      // outlines data visibility rules for each participant
@@ -149,7 +149,7 @@ type Workflow struct {
 	api.Model
 	DeployedAt   *time.Time       `json:"deployed_at"`
 	Metadata     *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
-	Participants []*Participant   `gorm:"many2many:workflows_participants" json:"participants"`
+	Participants []*Participant   `sql:"-" json:"participants"`
 	Shield       *string          `json:"shield,omitempty"`
 	Status       *string          `json:"status"`
 	Version      *string          `json:"version"`
@@ -172,7 +172,7 @@ type Workstep struct {
 	Metadata        *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
 	Prover          *privacy.Circuit `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
-	Participants    []*Participant   `gorm:"many2many:worksteps_participants" json:"participants,omitempty"`
+	Participants    []*Participant   `sql:"-" json:"participants,omitempty"`
 	RequireFinality bool             `json:"require_finality"`
 	Shield          *string          `json:"shield,omitempty"`
 	Status          *string          `json:"status"`
