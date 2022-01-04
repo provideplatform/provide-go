@@ -40,6 +40,7 @@ type Config struct {
 	NetworkID                *uuid.UUID        `sql:"-" json:"network_id,omitempty"`
 	OrganizationAddress      *string           `sql:"-" json:"organization_address,omitempty"`
 	OrganizationID           *uuid.UUID        `sql:"-" json:"organization_id,omitempty"`
+	WorkgroupID              *uuid.UUID        `sql:"-" json:"workgroup_id,omitempty"`
 	OrganizationRefreshToken *string           `sql:"-" json:"organization_refresh_token,omitempty"`
 	RegistryContractAddress  *string           `sql:"-" json:"registry_contract_address,omitempty"`
 }
