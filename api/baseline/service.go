@@ -26,8 +26,8 @@ func InitBaselineService(token string) *Service {
 	}
 
 	path := defaultBaselinePath
-	if os.Getenv("BASELIEN_API_PATH") != "" {
-		host = os.Getenv("BASELIEN_API_PATH")
+	if os.Getenv("BASELINE_API_PATH") != "" {
+		path = os.Getenv("BASELINE_API_PATH")
 	}
 
 	scheme := defaultBaselineScheme
