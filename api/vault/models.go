@@ -99,6 +99,14 @@ type Secret struct {
 	Value       *string    `json:"value,omitempty"`
 }
 
+// DetachedEncryptDecryptRequestResponse contains the data to be encrypted/decrypted
+type DetachedEncryptDecryptRequestResponse struct {
+	Data      *string `json:"data,omitempty"`
+	Nonce     *string `json:"nonce,omitempty"` // optional nonce parameter
+	PublicKey *string `json:"public_key,omitempty"`
+	Spec      *string `json:"spec,omitempty"`
+}
+
 // EncryptDecryptRequestResponse contains the data (i.e., encrypted or decrypted) and an optional nonce
 type EncryptDecryptRequestResponse struct {
 	Data  string  `json:"data"`
