@@ -46,25 +46,28 @@ func InitPrivacyService(token string) *Service {
 }
 
 // ListCircuits lists the circuits in the scope of the given bearer token
-func ListCircuits(token string, params map[string]interface{}) ([]*Circuit, error) {
-	status, resp, err := InitPrivacyService(token).Get("circuits", params)
+func ListCircuits(token string, params map[string]interface{}) ([]*Circuit, *common.Response, error) {
+	status, resp, err := InitPrivacyService(token).GetPaginated("circuits", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list circuits; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list circuits; status: %v", status)
 	}
 
 	circuits := make([]*Circuit, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		circuit := &Circuit{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &circuit)
 		circuits = append(circuits, circuit)
 	}
 
-	return circuits, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return circuits, response, nil
 }
 
 // GetCircuitDetails fetches details for the given circuit

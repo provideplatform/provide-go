@@ -46,26 +46,29 @@ func InitC2Service(token string) *Service {
 }
 
 // ListNodes list nodes for the given authorization scope
-func ListNodes(token string, params map[string]interface{}) ([]*Node, error) {
+func ListNodes(token string, params map[string]interface{}) ([]*Node, *common.Response, error) {
 	uri := fmt.Sprintf("nodes")
-	status, resp, err := InitC2Service(token).Get(uri, params)
+	status, resp, err := InitC2Service(token).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list nodes; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list nodes; status: %v", status)
 	}
 
 	nodes := make([]*Node, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		node := &Node{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &node)
 		nodes = append(nodes, node)
 	}
 
-	return nodes, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return nodes, response, nil
 }
 
 // CreateNode creates and deploys a new node for the given authorization scope
@@ -183,25 +186,28 @@ func DeleteNode(token, nodeID string) (*Node, error) {
 }
 
 // ListLoadBalancers list load balancers for the given authorization scope
-func ListLoadBalancers(token string, params map[string]interface{}) ([]*LoadBalancer, error) {
-	status, resp, err := InitC2Service(token).Get("load_balancers", params)
+func ListLoadBalancers(token string, params map[string]interface{}) ([]*LoadBalancer, *common.Response, error) {
+	status, resp, err := InitC2Service(token).GetPaginated("load_balancers", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list load balancers; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list load balancers; status: %v", status)
 	}
 
 	balancers := make([]*LoadBalancer, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		balancer := &LoadBalancer{}
 		raw, _ := json.Marshal(item)
 		json.Unmarshal(raw, &balancer)
 		balancers = append(balancers, balancer)
 	}
 
-	return balancers, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return balancers, response, nil
 }
 
 // CreateLoadBalancer creates and deploys a new load balancer for the given authorization scope

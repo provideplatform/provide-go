@@ -567,7 +567,7 @@ func requireVaultJWTKeypairs() {
 		select {
 		case <-timer.C:
 			if Vault != nil {
-				keys, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
+				keys, _, err := vault.ListKeys(DefaultVaultAccessJWT, Vault.ID.String(), map[string]interface{}{
 					"spec": defaultTokenSigningKeyspec,
 				})
 				if err != nil {

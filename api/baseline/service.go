@@ -60,25 +60,28 @@ func ConfigureStack(token string, params map[string]interface{}) error {
 }
 
 // ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
-func ListWorkgroups(token, applicationID string, params map[string]interface{}) ([]*Workgroup, error) {
-	status, resp, err := InitBaselineService(token).Get("workgroups", params)
+func ListWorkgroups(token, applicationID string, params map[string]interface{}) ([]*Workgroup, *common.Response, error) {
+	status, resp, err := InitBaselineService(token).GetPaginated("workgroups", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workgroups; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list baseline workgroups; status: %v", status)
 	}
 
 	workgroups := make([]*Workgroup, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		workgroup := &Workgroup{}
 		workgroupraw, _ := json.Marshal(item)
 		json.Unmarshal(workgroupraw, &workgroup)
 		workgroups = append(workgroups, workgroup)
 	}
 
-	return workgroups, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return workgroups, response, nil
 }
 
 // CreateWorkgroup initializes a new or previously-joined workgroup on the local baseline stack
@@ -115,25 +118,28 @@ func UpdateWorkgroup(id, token string, params map[string]interface{}) error {
 }
 
 // ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
-func ListWorkflows(token, applicationID string, params map[string]interface{}) ([]*Workflow, error) {
-	status, resp, err := InitBaselineService(token).Get("workflows", params)
+func ListWorkflows(token, applicationID string, params map[string]interface{}) ([]*Workflow, *common.Response, error) {
+	status, resp, err := InitBaselineService(token).GetPaginated("workflows", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workflows; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list baseline workflows; status: %v", status)
 	}
 
 	workflows := make([]*Workflow, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		workflow := &Workflow{}
 		workflowraw, _ := json.Marshal(item)
 		json.Unmarshal(workflowraw, &workflow)
 		workflows = append(workflows, workflow)
 	}
 
-	return workflows, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return workflows, response, nil
 }
 
 // CreateWorkflow initializes a new workflow on the local baseline stack
@@ -155,25 +161,28 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 }
 
 // ListWorksteps retrieves a paginated list of baseline worksteps scoped to the given API token
-func ListWorksteps(token, applicationID string, params map[string]interface{}) ([]*Workstep, error) {
-	status, resp, err := InitBaselineService(token).Get("worksteps", params)
+func ListWorksteps(token, applicationID string, params map[string]interface{}) ([]*Workstep, *common.Response, error) {
+	status, resp, err := InitBaselineService(token).GetPaginated("worksteps", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline worksteps; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list baseline worksteps; status: %v", status)
 	}
 
 	worksteps := make([]*Workstep, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		workstep := &Workstep{}
 		workstepraw, _ := json.Marshal(item)
 		json.Unmarshal(workstepraw, &workstep)
 		worksteps = append(worksteps, workstep)
 	}
 
-	return worksteps, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return worksteps, response, nil
 }
 
 // CreateWorkstep initializes a new workstep on the local baseline stack

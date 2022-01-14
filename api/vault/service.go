@@ -71,60 +71,66 @@ func CreateVault(token string, params map[string]interface{}) (*Vault, error) {
 }
 
 // ListVaults retrieves a paginated list of vaults scoped to the given API token
-func ListVaults(token string, params map[string]interface{}) ([]*Vault, error) {
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Get("vaults", params)
+func ListVaults(token string, params map[string]interface{}) ([]*Vault, *common.Response, error) {
+	status, resp, err := InitVaultService(common.StringOrNil(token)).GetPaginated("vaults", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, resp)
+		return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, resp)
 	}
 
 	vaults := make([]*Vault, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		vlt := &Vault{}
 		vltraw, err := json.Marshal(item)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
 		}
 		err = json.Unmarshal(vltraw, &vlt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to fetch vaults; status: %v; %s", status, err.Error())
 		}
 		vaults = append(vaults, vlt)
 	}
 
-	return vaults, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return vaults, response, nil
 }
 
 // ListKeys retrieves a paginated list of vault keys
-func ListKeys(token, vaultID string, params map[string]interface{}) ([]*Key, error) {
+func ListKeys(token, vaultID string, params map[string]interface{}) ([]*Key, *common.Response, error) {
 	uri := fmt.Sprintf("vaults/%s/keys", vaultID)
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch keys; status: %v; %s", status, resp)
+		return nil, nil, fmt.Errorf("failed to fetch keys; status: %v; %s", status, resp)
 	}
 
 	keys := make([]*Key, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		key := &Key{}
 		keyraw, err := json.Marshal(item)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
 		}
 		err = json.Unmarshal(keyraw, &key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
+			return nil, nil, fmt.Errorf("failed to list vault keys; status: %v; %s", status, err.Error())
 		}
 		keys = append(keys, key)
 	}
 
-	return keys, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return keys, response, nil
 }
 
 // CreateKey creates a new vault key
@@ -278,32 +284,35 @@ func VerifySignature(token, vaultID, keyID, msg, sig string, opts map[string]int
 }
 
 // ListSecrets retrieves a paginated list of secrets in the vault
-func ListSecrets(token, vaultID string, params map[string]interface{}) ([]*Secret, error) {
+func ListSecrets(token, vaultID string, params map[string]interface{}) ([]*Secret, *common.Response, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitVaultService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
+		return nil, nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
 	}
 
 	secrets := make([]*Secret, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		secret := &Secret{}
 		secretraw, err := json.Marshal(item)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
+			return nil, nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
 		}
 		err = json.Unmarshal(secretraw, &secret)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
+			return nil, nil, fmt.Errorf("failed to fetch secrets; status: %v; %s", status, resp)
 		}
 		secrets = append(secrets, secret)
 	}
 
-	return secrets, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return secrets, response, nil
 }
 
 // CreateSecret stores a new secret in the vault

@@ -134,25 +134,28 @@ func DeleteApplication(token, applicationID string) error {
 }
 
 // ListApplications retrieves a paginated list of applications scoped to the given API token
-func ListApplications(token string, params map[string]interface{}) ([]*Application, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("applications", params)
+func ListApplications(token string, params map[string]interface{}) ([]*Application, *common.Response, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated("applications", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list applications; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list applications; status: %v", status)
 	}
 
 	apps := make([]*Application, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		app := &Application{}
 		appraw, _ := json.Marshal(item)
 		json.Unmarshal(appraw, &app)
 		apps = append(apps, app)
 	}
 
-	return apps, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return apps, response, nil
 }
 
 // GetApplicationDetails retrives application details for the given API token and application id
@@ -180,72 +183,81 @@ func GetApplicationDetails(token, applicationID string, params map[string]interf
 }
 
 // ListApplicationTokens retrieves a paginated list of application API tokens
-func ListApplicationTokens(token, applicationID string, params map[string]interface{}) ([]*Token, error) {
+func ListApplicationTokens(token, applicationID string, params map[string]interface{}) ([]*Token, *common.Response, error) {
 	uri := fmt.Sprintf("applications/%s/tokens", applicationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list application tokens; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list application tokens; status: %v", status)
 	}
 
 	tkns := make([]*Token, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tkn := &Token{}
 		tknraw, _ := json.Marshal(item)
 		json.Unmarshal(tknraw, &tkn)
 		tkns = append(tkns, tkn)
 	}
 
-	return tkns, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return tkns, response, nil
 }
 
 // ListApplicationInvitations retrieves a paginated list of invitations scoped to the given API token
-func ListApplicationInvitations(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+func ListApplicationInvitations(token, applicationID string, params map[string]interface{}) ([]*User, *common.Response, error) {
 	uri := fmt.Sprintf("applications/%s/invitations", applicationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list application invitations; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list application invitations; status: %v", status)
 	}
 
 	users := make([]*User, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		usr := &User{}
 		usrraw, _ := json.Marshal(item)
 		json.Unmarshal(usrraw, &usr)
 		users = append(users, usr)
 	}
 
-	return users, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return users, response, nil
 }
 
 // ListApplicationOrganizations retrieves a paginated list of organizations scoped to the given API token
-func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*Organization, error) {
+func ListApplicationOrganizations(token, applicationID string, params map[string]interface{}) ([]*Organization, *common.Response, error) {
 	uri := fmt.Sprintf("applications/%s/organizations", applicationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list application organizations; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list application organizations; status: %v", status)
 	}
 
 	orgs := make([]*Organization, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		org := &Organization{}
 		orgraw, _ := json.Marshal(item)
 		json.Unmarshal(orgraw, &org)
 		orgs = append(orgs, org)
 	}
 
-	return orgs, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return orgs, response, nil
 }
 
 // CreateApplicationOrganization associates an organization with an application
@@ -279,26 +291,29 @@ func DeleteApplicationOrganization(token, applicationID, organizationID string) 
 }
 
 // ListApplicationUsers retrieves a paginated list of users scoped to the given API token
-func ListApplicationUsers(token, applicationID string, params map[string]interface{}) ([]*User, error) {
+func ListApplicationUsers(token, applicationID string, params map[string]interface{}) ([]*User, *common.Response, error) {
 	uri := fmt.Sprintf("applications/%s/users", applicationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list application users; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list application users; status: %v", status)
 	}
 
 	users := make([]*User, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		usr := &User{}
 		usrraw, _ := json.Marshal(item)
 		json.Unmarshal(usrraw, &usr)
 		users = append(users, usr)
 	}
 
-	return users, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return users, response, nil
 }
 
 // CreateApplicationUser associates a user with an application
@@ -352,25 +367,28 @@ func CreateApplicationToken(token, applicationID string, params map[string]inter
 }
 
 // ListOrganizations retrieves a paginated list of organizations scoped to the given API token
-func ListOrganizations(token string, params map[string]interface{}) ([]*Organization, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("organizations", params)
+func ListOrganizations(token string, params map[string]interface{}) ([]*Organization, *common.Response, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated("organizations", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list organizations; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list organizations; status: %v", status)
 	}
 
 	orgs := make([]*Organization, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		org := &Organization{}
 		orgraw, _ := json.Marshal(item)
 		json.Unmarshal(orgraw, &org)
 		orgs = append(orgs, org)
 	}
 
-	return orgs, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return orgs, response, nil
 }
 
 // CreateToken creates a new API token.
@@ -397,25 +415,28 @@ func CreateToken(token string, params map[string]interface{}) (*Token, error) {
 }
 
 // ListTokens retrieves a paginated list of API tokens scoped to the given API token
-func ListTokens(token string, params map[string]interface{}) ([]*Token, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("tokens", params)
+func ListTokens(token string, params map[string]interface{}) ([]*Token, *common.Response, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated("tokens", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list application tokens; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list application tokens; status: %v", status)
 	}
 
 	tkns := make([]*Token, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		tkn := &Token{}
 		tknraw, _ := json.Marshal(item)
 		json.Unmarshal(tknraw, &tkn)
 		tkns = append(tkns, tkn)
 	}
 
-	return tkns, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return tkns, response, nil
 }
 
 // GetTokenDetails retrieves details for the given API token id
@@ -553,26 +574,29 @@ func CreateUser(token string, params map[string]interface{}) (*User, error) {
 }
 
 // ListOrganizationUsers retrieves a paginated list of users scoped to an organization
-func ListOrganizationUsers(token, orgID string, params map[string]interface{}) ([]*User, error) {
+func ListOrganizationUsers(token, orgID string, params map[string]interface{}) ([]*User, *common.Response, error) {
 	uri := fmt.Sprintf("organizations/%s/users", orgID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list users; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list users; status: %v", status)
 	}
 
 	users := make([]*User, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		usr := &User{}
 		usrraw, _ := json.Marshal(item)
 		json.Unmarshal(usrraw, &usr)
 		users = append(users, usr)
 	}
 
-	return users, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return users, response, nil
 }
 
 // CreateOrganizationUser associates a user with an organization
@@ -621,48 +645,54 @@ func DeleteOrganizationUser(token, orgID, userID string) error {
 }
 
 // ListOrganizationInvitations retrieves a paginated list of organization invitations scoped to the given API token
-func ListOrganizationInvitations(token, organizationID string, params map[string]interface{}) ([]*User, error) {
+func ListOrganizationInvitations(token, organizationID string, params map[string]interface{}) ([]*User, *common.Response, error) {
 	uri := fmt.Sprintf("organizations/%s/invitations", organizationID)
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get(uri, params)
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated(uri, params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list organization invitations; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list organization invitations; status: %v", status)
 	}
 
 	users := make([]*User, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		usr := &User{}
 		usrraw, _ := json.Marshal(item)
 		json.Unmarshal(usrraw, &usr)
 		users = append(users, usr)
 	}
 
-	return users, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return users, response, nil
 }
 
 // ListUsers retrieves a paginated list of users scoped to the given API token
-func ListUsers(token string, params map[string]interface{}) ([]*User, error) {
-	status, resp, err := InitIdentService(common.StringOrNil(token)).Get("users", params)
+func ListUsers(token string, params map[string]interface{}) ([]*User, *common.Response, error) {
+	status, resp, err := InitIdentService(common.StringOrNil(token)).GetPaginated("users", params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list users; status: %v", status)
+		return nil, nil, fmt.Errorf("failed to list users; status: %v", status)
 	}
 
 	users := make([]*User, 0)
-	for _, item := range resp.([]interface{}) {
+	for _, item := range resp.Results.([]interface{}) {
 		usr := &User{}
 		usrraw, _ := json.Marshal(item)
 		json.Unmarshal(usrraw, &usr)
 		users = append(users, usr)
 	}
 
-	return users, nil
+	response := &common.Response{
+		TotalCount: resp.TotalCount,
+	}
+	return users, response, nil
 }
 
 // GetUserDetails retrieves details for the given user id

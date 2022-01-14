@@ -21,6 +21,10 @@ var (
 	Log *logger.Logger
 )
 
+type Response struct {
+	TotalCount string
+}
+
 func init() {
 	Log = logger.NewLogger("provide-go", getLogLevel(), getSyslogEndpoint())
 }

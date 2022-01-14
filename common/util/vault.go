@@ -83,7 +83,7 @@ func RequireVault() {
 					}
 				}
 
-				vaults, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
+				vaults, _, err := vault.ListVaults(DefaultVaultAccessJWT, map[string]interface{}{})
 				if err != nil {
 					common.Log.Warningf("failed to fetch vaults for given token; %s", err.Error())
 					continue
