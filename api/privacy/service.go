@@ -45,68 +45,68 @@ func InitPrivacyService(token string) *Service {
 	}
 }
 
-// ListCircuits lists the circuits in the scope of the given bearer token
-func ListCircuits(token string, params map[string]interface{}) ([]*Circuit, error) {
-	status, resp, err := InitPrivacyService(token).Get("circuits", params)
+// ListProvers lists the provers in the scope of the given bearer token
+func ListProvers(token string, params map[string]interface{}) ([]*Prover, error) {
+	status, resp, err := InitPrivacyService(token).Get("provers", params)
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list circuits; status: %v", status)
+		return nil, fmt.Errorf("failed to list provers; status: %v", status)
 	}
 
-	circuits := make([]*Circuit, 0)
+	provers := make([]*Prover, 0)
 	for _, item := range resp.([]interface{}) {
-		circuit := &Circuit{}
+		prover := &Prover{}
 		raw, _ := json.Marshal(item)
-		json.Unmarshal(raw, &circuit)
-		circuits = append(circuits, circuit)
+		json.Unmarshal(raw, &prover)
+		provers = append(provers, prover)
 	}
 
-	return circuits, nil
+	return provers, nil
 }
 
-// GetCircuitDetails fetches details for the given circuit
-func GetCircuitDetails(token, circuitID string) (*Circuit, error) {
-	uri := fmt.Sprintf("circuits/%s", circuitID)
+// GetProverDetails fetches details for the given prover
+func GetProverDetails(token, proverID string) (*Prover, error) {
+	uri := fmt.Sprintf("provers/%s", proverID)
 	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to fetch circuit; status: %v", status)
+		return nil, fmt.Errorf("failed to fetch prover; status: %v", status)
 	}
 
-	circuit := &Circuit{}
+	prover := &Prover{}
 	raw, _ := json.Marshal(resp)
-	json.Unmarshal(raw, &circuit)
+	json.Unmarshal(raw, &prover)
 
-	return circuit, nil
+	return prover, nil
 }
 
-// CreateCircuit creates a new circuit in the registry
-func CreateCircuit(token string, params map[string]interface{}) (*Circuit, error) {
-	status, resp, err := InitPrivacyService(token).Post("circuits", params)
+// CreateProver creates a new prover in the registry
+func CreateProver(token string, params map[string]interface{}) (*Prover, error) {
+	status, resp, err := InitPrivacyService(token).Post("provers", params)
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 201 {
-		return nil, fmt.Errorf("failed to create circuit; status: %v", status)
+		return nil, fmt.Errorf("failed to create prover; status: %v", status)
 	}
 
-	circuit := &Circuit{}
+	prover := &Prover{}
 	raw, _ := json.Marshal(resp)
-	json.Unmarshal(raw, &circuit)
+	json.Unmarshal(raw, &prover)
 
-	return circuit, nil
+	return prover, nil
 }
 
-// Prove generates a proof using the given inputs for the named circuit
-func Prove(token, circuitID string, params map[string]interface{}) (*ProveResponse, error) {
-	uri := fmt.Sprintf("circuits/%s/prove", circuitID)
+// Prove generates a proof using the given inputs for the named prover
+func Prove(token, proverID string, params map[string]interface{}) (*ProveResponse, error) {
+	uri := fmt.Sprintf("provers/%s/prove", proverID)
 	status, resp, err := InitPrivacyService(token).Post(uri, params)
 	if err != nil {
 		return nil, err
@@ -123,16 +123,16 @@ func Prove(token, circuitID string, params map[string]interface{}) (*ProveRespon
 	return prove, nil
 }
 
-// Verify verifies the given inputs using the named circuit
-func Verify(token, circuitID string, params map[string]interface{}) (*VerificationResponse, error) {
-	uri := fmt.Sprintf("circuits/%s/verify", circuitID)
+// Verify verifies the given inputs using the named prover
+func Verify(token, proverID string, params map[string]interface{}) (*VerificationResponse, error) {
+	uri := fmt.Sprintf("provers/%s/verify", proverID)
 	status, resp, err := InitPrivacyService(token).Post(uri, params)
 	if err != nil {
 		return nil, err
 	}
 
 	if status != 200 && status != 202 {
-		return nil, fmt.Errorf("failed to verify circuit inputs; status: %v", status)
+		return nil, fmt.Errorf("failed to verify prover inputs; status: %v", status)
 	}
 
 	verification := &VerificationResponse{}
@@ -143,8 +143,8 @@ func Verify(token, circuitID string, params map[string]interface{}) (*Verificati
 }
 
 // GetNoteValue fetches the value in the note store at a specified index
-func GetNoteValue(token, circuitID string, index uint64) (*StoreValueResponse, error) {
-	uri := fmt.Sprintf("circuits/%s/notes/%d", circuitID, index)
+func GetNoteValue(token, proverID string, index uint64) (*StoreValueResponse, error) {
+	uri := fmt.Sprintf("provers/%s/notes/%d", proverID, index)
 	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
 	if err != nil {
 		return nil, err
@@ -162,8 +162,8 @@ func GetNoteValue(token, circuitID string, index uint64) (*StoreValueResponse, e
 }
 
 // GetNullifierValue fetches the value in the nullifier store at the specified key
-func GetNullifierValue(token, circuitID, key string) (*StoreValueResponse, error) {
-	uri := fmt.Sprintf("circuits/%s/nullifiers/%s", circuitID, key)
+func GetNullifierValue(token, proverID, key string) (*StoreValueResponse, error) {
+	uri := fmt.Sprintf("provers/%s/nullifiers/%s", proverID, key)
 	status, resp, err := InitPrivacyService(token).Get(uri, map[string]interface{}{})
 	if err != nil {
 		return nil, err

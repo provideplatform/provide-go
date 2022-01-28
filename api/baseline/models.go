@@ -171,7 +171,7 @@ type Workstep struct {
 	Cardinality     int              `json:"cardinality"`
 	DeployedAt      *time.Time       `json:"deployed_at"`
 	Metadata        *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
-	Prover          *privacy.Circuit `json:"prover,omitempty"`
+	Prover          *privacy.Prover  `json:"prover,omitempty"`
 	ProverID        *uuid.UUID       `json:"prover_id"`
 	Participants    []*Participant   `sql:"-" json:"participants,omitempty"`
 	RequireFinality bool             `json:"require_finality"`

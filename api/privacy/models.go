@@ -5,8 +5,8 @@ import (
 	"github.com/provideplatform/provide-go/api"
 )
 
-// Circuit model
-type Circuit struct {
+// Prover model
+type Prover struct {
 	*api.Model
 
 	Name          *string `json:"name"`
