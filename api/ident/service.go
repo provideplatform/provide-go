@@ -513,7 +513,7 @@ func UpdateOrganization(token, organizationID string, params map[string]interfac
 	}
 
 	if status != 204 {
-		return fmt.Errorf("failed to update associated organization user; status: %v", status)
+		return fmt.Errorf("failed to update associated organization; status: %v", status)
 	}
 
 	return nil
