@@ -66,6 +66,8 @@ type Organization struct {
 	Description *string                `json:"description"`
 	Permissions uint32                 `json:"permissions,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata"`
+
+	UsersCount *uint32 `json:"users_count,omitempty"`
 }
 
 // Token represents a bearer JWT
