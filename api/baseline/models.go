@@ -139,7 +139,7 @@ type PublicWorkgroupInvitationRequest struct {
 
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
-	ID               *string                 `json:"id,omitempty"`
+	api.Model
 	BPIAccountIDs    []string                `json:"bpi_account_ids"`
 	Credentials      []interface{}           `json:"credentials"`
 	Metadata         *SubjectAccountMetadata `json:"metadata"`
