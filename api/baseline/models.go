@@ -6,7 +6,9 @@ import (
 
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideplatform/provide-go/api"
+	"github.com/provideplatform/provide-go/api/nchain"
 	"github.com/provideplatform/provide-go/api/privacy"
+	"github.com/provideplatform/provide-go/api/vault"
 )
 
 const ProtocolMessageOpcodeBaseline = "BLINE"
@@ -32,7 +34,7 @@ type BaselineRecord struct {
 	Type       *string          `sql:"-" json:"type"`
 }
 
-// Config represents the proxy configuration
+// Config represents the instance configuration
 type Config struct {
 	Counterparties           []*Participant    `sql:"-" json:"counterparties,omitempty"`
 	Env                      map[string]string `sql:"-" json:"env,omitempty"`
@@ -102,6 +104,7 @@ type Participant struct {
 	Metadata          map[string]interface{} `sql:"-" json:"metadata,omitempty"`
 	APIEndpoint       *string                `sql:"-" json:"api_endpoint,omitempty"`
 	MessagingEndpoint *string                `sql:"-" json:"messaging_endpoint,omitempty"`
+	WebsocketEndpoint *string                `sql:"-" json:"websocket_endpoint,omitempty"`
 }
 
 // ProtocolMessage is a baseline protocol message
@@ -132,6 +135,61 @@ type PublicWorkgroupInvitationRequest struct {
 	FirstName        *string `json:"first_name"`
 	LastName         *string `json:"last_name"`
 	OrganizationName *string `json:"organization_name"`
+}
+
+// SubjectAccount is a baseline BPI Subject Account per the specification
+type SubjectAccount struct {
+	ID               *string                 `json:"id,omitempty"`
+	BPIAccountIDs    []string                `json:"bpi_account_ids"`
+	Credentials      []interface{}           `json:"credentials"`
+	Metadata         *SubjectAccountMetadata `json:"metadata"`
+	RecoveryPolicy   map[string]interface{}  `json:"recovery_policy"`
+	Role             map[string]interface{}  `json:"role"`
+	SecurityPolicies []interface{}           `json:"security_policies"`
+	SubjectID        *string                 `json:"subject_id"`
+	Type             *string                 `json:"type"`
+}
+
+// SubjectAccountMetadata is `SubjectAccount` metadata specific to this BPI instance
+type SubjectAccountMetadata struct {
+	// Counterparties are the default counterparties
+	Counterparties []*Participant `sql:"-" json:"counterparties,omitempty"`
+
+	// NetworkID is the baseline network id
+	NetworkID *string `json:"network_id,omitempty"`
+
+	// OrganizationAddress is the baseline organization address
+	OrganizationAddress *string `json:"organization_address,omitempty"`
+
+	// OrganizationID is the id of the org
+	OrganizationID *string `json:"organization_id,omitempty"`
+
+	// OrganizationMessagingEndpoint is the public organziation messaging endpoint
+	OrganizationMessagingEndpoint *string `json:"organization_messaging_endpoint,omitempty"`
+
+	// OrganizationProxyEndpoint is the configured endpoint for the baseline proxy REST API
+	OrganizationProxyEndpoint *string `json:"organization_proxy_endpoint,omitempty"`
+
+	// OrganizationRefreshToken is the refresh token for the org
+	OrganizationRefreshToken *string `json:"organization_refresh_token,omitempty"`
+
+	// OrganizationWebsocketEndpoint is the configured endpoint for the baseline websocket
+	OrganizationWebsocketEndpoint *string `json:"organization_websocket_endpoint,omitempty"`
+
+	// RegistryContractAddress is a contract address
+	RegistryContractAddress *string `json:"registry_contract_address,omitempty"`
+
+	// RegistryContract is a compiled contract artifact
+	RegistryContract *nchain.CompiledArtifact `json:"-"`
+
+	// SOR contains one or more systems of record configurations
+	SOR map[string]interface{} `json:"sor,omitempty"`
+
+	// WorkgroupID is the id of the workgroup
+	WorkgroupID *string `json:"workgroup_id,omitempty"`
+
+	// Vault is the vault instance
+	Vault *vault.Vault `json:"-"`
 }
 
 // Workgroup is a baseline workgroup context
