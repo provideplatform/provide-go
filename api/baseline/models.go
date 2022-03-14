@@ -142,9 +142,9 @@ type SubjectAccount struct {
 	api.Model
 	Credentials      *json.RawMessage        `json:"credentials"`
 	Metadata         *SubjectAccountMetadata `json:"metadata"`
-	RecoveryPolicy   *json.RawMessage        `json:"recovery_policy"`
+	RecoveryPolicy   *json.RawMessage        `gorm:"column:recoverypolicy" json:"recovery_policy"`
 	Role             *json.RawMessage        `json:"role"`
-	SecurityPolicies *json.RawMessage        `json:"security_policies"`
+	SecurityPolicies *json.RawMessage        `gorm:"column:securitypolicies" json:"security_policies"`
 	SubjectID        *string                 `json:"subject_id"`
 	Type             *string                 `json:"type"`
 }
