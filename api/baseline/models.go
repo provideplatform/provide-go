@@ -142,8 +142,8 @@ type SubjectAccount struct {
 	api.Model
 	Credentials      *json.RawMessage        `json:"credentials"`
 	Metadata         *SubjectAccountMetadata `json:"metadata"`
-	RecoveryPolicy   map[string]interface{}  `json:"recovery_policy"`
-	Role             map[string]interface{}  `json:"role"`
+	RecoveryPolicy   *json.RawMessage        `json:"recovery_policy"`
+	Role             *json.RawMessage        `json:"role"`
 	SecurityPolicies *json.RawMessage        `json:"security_policies"`
 	SubjectID        *string                 `json:"subject_id"`
 	Type             *string                 `json:"type"`
