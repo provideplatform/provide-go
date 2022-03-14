@@ -140,12 +140,11 @@ type PublicWorkgroupInvitationRequest struct {
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
 	api.Model
-	BPIAccountIDs    []string                `json:"bpi_account_ids"`
-	Credentials      []interface{}           `json:"credentials"`
+	Credentials      *json.RawMessage        `json:"credentials"`
 	Metadata         *SubjectAccountMetadata `json:"metadata"`
 	RecoveryPolicy   map[string]interface{}  `json:"recovery_policy"`
 	Role             map[string]interface{}  `json:"role"`
-	SecurityPolicies []interface{}           `json:"security_policies"`
+	SecurityPolicies *json.RawMessage        `json:"security_policies"`
 	SubjectID        *string                 `json:"subject_id"`
 	Type             *string                 `json:"type"`
 }
@@ -189,7 +188,7 @@ type SubjectAccountMetadata struct {
 	WorkgroupID *string `json:"workgroup_id,omitempty"`
 
 	// Vault is the vault instance
-	Vault *vault.Vault `json:"-"`
+	Vault *vault.Vault `sql:"-" json:"-"`
 }
 
 // Workgroup is a baseline workgroup context
