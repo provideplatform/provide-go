@@ -141,13 +141,14 @@ type PublicWorkgroupInvitationRequest struct {
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
 	api.Model
-	Credentials      *json.RawMessage        `json:"credentials"`
-	Metadata         *SubjectAccountMetadata `json:"metadata"`
-	RecoveryPolicy   *json.RawMessage        `gorm:"column:recoverypolicy" json:"recovery_policy"`
-	Role             *json.RawMessage        `json:"role"`
-	SecurityPolicies *json.RawMessage        `gorm:"column:securitypolicies" json:"security_policies"`
+	ID               string                  `sql:"primary_key" json:"id"`
+	Credentials      *json.RawMessage        `json:"credentials,omitempty"`
+	Metadata         *SubjectAccountMetadata `json:"metadata,omitempty"`
+	RecoveryPolicy   *json.RawMessage        `gorm:"column:recoverypolicy" json:"recovery_policy,omitempty"`
+	Role             *json.RawMessage        `json:"role,omitempty"`
+	SecurityPolicies *json.RawMessage        `gorm:"column:securitypolicies" json:"security_policies,omitempty"`
 	SubjectID        *string                 `json:"subject_id"`
-	Type             *string                 `json:"type"`
+	Type             *string                 `json:"type,omitempty"`
 }
 
 // SubjectAccountMetadata is `SubjectAccount` metadata specific to this BPI instance
