@@ -140,8 +140,7 @@ type PublicWorkgroupInvitationRequest struct {
 
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
-	api.Model
-	ID               string                  `sql:"primary_key" json:"id"`
+	api.ModelWithDID
 	Credentials      *json.RawMessage        `json:"credentials,omitempty"`
 	Metadata         *SubjectAccountMetadata `json:"metadata,omitempty"`
 	RecoveryPolicy   *json.RawMessage        `gorm:"column:recoverypolicy" json:"recovery_policy,omitempty"`
