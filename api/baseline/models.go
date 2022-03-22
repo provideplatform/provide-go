@@ -82,7 +82,7 @@ type MappingModel struct {
 	Description *string         `json:"description"`
 	Fields      []*MappingField `json:"fields"`
 	PrimaryKey  *string         `json:"primary_key"`
-	Standard    *string         `json:"standard,omitempty"`
+	Standard    *string         `json:"standard"`
 	Type        *string         `json:"type"`
 }
 
