@@ -141,8 +141,9 @@ type PublicWorkgroupInvitationRequest struct {
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
 	api.ModelWithDID
-	SubjectID *string `json:"subject_id"`
-	Type      *string `json:"type,omitempty"`
+	SubjectID *string    `json:"subject_id"`
+	Type      *string    `json:"type,omitempty"`
+	VaultID   *uuid.UUID `json:"vault_id"`
 
 	Credentials         *json.RawMessage `sql:"-" json:"credentials,omitempty"`
 	CredentialsSecretID *uuid.UUID       `json:"credentials_secret_id,omitempty"`
