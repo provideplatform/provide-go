@@ -141,13 +141,23 @@ type PublicWorkgroupInvitationRequest struct {
 // SubjectAccount is a baseline BPI Subject Account per the specification
 type SubjectAccount struct {
 	api.ModelWithDID
-	Credentials      *json.RawMessage        `json:"credentials,omitempty"`
-	Metadata         *SubjectAccountMetadata `json:"metadata,omitempty"`
-	RecoveryPolicy   *json.RawMessage        `gorm:"column:recoverypolicy" json:"recovery_policy,omitempty"`
-	Role             *json.RawMessage        `json:"role,omitempty"`
-	SecurityPolicies *json.RawMessage        `gorm:"column:securitypolicies" json:"security_policies,omitempty"`
-	SubjectID        *string                 `json:"subject_id"`
-	Type             *string                 `json:"type,omitempty"`
+	SubjectID *string `json:"subject_id"`
+	Type      *string `json:"type,omitempty"`
+
+	Credentials         *json.RawMessage `sql:"-" json:"credentials,omitempty"`
+	CredentialsSecretID *uuid.UUID       `json:"credentials_secret_id,omitempty"`
+
+	Metadata         *SubjectAccountMetadata `sql:"-" json:"metadata,omitempty"`
+	MetadataSecretID *uuid.UUID              `json:"metadata_secret_id,omitempty"`
+
+	RecoveryPolicy         *json.RawMessage `sql:"-" json:"recovery_policy,omitempty"`
+	RecoveryPolicySecretID *uuid.UUID       `json:"recovery_policy_secret_id,omitempty"`
+
+	Role         *json.RawMessage `sql:"-" json:"role,omitempty"`
+	RoleSecretID *uuid.UUID       `json:"role_secret_id,omitempty"`
+
+	SecurityPolicies         *json.RawMessage `sql:"-" json:"security_policies,omitempty"`
+	SecurityPoliciesSecretID *uuid.UUID       `json:"security_policies_secret_id,omitempty"`
 }
 
 // SubjectAccountMetadata is `SubjectAccount` metadata specific to this BPI instance
@@ -180,7 +190,7 @@ type SubjectAccountMetadata struct {
 	RegistryContractAddress *string `json:"registry_contract_address,omitempty"`
 
 	// RegistryContract is a compiled contract artifact
-	RegistryContract *nchain.CompiledArtifact `json:"-"`
+	RegistryContract *nchain.CompiledArtifact `sql:"-" json:"-"`
 
 	// SOR contains one or more systems of record configurations
 	SOR map[string]interface{} `json:"sor,omitempty"`
