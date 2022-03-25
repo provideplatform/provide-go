@@ -296,3 +296,35 @@ func SendProtocolMessage(token string, params map[string]interface{}) (interface
 
 	return resp, nil
 }
+
+// Status returns the status of the service
+func Status() error {
+	host := defaultBaselineHost
+	if os.Getenv("BASELINE_API_HOST") != "" {
+		host = os.Getenv("BASELINE_API_HOST")
+	}
+
+	scheme := defaultBaselineScheme
+	if os.Getenv("BASELINE_API_SCHEME") != "" {
+		scheme = os.Getenv("BASELINE_API_SCHEME")
+	}
+
+	service := &Service{
+		api.Client{
+			Host:   host,
+			Path:   "",
+			Scheme: scheme,
+		},
+	}
+
+	status, _, err := service.Get("status", map[string]interface{}{})
+	if err != nil {
+		return fmt.Errorf("failed to fetch status; %s", err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("status endpoint returned %d status code", status)
+	}
+
+	return nil
+}
