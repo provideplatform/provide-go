@@ -45,15 +45,58 @@ func InitBaselineService(token string) *Service {
 	}
 }
 
-// ConfigureStack updates the global configuration on the local baseline stack
-func ConfigureStack(token string, params map[string]interface{}) error {
-	status, _, err := InitBaselineService(token).Put("config", params)
+// ListSubjectAccounts creates a BPI subject account using the given organization and params
+func ListSubjectAccounts(token, organizationID string, params map[string]interface{}) ([]*SubjectAccount, error) {
+	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
 	if err != nil {
-		return fmt.Errorf("failed to configure baseline stack; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to list BPI subject accounts; status: %v; %s", status, err.Error())
 	}
 
-	if status != 204 {
-		return fmt.Errorf("failed to configure baseline stack; status: %v", status)
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list BPI subject accounts; status: %v", status)
+	}
+
+	subjectAccounts := make([]*SubjectAccount, 0)
+	for _, item := range resp.([]interface{}) {
+		subjectAccount := &SubjectAccount{}
+		subjectAccountRaw, _ := json.Marshal(item)
+		json.Unmarshal(subjectAccountRaw, &subjectAccount)
+		subjectAccounts = append(subjectAccounts, subjectAccount)
+	}
+
+	return subjectAccounts, nil
+}
+
+// CreateSubjectAccount creates a BPI subject account using the given organization and params
+func CreateSubjectAccount(token, organizationID string, params map[string]interface{}) (*SubjectAccount, error) {
+	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create BPI subject account; status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create BPI subject account; status: %v", status)
+	}
+
+	subjectAccount := &SubjectAccount{}
+	subjectAccountRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(subjectAccountRaw, &subjectAccount)
+
+	return subjectAccount, nil
+}
+
+// UpdateSubjectAccount updates a BPI subject account
+func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("subjects/%s/accounts/%s", organizationID, subjectAccountID)
+	status, _, err := InitBaselineService(token).Put(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to create BPI subject account; status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return fmt.Errorf("failed to create BPI subject account; status: %v", status)
 	}
 
 	return nil
@@ -238,4 +281,18 @@ func UpdateObject(token, id string, params map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+// SendProtocolMessage is a generic way to dispatch a protocol message
+func SendProtocolMessage(token string, params map[string]interface{}) (interface{}, error) {
+	status, resp, err := InitBaselineService(token).Post("protocol_messages", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dispatch baseline protocol message; status: %v; %s", status, err.Error())
+	}
+
+	if status != 202 {
+		return nil, fmt.Errorf("failed to dispatch baseline protocol message; status: %v", status)
+	}
+
+	return resp, nil
 }
