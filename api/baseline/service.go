@@ -266,7 +266,7 @@ func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]int
 		return nil, fmt.Errorf("failed to execute workstep; status: %v; %s", status, err.Error())
 	}
 
-	if status != 202 {
+	if status != 201 {
 		return nil, fmt.Errorf("failed to execute workstep; status: %v", status)
 	}
 
