@@ -115,7 +115,7 @@ func UpdateWorkgroup(id, token string, params map[string]interface{}) error {
 }
 
 // ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
-func ListWorkflows(token, applicationID string, params map[string]interface{}) ([]*Workflow, error) {
+func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, error) {
 	status, resp, err := InitBaselineService(token).Get("workflows", params)
 	if err != nil {
 		return nil, err
@@ -155,8 +155,9 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 }
 
 // ListWorksteps retrieves a paginated list of baseline worksteps scoped to the given API token
-func ListWorksteps(token, applicationID string, params map[string]interface{}) ([]*Workstep, error) {
-	status, resp, err := InitBaselineService(token).Get("worksteps", params)
+func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*Workstep, error) {
+	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -177,8 +178,9 @@ func ListWorksteps(token, applicationID string, params map[string]interface{}) (
 }
 
 // CreateWorkstep initializes a new workstep on the local baseline stack
-func CreateWorkstep(token string, params map[string]interface{}) (*Workstep, error) {
-	status, resp, err := InitBaselineService(token).Post("worksteps", params)
+func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*Workstep, error) {
+	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
 	}
@@ -192,6 +194,21 @@ func CreateWorkstep(token string, params map[string]interface{}) (*Workstep, err
 	err = json.Unmarshal(workstepraw, &workstep)
 
 	return workstep, nil
+}
+
+// ExecuteWorkstep executes a specific workstep
+func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]interface{}) (interface{}, error) {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s/execute", workflowID, workstepID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute workstep; status: %v; %s", status, err.Error())
+	}
+
+	if status != 202 {
+		return nil, fmt.Errorf("failed to execute workstep; status: %v", status)
+	}
+
+	return resp, nil
 }
 
 // CreateObject is a generic way to baseline a business object

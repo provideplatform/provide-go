@@ -172,6 +172,9 @@ type SubjectAccountMetadata struct {
 	// OrganizationAddress is the baseline organization address
 	OrganizationAddress *string `json:"organization_address,omitempty"`
 
+	// OrganizationDomain is the baseline organization domain
+	OrganizationDomain *string `json:"organization_domain,omitempty"`
+
 	// OrganizationID is the id of the org
 	OrganizationID *string `json:"organization_id,omitempty"`
 
