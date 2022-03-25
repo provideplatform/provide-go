@@ -205,7 +205,7 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 		return nil, fmt.Errorf("failed to create workflow; status: %v; %s", status, err.Error())
 	}
 
-	if status != 200 {
+	if status != 201 {
 		return nil, fmt.Errorf("failed to create workflow; status: %v", status)
 	}
 
