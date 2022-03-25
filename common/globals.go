@@ -1,6 +1,8 @@
 package common
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -63,4 +65,11 @@ func StringOrNil(str string) *string {
 		return nil
 	}
 	return &str
+}
+
+// SHA256 is a convenience method to return the sha256 hash of the given input
+func SHA256(str string) string {
+	digest := sha256.New()
+	digest.Write([]byte(str))
+	return hex.EncodeToString(digest.Sum(nil))
 }

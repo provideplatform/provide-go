@@ -48,7 +48,7 @@ func InitBaselineService(token string) *Service {
 // ListSubjectAccounts creates a BPI subject account using the given organization and params
 func ListSubjectAccounts(token, organizationID string, params map[string]interface{}) ([]*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list BPI subject accounts; status: %v; %s", status, err.Error())
 	}
@@ -66,6 +66,25 @@ func ListSubjectAccounts(token, organizationID string, params map[string]interfa
 	}
 
 	return subjectAccounts, nil
+}
+
+// GetSubjectAccountDetails retrieves details for the given BPI subject account id
+func GetSubjectAccountDetails(token, organizationID, subjectAccountID string, params map[string]interface{}) (*SubjectAccount, error) {
+	uri := fmt.Sprintf("subjects/%s/accounts/%s", organizationID, subjectAccountID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	subjectAccount := &SubjectAccount{}
+	subjectAccountRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(subjectAccountRaw, &subjectAccount)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch BPI subject account details; status: %v; %s", status, err.Error())
+	}
+
+	return subjectAccount, nil
 }
 
 // CreateSubjectAccount creates a BPI subject account using the given organization and params

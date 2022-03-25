@@ -2,6 +2,7 @@ package baseline
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	uuid "github.com/kthomas/go.uuid"
@@ -9,6 +10,7 @@ import (
 	"github.com/provideplatform/provide-go/api/nchain"
 	"github.com/provideplatform/provide-go/api/privacy"
 	"github.com/provideplatform/provide-go/api/vault"
+	"github.com/provideplatform/provide-go/common"
 )
 
 const ProtocolMessageOpcodeBaseline = "BLINE"
@@ -256,4 +258,9 @@ type Workstep struct {
 type WorkstepInstance struct {
 	Workstep
 	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
+}
+
+// SubjectAccountIDFactory returns H(organization_id, workgroup_id)
+func SubjectAccountIDFactory(organizationID, workgroupID string) string {
+	return common.SHA256(fmt.Sprintf("%s.%s", organizationID, workgroupID))
 }
