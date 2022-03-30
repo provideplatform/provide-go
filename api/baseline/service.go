@@ -9,9 +9,9 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultBaselineHost = "localhost:8080"
+const defaultBaselineHost = "baseline.provide.services"
 const defaultBaselinePath = "api/v1"
-const defaultBaselineScheme = "http"
+const defaultBaselineScheme = "https"
 
 // Service for the baseline api
 type Service struct {
@@ -271,35 +271,6 @@ func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]int
 	}
 
 	return resp, nil
-}
-
-// CreateObject is a generic way to baseline a business object
-func CreateObject(token string, params map[string]interface{}) (interface{}, error) {
-	status, resp, err := InitBaselineService(token).Post("objects", params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create baseline object; status: %v; %s", status, err.Error())
-	}
-
-	if status != 202 {
-		return nil, fmt.Errorf("failed to create baseline object; status: %v", status)
-	}
-
-	return resp, nil
-}
-
-// UpdateObject updates a business object
-func UpdateObject(token, id string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("objects/%s", id)
-	status, _, err := InitBaselineService(token).Put(uri, params)
-	if err != nil {
-		return fmt.Errorf("failed to update baseline state; status: %v; %s", status, err.Error())
-	}
-
-	if status != 202 {
-		return fmt.Errorf("failed to update baseline state; status: %v", status)
-	}
-
-	return nil
 }
 
 // SendProtocolMessage is a generic way to dispatch a protocol message
