@@ -1,0 +1,70 @@
+# You can specify more than one package
+packages:
+  # The package path just like you would import it in Go
+  - path: 'github.com/provideplatform/provide-go/api/baseline'
+
+    # Where this output should be written to.
+    # If you specify a folder it will be written to a file `index.ts` within that folder. By default it is written into the Golang package folder.
+    output_path: '../provide-types/src/baseline/index.ts'
+
+    # Customize the indentation (use \t if you want tabs)
+    indent: '  '
+
+    # Specify your own custom type translations, useful for custom types, `time.Time` and `null.String`.
+    # Be default unrecognized types will be `any`.
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'
+
+  - path: 'github.com/provideplatform/provide-go/api/ident'
+    output_path: '../provide-types/src/ident/index.ts'
+    indent: '  '
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'
+
+  - path: 'github.com/provideplatform/provide-go/api/vault'
+    output_path: '../provide-types/src/vault/index.ts'
+    indent: '  '
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'
+
+  - path: 'github.com/provideplatform/provide-go/api/privacy'
+    output_path: '../provide-types/src/privacy/index.ts'
+    indent: '  '
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'
+
+  - path: 'github.com/provideplatform/provide-go/api/nchain'
+    output_path: '../provide-types/src/nchain/index.ts'
+    indent: '  '
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'
+
+  - path: 'github.com/provideplatform/provide-go/api/bookie'
+    output_path: '../provide-types/src/bookie/index.ts'
+    indent: '  '
+    type_mappings:
+      time.Time: 'string /* RFC3339 */'
+      uuid.UUID: 'string /* uuid */'
+
+    exclude_files:
+      - 'service.go'

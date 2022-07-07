@@ -1,4 +1,4 @@
-.PHONY: build clean install mod lint test
+.PHONY: build clean install mod lint test generate-ts-types
 
 clean:
 	go fix ./...
@@ -20,3 +20,6 @@ test: build
 	go test -v -race ./api
 	go test -v -race ./common
 	go test -v -race ./crypto
+
+generate-ts-types:
+	./ops/generate-ts-types.sh
