@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	uuid "github.com/kthomas/go.uuid"
 	"github.com/provideplatform/provide-go/api"
 	"github.com/provideplatform/provide-go/api/nchain"
@@ -38,7 +39,7 @@ type BaselineContext struct {
 	ID         *uuid.UUID        `sql:"-" json:"id,omitempty"`
 	BaselineID *uuid.UUID        `sql:"-" json:"baseline_id,omitempty"`
 	Records    []*BaselineRecord `sql:"-" json:"records,omitempty"`
-	Workflow   *Workflow         `sql:"-" json:"-"`
+	Workflow   *WorkflowInstance `sql:"-" json:"-"`
 	WorkflowID *uuid.UUID        `sql:"-" json:"workflow_id"`
 }
 
@@ -84,6 +85,24 @@ type Mapping struct {
 	Name        string          `json:"name"`
 	Description *string         `json:"description"`
 	Type        *string         `json:"type"`
+
+	OrganizationID *uuid.UUID `json:"organization_id"`
+	Ref            *string    `json:"ref,omitempty"`
+	RefMappingID   *uuid.UUID `json:"ref_mapping_id"`
+	Version        *string    `json:"version"`
+	WorkgroupID    *uuid.UUID `json:"workgroup_id"`
+}
+
+// MappingModel consists of fields for mapping
+type MappingModel struct {
+	Description *string `json:"description"`
+	PrimaryKey  *string `json:"primary_key"`
+	Standard    *string `json:"standard"`
+	Type        *string `json:"type"`
+
+	MappingID  uuid.UUID       `json:"mapping_id"`
+	RefModelID *uuid.UUID      `json:"ref_model_id"`
+	Fields     []*MappingField `sql:"-" json:"fields"`
 }
 
 // MappingField for mapping
@@ -93,15 +112,9 @@ type MappingField struct {
 	Name         string      `json:"name"`
 	Description  *string     `json:"description"`
 	Type         string      `json:"type"`
-}
 
-// MappingModel consists of fields for mapping
-type MappingModel struct {
-	Description *string         `json:"description"`
-	Fields      []*MappingField `json:"fields"`
-	PrimaryKey  *string         `json:"primary_key"`
-	Standard    *string         `json:"standard"`
-	Type        *string         `json:"type"`
+	MappingModelID uuid.UUID  `json:"mapping_model_id"` // gorm: "column:mappingmodel_id"
+	RefFieldID     *uuid.UUID `json:"ref_field_id"`
 }
 
 // Message is a proxy-internal wrapper for protocol message handling
@@ -115,15 +128,47 @@ type Message struct {
 	Recipients      []*Participant   `sql:"-" json:"recipients"`
 	Status          *string          `sql:"-" json:"status,omitempty"`
 	Type            *string          `sql:"-" json:"type,omitempty"`
+
+	// HACK -- convenience ptr ... for access during baselineOutbound()
+	subjectAccount *SubjectAccount `sql:"-" json:"-"`
+	token          *string         `sql:"-" json:"-"`
 }
 
 // Participant is a party to a baseline workgroup or workflow context
 type Participant struct {
-	Address           *string                `sql:"-" json:"address"`
 	Metadata          map[string]interface{} `sql:"-" json:"metadata,omitempty"`
 	APIEndpoint       *string                `sql:"-" json:"api_endpoint,omitempty"`
 	MessagingEndpoint *string                `sql:"-" json:"messaging_endpoint,omitempty"`
 	WebsocketEndpoint *string                `sql:"-" json:"websocket_endpoint,omitempty"`
+
+	Address    *string      `json:"address"` // gorm:"column:participant"
+	Workgroups []*Workgroup `sql:"-" json:"workgroups,omitempty"`
+	Workflows  []*Workflow  `sql:"-" json:"workflows,omitempty"`
+	Worksteps  []*Workstep  `sql:"-" json:"worksteps,omitempty"`
+}
+
+// WorkgroupParticipant is a party to a baseline workgroup
+type WorkgroupParticipant struct {
+	Participant *string     `json:"address"`
+	Proof       *string     `json:"proof"`
+	Witness     interface{} `json:"witness"`
+	WitnessedAt *time.Time  `json:"witnessed_at"`
+}
+
+// WorkflowParticipant is a party to a baseline workflow
+type WorkflowParticipant struct {
+	Participant *string     `json:"address"`
+	Proof       *string     `json:"proof"`
+	Witness     interface{} `json:"witness"`
+	WitnessedAt *time.Time  `json:"witnessed_at"`
+}
+
+// WorkstepParticipant is a party to a baseline workstep
+type WorkstepParticipant struct {
+	Participant *string     `json:"address"`
+	Proof       *string     `json:"proof"`
+	Witness     interface{} `json:"witness"`
+	WitnessedAt *time.Time  `json:"witnessed_at"`
 }
 
 // ProtocolMessage is a baseline protocol message
@@ -138,6 +183,10 @@ type ProtocolMessage struct {
 	Signature  *string                 `sql:"-" json:"signature,omitempty"`
 	Type       *string                 `sql:"-" json:"type,omitempty"`
 	Payload    *ProtocolMessagePayload `sql:"-" json:"payload,omitempty"`
+
+	// HACK -- convenience ptr ... for access during baselineInbound()
+	subjectAccount *SubjectAccount `sql:"-" json:"-"`
+	token          *string         `sql:"-" json:"-"`
 }
 
 // ProtocolMessagePayload is a baseline protocol message payload
@@ -154,6 +203,20 @@ type PublicWorkgroupInvitationRequest struct {
 	FirstName        *string `json:"first_name"`
 	LastName         *string `json:"last_name"`
 	OrganizationName *string `json:"organization_name"`
+}
+
+// BaselineClaims represent JWT claims encoded within the invite token
+type BaselineClaims struct {
+	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
+	InvitorSubjectAccountID    *string `json:"invitor_subject_account_id"`
+	RegistryContractAddress    *string `json:"registry_contract_address"`
+	WorkgroupID                *string `json:"workgroup_id"`
+}
+
+// InviteClaims represent JWT invitation claims
+type InviteClaims struct {
+	jwt.MapClaims
+	Baseline *BaselineClaims `json:"baseline"`
 }
 
 // SubjectAccount is a baseline BPI Subject Account per the specification
@@ -177,6 +240,9 @@ type SubjectAccount struct {
 
 	SecurityPolicies         *json.RawMessage `sql:"-" json:"security_policies,omitempty"`
 	SecurityPoliciesSecretID *uuid.UUID       `json:"security_policies_secret_id,omitempty"`
+
+	RefreshToken    *string `json:"-"` // encrypted, hex-encoded refresh token for the BPI subject account
+	refreshTokenRaw *string `sql:"-" json:"-"`
 }
 
 // SubjectAccountMetadata is `SubjectAccount` metadata specific to this BPI instance
@@ -233,25 +299,45 @@ type Workgroup struct {
 	PrivacyPolicy      interface{}    `json:"privacy_policy"`      // outlines data visibility rules for each participant
 	SecurityPolicy     interface{}    `json:"security_policy"`     // consists of authentication and authorization rules for the workgroup participants
 	TokenizationPolicy interface{}    `json:"tokenization_policy"` // consists of policies governing tokenization of workflow outputs
+
+	Name           *string     `json:"name"`
+	Description    *string     `json:"description"`
+	Config         interface{} `sql:"-" json:"config"`
+	NetworkID      *uuid.UUID  `sql:"-" json:"network_id"`
+	OrganizationID *uuid.UUID  `json:"-"`
 }
 
 // Workflow is a baseline workflow prototype
 type Workflow struct {
 	api.Model
-	DeployedAt   *time.Time       `json:"deployed_at"`
-	Metadata     *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
-	Participants []*Participant   `sql:"-" json:"participants"`
-	Shield       *string          `json:"shield,omitempty"`
-	Status       *string          `json:"status"`
-	Version      *string          `json:"version"`
-	Worksteps    []*Workstep      `sql:"-" json:"worksteps,omitempty"`
+	DeployedAt *time.Time       `json:"deployed_at"`
+	Metadata   *json.RawMessage `sql:"type:json not null" json:"metadata,omitempty"`
+	Shield     *string          `json:"shield,omitempty"`
+	Status     *string          `json:"status"`
+	Version    *string          `json:"version"`
+
+	Name           *string        `json:"name"`
+	Description    *string        `json:"description"`
+	UpdatedAt      *time.Time     `json:"updated_at"`
+	Participants   []*Participant `sql:"-" json:"participants,omitempty"`
+	WorkgroupID    *uuid.UUID     `json:"workgroup_id"`
+	WorkflowID     *uuid.UUID     `json:"workflow_id"` // when nil, indicates the workflow is a prototype (not an instance)
+	Worksteps      []*Workstep    `json:"worksteps,omitempty"`
+	WorkstepsCount int            `json:"worksteps_count,omitempty"`
+}
+
+// WorkflowVersion is a version of a workflow referenced by the initial workflow id
+type WorkflowVersion struct {
+	InitialWorkflowID uuid.UUID `json:"initial_workflow_id"`
+	WorkflowID        uuid.UUID `json:"workflow_id"`
+	Version           string    `json:"version"`
 }
 
 // WorkflowInstance is a baseline workflow instance
 type WorkflowInstance struct {
 	Workflow
 	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"` // references the workflow prototype identifier
-	Worksteps  []*WorkstepInstance `sql:"-" json:"worksteps,omitempty"`
+	Worksteps  []*WorkstepInstance `json:"worksteps,omitempty"`
 }
 
 // Workstep is a baseline workstep context
@@ -268,15 +354,78 @@ type Workstep struct {
 	Shield          *string          `json:"shield,omitempty"`
 	Status          *string          `json:"status"`
 	WorkflowID      *uuid.UUID       `json:"workflow_id,omitempty"`
+
+	Description *string    `json:"description"`
+	WorkstepID  *uuid.UUID `json:"workstep_id"` // when nil, indicates the workstep is a prototype (not an instance)
+
+	userInputCardinality bool `json:"-"`
 }
 
 // WorkstepInstance is a baseline workstep instance
 type WorkstepInstance struct {
 	Workstep
-	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
+	WorkstepID *uuid.UUID          `json:"workstep_id,omitempty"` // references the workstep prototype identifier
+	Worksteps  []*WorkstepInstance `json:"worksteps,omitempty"`
 }
 
 // SubjectAccountIDFactory returns H(organization_id, workgroup_id)
 func SubjectAccountIDFactory(organizationID, workgroupID string) string {
 	return common.SHA256(fmt.Sprintf("%s.%s", organizationID, workgroupID))
+}
+
+// WorkgroupDashboardAPIResponse is a general response containing data related to the current workgroup and organization context
+type WorkgroupDashboardAPIResponse struct {
+	Activity     []*ActivityAPIResponseItem `json:"activity"`
+	Analytics    *AnalyticsAPIResponse      `json:"analytics"`
+	Participants *ParticipantsAPIResponse   `json:"participants"`
+	Workflows    *WorkflowsAPIResponse      `json:"workflows"`
+}
+
+// ActivityAPIResponseItem is a single activity item for inclusion in the `WorkgroupDashboardAPIResponse`
+type ActivityAPIResponseItem struct {
+	Metadata  *json.RawMessage `json:"metadata,omitempty"`
+	Subtitle  *string          `json:"subtitle"`
+	Timestamp *time.Time       `json:"timestamp"`
+	Title     *string          `json:"title"`
+
+	WorkflowID *uuid.UUID `json:"workflow_id"`
+	WorkstepID *uuid.UUID `json:"workstep_id"`
+}
+
+// AnalyticsAPIResponse is the analytics item for inclusion in the `WorkgroupDashboardAPIResponse`
+type AnalyticsAPIResponse struct {
+	Metadata *json.RawMessage          `json:"metadata,omitempty"`
+	Tree     *TreeAnalyticsAPIResponse `json:"tree"`
+}
+
+// TreeAnalyticsAPIResponse is the tree analtics time-series item for inclusion in the `AnalyticsAPIResponse`
+type TreeAnalyticsAPIResponse struct {
+	StartAt *time.Time `json:"start_at"`
+	EndAt   *time.Time `json:"end_at"`
+
+	Items    []*TreeAnalyticsAPIResponseItem `json:"items"`
+	Metadata *json.RawMessage                `json:"metadata,omitempty"`
+}
+
+// TreeAnalyticsAPIResponseItem is the tree analtics time-series item for inclusion in the `AnalyticsAPIResponse`
+type TreeAnalyticsAPIResponseItem struct {
+	Date     *time.Time       `json:"date"`
+	Metadata *json.RawMessage `json:"metadata,omitempty"`
+	Size     uint64           `json:"size"` // in bytes
+	Subtitle *string          `json:"subtitle"`
+	Title    *string          `json:"title"`
+}
+
+// ParticipantsAPIResponse is the participants item for inclusion in the `WorkgroupDashboardAPIResponse`
+type ParticipantsAPIResponse struct {
+	ActionItemsCount   *uint64 `json:"action_items_count"`
+	UsersCount         *uint64 `json:"users_count"`
+	OrganizationsCount *uint64 `json:"organizations_count"`
+}
+
+// WorkflowsAPIResponse is the workflows item for inclusion in the `WorkgroupDashboardAPIResponse`
+type WorkflowsAPIResponse struct {
+	DelayedCount   *uint64 `json:"delayed_count"`
+	DraftCount     *uint64 `json:"draft_count"`
+	PublishedCount *uint64 `json:"published_count"`
 }
