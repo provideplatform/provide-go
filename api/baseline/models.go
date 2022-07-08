@@ -147,30 +147,6 @@ type Participant struct {
 	Worksteps  []*Workstep  `sql:"-" json:"worksteps,omitempty"`
 }
 
-// WorkgroupParticipant is a party to a baseline workgroup
-type WorkgroupParticipant struct {
-	Participant *string     `json:"address"`
-	Proof       *string     `json:"proof"`
-	Witness     interface{} `json:"witness"`
-	WitnessedAt *time.Time  `json:"witnessed_at"`
-}
-
-// WorkflowParticipant is a party to a baseline workflow
-type WorkflowParticipant struct {
-	Participant *string     `json:"address"`
-	Proof       *string     `json:"proof"`
-	Witness     interface{} `json:"witness"`
-	WitnessedAt *time.Time  `json:"witnessed_at"`
-}
-
-// WorkstepParticipant is a party to a baseline workstep
-type WorkstepParticipant struct {
-	Participant *string     `json:"address"`
-	Proof       *string     `json:"proof"`
-	Witness     interface{} `json:"witness"`
-	WitnessedAt *time.Time  `json:"witnessed_at"`
-}
-
 // ProtocolMessage is a baseline protocol message
 // see https://github.com/ethereum-oasis/baseline/blob/master/core/types/src/protocol.ts
 type ProtocolMessage struct {
