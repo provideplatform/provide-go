@@ -138,7 +138,7 @@ func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params
 }
 
 // ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
-func ListWorkgroups(token, applicationID string, params map[string]interface{}) ([]*Workgroup, error) {
+func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, error) {
 	status, resp, err := InitBaselineService(token).Get("workgroups", params)
 	if err != nil {
 		return nil, err
