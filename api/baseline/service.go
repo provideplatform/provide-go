@@ -127,11 +127,11 @@ func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params
 	uri := fmt.Sprintf("subjects/%s/accounts/%s", organizationID, subjectAccountID)
 	status, _, err := InitBaselineService(token).Put(uri, params)
 	if err != nil {
-		return fmt.Errorf("failed to create BPI subject account; status: %v; %s", status, err.Error())
+		return fmt.Errorf("failed to update BPI subject account; status: %v; %s", status, err.Error())
 	}
 
-	if status != 201 {
-		return fmt.Errorf("failed to create BPI subject account; status: %v", status)
+	if status != 204 {
+		return fmt.Errorf("failed to update BPI subject account; status: %v", status)
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 		return nil, fmt.Errorf("failed to create workgroup; status: %v; %s", status, err.Error())
 	}
 
-	if status != 200 {
+	if status != 201 {
 		return nil, fmt.Errorf("failed to create workgroup; status: %v", status)
 	}
 
@@ -263,7 +263,7 @@ func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*W
 		return nil, fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
 	}
 
-	if status != 200 {
+	if status != 201 {
 		return nil, fmt.Errorf("failed to create workstep; status: %v", status)
 	}
 
