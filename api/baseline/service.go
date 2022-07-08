@@ -159,6 +159,25 @@ func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, 
 	return workgroups, nil
 }
 
+// GetWorkgroupDetails retrieves details for the given workgroup id
+func GetWorkgroupDetails(token, workgroupID string, params map[string]interface{}) (*Workgroup, error) {
+	uri := fmt.Sprintf("workgroups/%s", workgroupID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	workgroup := &Workgroup{}
+	workgroupRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(workgroupRaw, &workgroup)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch workgroup details; status: %v; %s", status, err.Error())
+	}
+
+	return workgroup, nil
+}
+
 // CreateWorkgroup initializes a new or previously-joined workgroup on the local baseline stack
 func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, error) {
 	status, resp, err := InitBaselineService(token).Post("workgroups", params)
