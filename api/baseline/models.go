@@ -81,6 +81,7 @@ type IssueVerifiableCredentialResponse struct {
 
 // Mapping for arbitrary model transformations
 type Mapping struct {
+	api.Model
 	Models      []*MappingModel `json:"models"`
 	Name        string          `json:"name"`
 	Description *string         `json:"description"`
@@ -95,6 +96,7 @@ type Mapping struct {
 
 // MappingModel consists of fields for mapping
 type MappingModel struct {
+	api.Model
 	Description *string `json:"description"`
 	PrimaryKey  *string `json:"primary_key"`
 	Standard    *string `json:"standard"`
@@ -107,6 +109,7 @@ type MappingModel struct {
 
 // MappingField for mapping
 type MappingField struct {
+	api.Model
 	DefaultValue interface{} `json:"default_value,omitempty"`
 	IsPrimaryKey bool        `json:"is_primary_key"`
 	Name         string      `json:"name"`
