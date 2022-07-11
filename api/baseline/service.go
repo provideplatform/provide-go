@@ -61,7 +61,62 @@ func InitBaselineService(token string) *Service {
 	}
 }
 
-// ListSubjectAccounts creates a BPI subject account using the given organization and params
+// ListMappings lists mappings using the given params
+func ListMappings(token string, params map[string]interface{}) ([]*Mapping, error) {
+	status, resp, err := InitBaselineService(token).Get("mappings", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list mappings; status: %v; %s", status, err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list mappings; status: %v", status)
+	}
+
+	mappings := make([]*Mapping, 0)
+	for _, item := range resp.([]interface{}) {
+		mapping := &Mapping{}
+		mappingRaw, _ := json.Marshal(item)
+		json.Unmarshal(mappingRaw, &mapping)
+		mappings = append(mappings, mapping)
+	}
+
+	return mappings, nil
+}
+
+// CreateMapping creates a mapping using the given params
+func CreateMapping(token string, params map[string]interface{}) (*Mapping, error) {
+	status, resp, err := InitBaselineService(token).Post("mappings", params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create mapping; status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create mapping; status: %v", status)
+	}
+
+	mapping := &Mapping{}
+	mappingRaw, _ := json.Marshal(resp)
+	err = json.Unmarshal(mappingRaw, &mapping)
+
+	return mapping, nil
+}
+
+// UpdateMapping updates a mapping
+func UpdateMapping(token, mappingID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("mappings/%s", mappingID)
+	status, _, err := InitBaselineService(token).Put(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to update mapping; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to update mapping; status: %v", status)
+	}
+
+	return nil
+}
+
+// ListSubjectAccounts lists BPI subject accounts using the given organization and params
 func ListSubjectAccounts(token, organizationID string, params map[string]interface{}) ([]*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
 	status, resp, err := InitBaselineService(token).Get(uri, params)
