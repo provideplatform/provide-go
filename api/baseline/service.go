@@ -252,8 +252,8 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 }
 
 // UpdateWorkgroup updates a previously-initialized workgroup on the local baseline stack
-func UpdateWorkgroup(id, token string, params map[string]interface{}) error {
-	uri := fmt.Sprintf("workgroups/%s", id)
+func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("workgroups/%s", workgroupID)
 	status, _, err := InitBaselineService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update workgroup; status: %v; %s", status, err.Error())
