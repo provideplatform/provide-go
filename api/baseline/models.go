@@ -184,8 +184,9 @@ type PublicWorkgroupInvitationRequest struct {
 	OrganizationName *string `json:"organization_name"`
 }
 
-// BaselineClaims represent JWT claims encoded within the invite token
+// BaselineClaims represent JWT claims encoded within the authorization bearer token within an invitation token
 type BaselineClaims struct {
+	jwt.MapClaims
 	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
 	InvitorSubjectAccountID    *string `json:"invitor_subject_account_id"`
 	RegistryContractAddress    *string `json:"registry_contract_address"`
@@ -194,8 +195,59 @@ type BaselineClaims struct {
 
 // InviteClaims represent JWT invitation claims
 type InviteClaims struct {
-	jwt.MapClaims
-	Baseline *BaselineClaims `json:"baseline"`
+	jwt.StandardClaims
+	NATS *NATSClaims `json:"nats"`
+	PRVD *PRVDClaims `json:"prvd"`
+}
+
+// NATSClaims represent JWT invitation nats claims
+type NATSClaims struct {
+	Permissions *PermissionsClaims `json:"permissions"`
+}
+
+// NATSClaims represent JWT invitation nats permissions claims
+type PermissionsClaims struct {
+	Publish   *PublishClaims   `json:"publish"`
+	Subscribe *SubscribeClaims `json:"subscribe"`
+}
+
+// PublishClaims represent JWT invitation nats publish permissions claims
+type PublishClaims struct {
+	Allow []*string `json:"allow"`
+}
+
+// SubscribeClaims represent JWT invitation nats subscribe permissions claims
+type SubscribeClaims struct {
+	Allow []*string `json:"allow"`
+}
+
+// PRVDClaims represent JWT invitation PRVD claims
+type PRVDClaims struct {
+	Data        *DataClaims `json:"data"`
+	Permissions uint32      `json:"permissions"`
+}
+
+// PRVDClaims represent JWT invitation PRVD data claims
+type DataClaims struct {
+	ApplicationID    *uuid.UUID   `json:"application_id"`
+	Email            *string      `json:"email"`
+	FirstName        *string      `json:"first_name"`
+	InvitorID        *uuid.UUID   `json:"invitor_id"`
+	InvitorName      *string      `json:"invitor_name"`
+	LastName         *string      `json:"last_name"`
+	OrganizationID   *uuid.UUID   `json:"organization_id"`
+	OrganizationName *string      `json:"organization_name"`
+	Params           *ClaimParams `json:"params"`
+	UserID           *uuid.UUID   `json:"user_id"`
+}
+
+// PRVDClaims represent JWT invitation PRVD data claim params
+type ClaimParams struct {
+	AuthorizedBearerToken    *string    `json:"authorized_bearer_token,omitempty"`
+	IsOrganizationInvite     bool       `json:"is_organization_invite,omitempty"`
+	IsOrganizationUserInvite     bool       `json:"is_organization_user_invite,omitempty"`
+	OperatorSeparationDegree uint32     `json:"operator_separation_degree"`
+	Workgroup                *Workgroup `json:"workgroup"`
 }
 
 // SubjectAccount is a baseline BPI Subject Account per the specification
