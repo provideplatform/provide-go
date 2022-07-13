@@ -240,15 +240,19 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 		return nil, fmt.Errorf("failed to create workgroup; status: %v; %s", status, err.Error())
 	}
 
-	if status != 201 {
+	if status != 201 && status != 204 {
 		return nil, fmt.Errorf("failed to create workgroup; status: %v", status)
 	}
 
-	workgroup := &Workgroup{}
-	workgroupraw, _ := json.Marshal(resp)
-	err = json.Unmarshal(workgroupraw, &workgroup)
+	if resp != nil {
+		workgroup := &Workgroup{}
+		workgroupraw, _ := json.Marshal(resp)
+		err = json.Unmarshal(workgroupraw, &workgroup)
+	
+		return workgroup, nil
+	}
 
-	return workgroup, nil
+	return nil, nil
 }
 
 // UpdateWorkgroup updates a previously-initialized workgroup on the local baseline stack
