@@ -323,14 +323,9 @@ func ListSecrets(token, vaultID string, params map[string]interface{}) ([]*Secre
 }
 
 // CreateSecret stores a new secret in the vault
-func CreateSecret(token, vaultID, value, name, description, secretType string) (*Secret, error) {
+func CreateSecret(token, vaultID string, params map[string]interface{}) (*Secret, error) {
 	uri := fmt.Sprintf("vaults/%s/secrets", vaultID)
-	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, map[string]interface{}{
-		"name":        name,
-		"description": description,
-		"type":        secretType,
-		"value":       value,
-	})
+	status, resp, err := InitVaultService(common.StringOrNil(token)).Post(uri, params)
 	if err != nil {
 		return nil, err
 	}
