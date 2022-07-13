@@ -73,14 +73,21 @@ func InitIdentService(token *string) *Service {
 	}
 }
 
-// Authenticate a user by email address and password, returning a newly-authorized API token
-func Authenticate(email, passwd string) (*AuthenticationResponse, error) {
+// Authenticate a user by email address and password with optional invitationToken, returning a newly-authorized API token
+func Authenticate(email, password, invitationToken string) (*AuthenticationResponse, error) {
 	prvd := InitIdentService(nil)
-	status, resp, err := prvd.Post("authenticate", map[string]interface{}{
+
+	params := map[string]interface{}{
 		"email":    email,
-		"password": passwd,
+		"password": password,
 		"scope":    "offline_access",
-	})
+	}
+
+	if invitationToken != "" {
+		params["invitation_token"] = invitationToken
+	}
+
+	status, resp, err := prvd.Post("authenticate", params)
 	if err != nil {
 		return nil, err
 	}
