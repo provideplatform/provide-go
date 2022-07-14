@@ -245,7 +245,7 @@ type DataClaims struct {
 type ClaimParams struct {
 	AuthorizedBearerToken    *string    `json:"authorized_bearer_token,omitempty"`
 	IsOrganizationInvite     bool       `json:"is_organization_invite,omitempty"`
-	IsOrganizationUserInvite     bool       `json:"is_organization_user_invite,omitempty"`
+	IsOrganizationUserInvite bool       `json:"is_organization_user_invite,omitempty"`
 	OperatorSeparationDegree uint32     `json:"operator_separation_degree"`
 	Workgroup                *Workgroup `json:"workgroup"`
 }
@@ -459,4 +459,12 @@ type WorkflowsAPIResponse struct {
 	DelayedCount   *uint64 `json:"delayed_count"`
 	DraftCount     *uint64 `json:"draft_count"`
 	PublishedCount *uint64 `json:"published_count"`
+}
+
+// Schema is a schema from a connected sap system of record to create a mapping from
+type Schema struct {
+	Description *string       `json:"description"`
+	Fields      []interface{} `json:"fields,omitempty"`
+	Name        *string       `json:"name"`
+	Type        *string       `json:"type"`
 }
