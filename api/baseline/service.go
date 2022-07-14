@@ -454,3 +454,17 @@ func GetSchemaDetails(token, workgroupID, schemaID string, params map[string]int
 
 	return &schema, nil
 }
+
+// SystemReachability returns whether a system of record is a valid tenant and if so, configures said tenant
+func SystemReachability(token string, params map[string]interface{}) error {
+	status, _, err := InitBaselineService(token).Get("systems/reachability", params)
+	if err != nil {
+		return err
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to check system reachability; status: %v", status)
+	}
+
+	return nil
+}
