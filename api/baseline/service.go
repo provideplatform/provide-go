@@ -248,7 +248,7 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 		workgroup := &Workgroup{}
 		workgroupraw, _ := json.Marshal(resp)
 		err = json.Unmarshal(workgroupraw, &workgroup)
-	
+
 		return workgroup, nil
 	}
 
@@ -411,4 +411,46 @@ func Status() error {
 	}
 
 	return nil
+}
+
+// ListSchemas returns the schemas from a workgroup system of record
+func ListSchemas(token, workgroupID string, params map[string]interface{}) ([]*Schema, error) {
+	uri := fmt.Sprintf("workgroups/%s/schemas", workgroupID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list schemas; status: %v", status)
+	}
+
+	schemas := make([]*Schema, 0)
+	for _, item := range resp.([]interface{}) {
+		var schema Schema
+		schemaRaw, _ := json.Marshal(item)
+		json.Unmarshal(schemaRaw, &schema)
+		schemas = append(schemas, &schema)
+	}
+
+	return schemas, nil
+}
+
+// GetSchemaDetails retrieves details for the given schema id
+func GetSchemaDetails(token, workgroupID, schemaID string, params map[string]interface{}) (*Schema, error) {
+	uri := fmt.Sprintf("workgroups/%s/schemas/%s", workgroupID, schemaID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to get schema details; status: %v", status)
+	}
+
+	var schema Schema
+	schemaRaw, _ := json.Marshal(resp)
+	json.Unmarshal(schemaRaw, &schema)
+
+	return &schema, nil
 }
