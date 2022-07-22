@@ -116,6 +116,21 @@ func UpdateMapping(token, mappingID string, params map[string]interface{}) error
 	return nil
 }
 
+// DeleteMapping deletes a mapping
+func DeleteMapping(token, mappingID string) error {
+	uri := fmt.Sprintf("mappings/%s", mappingID)
+	status, _, err := InitBaselineService(token).Delete(uri)
+	if err != nil {
+		return fmt.Errorf("failed to delete mapping; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to delete mapping; status: %v", status)
+	}
+
+	return nil
+}
+
 // ListSubjectAccounts lists BPI subject accounts using the given organization and params
 func ListSubjectAccounts(token, organizationID string, params map[string]interface{}) ([]*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
@@ -255,7 +270,7 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 	return nil, nil
 }
 
-// UpdateWorkgroup updates a previously-initialized workgroup on the local baseline stack
+// UpdateWorkgroup updates a baseline workgroup
 func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workgroups/%s", workgroupID)
 	status, _, err := InitBaselineService(token).Put(uri, params)
@@ -268,6 +283,25 @@ func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) e
 	}
 
 	return nil
+}
+
+// FetchWorkgroupAnalytics retrieves analytics data for the given workgroupID
+func FetchWorkgroupAnalytics(token, workgroupID string, params map[string]interface{}) (*WorkgroupDashboardAPIResponse, error) {
+	uri := fmt.Sprintf("workgroups/%s/analytics", workgroupID)
+	status, _, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch workgroup analytics; status: %v; %s", status, err.Error())
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch workgroup analytics; status: %v", status)
+	}
+
+	var analytics WorkgroupDashboardAPIResponse
+	analyticsRaw, _ := json.Marshal(analytics)
+	err = json.Unmarshal(analyticsRaw, &analytics)
+
+	return &analytics, nil
 }
 
 // ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
@@ -284,12 +318,31 @@ func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, er
 	workflows := make([]*Workflow, 0)
 	for _, item := range resp.([]interface{}) {
 		workflow := &Workflow{}
-		workflowraw, _ := json.Marshal(item)
-		json.Unmarshal(workflowraw, &workflow)
+		workflowRaw, _ := json.Marshal(item)
+		json.Unmarshal(workflowRaw, &workflow)
 		workflows = append(workflows, workflow)
 	}
 
 	return workflows, nil
+}
+
+// GetWorkflowDetails retrieves details for the given workflow id
+func GetWorkflowDetails(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
+	uri := fmt.Sprintf("workflows/%s", workflowID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch workflow details; status: %v", status)
+	}
+
+	workflow := &Workflow{}
+	workflowRaw, _ := json.Marshal(resp)
+	json.Unmarshal(workflowRaw, &workflow)
+
+	return workflow, nil
 }
 
 // CreateWorkflow initializes a new workflow on the local baseline stack
@@ -306,6 +359,82 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 	workflow := &Workflow{}
 	workflowraw, _ := json.Marshal(resp)
 	err = json.Unmarshal(workflowraw, &workflow)
+
+	return workflow, nil
+}
+
+// UpdateWorkflow updates a baseline workflow
+func UpdateWorkflow(token, workflowID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("workflows/%s", workflowID)
+	status, _, err := InitBaselineService(token).Put(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to update workflow; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to update workflow; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeployWorkflow deploys a workflow to the specified layer(s), preventing future changes
+func DeployWorkflow(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
+	uri := fmt.Sprintf("workflows/%s/deploy", workflowID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deploy workflow; status: %v; %s", status, err.Error())
+	}
+
+	if status != 202 {
+		return nil, fmt.Errorf("failed to deploy workflow; status: %v", status)
+	}
+
+	workflow := &Workflow{}
+	workflowRaw, _ := json.Marshal(resp)
+	json.Unmarshal(workflowRaw, &workflow)
+
+	return workflow, nil
+}
+
+// FetchWorkflowVersions returns all of the versions of a given workflow
+func FetchWorkflowVersions(token, workflowID string, params map[string]interface{}) ([]*Workflow, error) {
+	uri := fmt.Sprintf("workflows/%s/versions", workflowID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list baseline workflow versions; status: %v", status)
+	}
+
+	workflows := make([]*Workflow, 0)
+	for _, item := range resp.([]interface{}) {
+		workflow := &Workflow{}
+		workflowRaw, _ := json.Marshal(item)
+		json.Unmarshal(workflowRaw, &workflow)
+		workflows = append(workflows, workflow)
+	}
+
+	return workflows, nil
+}
+
+// VersionWorkflow creates a new version of a previously deployed workflow
+func VersionWorkflow(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
+	uri := fmt.Sprintf("workflows/%s/versions", workflowID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create workflow version; status: %v", status)
+	}
+
+	workflow := &Workflow{}
+	workflowRaw, _ := json.Marshal(resp)
+	json.Unmarshal(workflowRaw, &workflow)
 
 	return workflow, nil
 }
@@ -333,6 +462,25 @@ func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*
 	return worksteps, nil
 }
 
+// GetWorkstepDetails retrieves the details of a workstep
+func GetWorkstepDetails(token, workflowID, workstepID string, params map[string]interface{}) (*Workstep, error) {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to get workstep details; status: %v", status)
+	}
+
+	workstep := &Workstep{}
+	workstepraw, _ := json.Marshal(resp)
+	json.Unmarshal(workstepraw, &workstep)
+
+	return workstep, nil
+}
+
 // CreateWorkstep initializes a new workstep on the local baseline stack
 func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
@@ -350,6 +498,21 @@ func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*W
 	err = json.Unmarshal(workstepraw, &workstep)
 
 	return workstep, nil
+}
+
+// UpdateWorkstep updates a baseline workstep
+func UpdateWorkstep(token, workflowID, workstepID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
+	status, _, err := InitBaselineService(token).Put(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to create workstep; status: %v", status)
+	}
+
+	return nil
 }
 
 // ExecuteWorkstep executes a specific workstep
@@ -464,6 +627,60 @@ func SystemReachability(token string, params map[string]interface{}) error {
 
 	if status != 204 {
 		return fmt.Errorf("failed to check system reachability; status: %v", status)
+	}
+
+	return nil
+}
+
+// FetchWorkstepParticipants returns the participants for a given workstep
+func FetchWorkstepParticipants(token, workflowID, workstepID string, params map[string]interface{}) ([]*Participant, error) {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants", workflowID, workstepID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to fetch workstep participants; status: %v", status)
+	}
+
+	participants := make([]*Participant, 0)
+	for _, item := range resp.([]interface{}) {
+		var participant Participant
+		participantRaw, _ := json.Marshal(item)
+		json.Unmarshal(participantRaw, &participant)
+
+		participants = append(participants, &participant)
+	}
+
+	return participants, nil
+}
+
+// CreateWorkstepParticipant adds a participant to a given workstep
+func CreateWorkstepParticipant(token, workflowID, workstepID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants", workflowID, workstepID)
+	status, _, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to create workstep participant; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to create workstep participant; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeleteWorkstepParticipant removes a participant from a given workstep
+func DeleteWorkstepParticipant(token, workflowID, workstepID, address string) error {
+	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants/%s", workflowID, workstepID, address)
+	status, _, err := InitBaselineService(token).Delete(uri)
+	if err != nil {
+		return fmt.Errorf("failed to delete workstep participant; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to delete workstep participant; status: %v", status)
 	}
 
 	return nil
