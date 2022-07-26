@@ -395,8 +395,7 @@ type Workstep struct {
 // WorkstepInstance is a baseline workstep instance
 type WorkstepInstance struct {
 	Workstep
-	WorkstepID *uuid.UUID          `json:"workstep_id,omitempty"` // references the workstep prototype identifier
-	Worksteps  []*WorkstepInstance `json:"worksteps,omitempty"`
+	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier
 }
 
 // SubjectAccountIDFactory returns H(organization_id, workgroup_id)
