@@ -158,10 +158,13 @@ type ProtocolMessage struct {
 	Sender     *string                 `sql:"-" json:"sender,omitempty"`
 	Recipient  *string                 `sql:"-" json:"recipient,omitempty"`
 	Shield     *string                 `sql:"-" json:"shield,omitempty"`
-	Identifier *uuid.UUID              `sql:"-" json:"identifier,omitempty"`
 	Signature  *string                 `sql:"-" json:"signature,omitempty"`
 	Type       *string                 `sql:"-" json:"type,omitempty"`
 	Payload    *ProtocolMessagePayload `sql:"-" json:"payload,omitempty"`
+
+	WorkgroupID *uuid.UUID `sql:"-" json:"workgroup_id,omitempty"`
+	WorkflowID  *uuid.UUID `sql:"-" json:"workgroup_id,omitempty"`
+	WorkstepID  *uuid.UUID `sql:"-" json:"workstep_id,omitempty"`
 
 	// HACK -- convenience ptr ... for access during baselineInbound()
 	subjectAccount *SubjectAccount `sql:"-" json:"-"`
