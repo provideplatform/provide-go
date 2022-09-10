@@ -505,11 +505,11 @@ func UpdateWorkstep(token, workflowID, workstepID string, params map[string]inte
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
 	status, _, err := InitBaselineService(token).Put(uri, params)
 	if err != nil {
-		return fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
+		return fmt.Errorf("failed to update workstep; status: %v; %s", status, err.Error())
 	}
 
 	if status != 204 {
-		return fmt.Errorf("failed to create workstep; status: %v", status)
+		return fmt.Errorf("failed to update workstep; status: %v", status)
 	}
 
 	return nil
@@ -571,6 +571,97 @@ func Status() error {
 
 	if status != 204 {
 		return fmt.Errorf("status endpoint returned %d status code", status)
+	}
+
+	return nil
+}
+
+// ListSystems returns the systems for a workgroup
+func ListSystems(token, workgroupID string, params map[string]interface{}) ([]*System, error) {
+	uri := fmt.Sprintf("workgroups/%s/systems", workgroupID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to list systems; status: %v", status)
+	}
+
+	systems := make([]*System, 0)
+	for _, item := range resp.([]interface{}) {
+		var system System
+		systemRaw, _ := json.Marshal(item)
+		json.Unmarshal(systemRaw, &system)
+		systems = append(systems, &system)
+	}
+
+	return systems, nil
+}
+
+// GetSystemDetails returns the system details for a workgroup
+func GetSystemDetails(token, workgroupID, systemID string, params map[string]interface{}) (*System, error) {
+	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
+	status, resp, err := InitBaselineService(token).Get(uri, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 200 {
+		return nil, fmt.Errorf("failed to get system details; status: %v", status)
+	}
+
+	var system System
+	systemRaw, _ := json.Marshal(resp)
+	json.Unmarshal(systemRaw, &system)
+
+	return &system, nil
+}
+
+// CreateSystem initializes a new system of record on the local baseline stack
+func CreateSystem(token, workgroupID string, params map[string]interface{}) (*System, error) {
+	uri := fmt.Sprintf("workgroups/%s/systems", workgroupID)
+	status, resp, err := InitBaselineService(token).Post(uri, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create system; status: %v; %s", status, err.Error())
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to create system; status: %v", status)
+	}
+
+	var system System
+	systemRaw, _ := json.Marshal(resp)
+	json.Unmarshal(systemRaw, &system)
+
+	return &system, nil
+}
+
+// UpdateSystem updates a baseline system of record
+func UpdateSystem(token, workgroupID, systemID string, params map[string]interface{}) error {
+	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
+	status, _, err := InitBaselineService(token).Put(uri, params)
+	if err != nil {
+		return fmt.Errorf("failed to update system; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to update system; status: %v", status)
+	}
+
+	return nil
+}
+
+// DeleteSystem deletes a system
+func DeleteSystem(token, workgroupID, systemID string) error {
+	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
+	status, _, err := InitBaselineService(token).Delete(uri)
+	if err != nil {
+		return fmt.Errorf("failed to delete system; status: %v; %s", status, err.Error())
+	}
+
+	if status != 204 {
+		return fmt.Errorf("failed to delete system; status: %v", status)
 	}
 
 	return nil
