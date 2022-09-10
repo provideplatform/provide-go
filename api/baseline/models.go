@@ -467,3 +467,47 @@ type Schema struct {
 	Name        *string       `json:"name"`
 	Type        *string       `json:"type"`
 }
+
+// System is a persistent representation and instance of a functional
+// `middleware.System` implementation that uses a vault secret to
+// securely store the configuration
+type System struct {
+	api.Model
+
+	Name           *string    `sql:"not null" json:"name"`
+	Description    *string    `json:"description"`
+	Type           *string    `sql:"not null" json:"type"`
+	OrganizationID *uuid.UUID `sql:"not null" json:"organization_id"`
+	WorkgroupID    *uuid.UUID `sql:"not null" json:"workgroup_id"`
+
+	Auth        *SystemAuth       `sql:"-" json:"auth,omitempty"`
+	EndpointURL *string           `sql:"-" json:"endpoint_url"`
+	Middleware  *SystemMiddleware `sql:"-" json:"middleware,omitempty"`
+
+	VaultID  *uuid.UUID `sql:"not null" json:"-"`
+	SecretID *uuid.UUID `sql:"not null" json:"-"`
+}
+
+// SystemAuth defines authn/authz params
+type SystemAuth struct {
+	Method   *string `json:"name"`
+	Username *string `json:"username"`
+	Password *string `json:"password,omitempty"`
+
+	RequireClientCredentials bool    `json:"require_client_credentials"`
+	ClientID                 *string `json:"client_id"`
+	ClientSecret             *string `json:"client_secret"`
+}
+
+// SystemMiddleware defines middleware for inbound and outbound middleware
+type SystemMiddlewarePolicy struct {
+	Auth *SystemAuth `json:"auth"`
+	Name *string     `json:"name"`
+	URL  *string     `json:"url"`
+}
+
+// SystemMiddleware defines middleware for inbound and outbound middleware
+type SystemMiddleware struct {
+	Inbound  *SystemMiddlewarePolicy `json:"inbound,omitempty"`
+	Outbound *SystemMiddlewarePolicy `json:"outbound,omitempty"`
+}
