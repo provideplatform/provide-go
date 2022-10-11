@@ -73,21 +73,42 @@ func InitIdentService(token *string) *Service {
 	}
 }
 
-// Authenticate a user by email address and password with optional invitationToken, returning a newly-authorized API token
-func Authenticate(email, password, invitationToken string) (*AuthenticationResponse, error) {
-	prvd := InitIdentService(nil)
-
+// Authenticate a user by email address and password
+func Authenticate(email, password string) (*AuthenticationResponse, error) {
 	params := map[string]interface{}{
 		"email":    email,
 		"password": password,
 		"scope":    "offline_access",
 	}
 
-	if invitationToken != "" {
-		params["invitation_token"] = invitationToken
+	status, resp, err := InitIdentService(nil).Post("authenticate", params)
+	if err != nil {
+		return nil, err
 	}
 
-	status, resp, err := prvd.Post("authenticate", params)
+	// FIXME...
+	authresp := &AuthenticationResponse{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &authresp)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to authenticate user; status: %d; %s", status, err.Error())
+	} else if status != 201 {
+		return nil, fmt.Errorf("failed to authenticate user; status: %d", status)
+	}
+
+	return authresp, nil
+}
+
+// Authenticate a user by email address and password and attempt to accept
+// an invite associated with the given invitation token
+func AuthenticateAcceptInvite(email, password, invitationToken string) (*AuthenticationResponse, error) {
+	status, resp, err := InitIdentService(nil).Post("authenticate", map[string]interface{}{
+		"email":            email,
+		"password":         password,
+		"scope":            "offline_access",
+		"invitation_token": invitationToken,
+	})
 	if err != nil {
 		return nil, err
 	}
