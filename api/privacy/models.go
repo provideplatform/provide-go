@@ -36,6 +36,9 @@ type Prover struct {
 	NoteStoreID      *uuid.UUID `json:"note_store_id"`
 	NullifierStoreID *uuid.UUID `json:"nullifier_store_id"`
 
+	ProvingKeyID   *uuid.UUID `json:"proving_key_id"`
+	VerifyingKeyID *uuid.UUID `json:"verifying_key_id"`
+
 	Artifacts        map[string]interface{} `json:"artifacts,omitempty"`
 	VerifierContract map[string]interface{} `json:"verifier_contract,omitempty"`
 }
