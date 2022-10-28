@@ -294,7 +294,10 @@ func (c *Client) Head(uri string, params map[string]interface{}) (status int, re
 	url := c.buildURL(uri)
 	resp, err := c.sendRequest("HEAD", url, defaultContentType, params)
 	if err != nil {
-		return resp.StatusCode, nil, err
+		if resp != nil {
+			return resp.StatusCode, nil, err
+		}
+		return 0, nil, err
 	}
 	return resp.StatusCode, resp.Header, nil
 }
