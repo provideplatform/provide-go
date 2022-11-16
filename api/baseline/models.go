@@ -190,6 +190,7 @@ type PublicWorkgroupInvitationRequest struct {
 // BaselineClaims represent JWT claims encoded within a generic verifiable credential for use with the baseline protocol
 type BaselineClaims struct {
 	jwt.MapClaims
+	BPIEndpoint             *string `json:"bpi_endpoint,omitempty"`
 	RegistryContractAddress *string `json:"registry_contract_address"`
 	WorkgroupID             *string `json:"workgroup_id"`
 }
@@ -197,6 +198,7 @@ type BaselineClaims struct {
 // BaselineInviteClaims represent JWT claims encoded within an verifiable credential representing an invitation
 type BaselineInviteClaims struct {
 	BaselineClaims
+	InvitorBPIEndpoint         *string `json:"invitor_bpi_endpoint,omitempty"`
 	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
 	InvitorSubjectAccountID    *string `json:"invitor_subject_account_id"`
 }
