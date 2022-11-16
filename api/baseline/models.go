@@ -187,13 +187,18 @@ type PublicWorkgroupInvitationRequest struct {
 	OrganizationName *string `json:"organization_name"`
 }
 
-// BaselineClaims represent JWT claims encoded within the authorization bearer token within an invitation token
+// BaselineClaims represent JWT claims encoded within a generic verifiable credential for use with the baseline protocol
 type BaselineClaims struct {
 	jwt.MapClaims
+	RegistryContractAddress *string `json:"registry_contract_address"`
+	WorkgroupID             *string `json:"workgroup_id"`
+}
+
+// BaselineInviteClaims represent JWT claims encoded within an verifiable credential representing an invitation
+type BaselineInviteClaims struct {
+	BaselineClaims
 	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
 	InvitorSubjectAccountID    *string `json:"invitor_subject_account_id"`
-	RegistryContractAddress    *string `json:"registry_contract_address"`
-	WorkgroupID                *string `json:"workgroup_id"`
 }
 
 // InviteClaims represent JWT invitation claims
