@@ -207,7 +207,7 @@ func init() {
 
 // AuthorizedSubjectID returns the requested JWT subject if it matches
 func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
-	token, err := ParseBearerAuthorizationHeader(c, nil)
+	token, err := ParseBearerAuthorizationHeader(c.GetHeader("authorization"), nil)
 	if err != nil {
 		common.Log.Tracef("no %s subject claim parsed from bearer authorization header; %s", subject, err.Error())
 		return nil
@@ -235,7 +235,7 @@ func AuthorizedSubjectID(c *gin.Context, subject string) *uuid.UUID {
 }
 
 func AuthorizedSubjectDID(c *gin.Context, subject string) *string {
-	token, err := ParseBearerAuthorizationHeader(c, nil)
+	token, err := ParseBearerAuthorizationHeader(c.GetHeader("authorization"), nil)
 	if err != nil {
 		common.Log.Tracef("no %s subject claim parsed from bearer authorization header; %s", subject, err.Error())
 		return nil
@@ -262,10 +262,9 @@ func AuthorizedSubjectDID(c *gin.Context, subject string) *string {
 	return &id
 }
 
-// ParseBearerAuthorizationHeader parses a bearer authorization header
-// expecting to find a valid JWT token; returns the token if present
-func ParseBearerAuthorizationHeader(c *gin.Context, keyfunc *func(_jwtToken *jwt.Token) (interface{}, error)) (*jwt.Token, error) {
-	authorization := c.GetHeader(authorizationHeader)
+// ParseBearerAuthorizationHeader parses the given bearer authorization token;
+// returns the parsed JWT token if valid
+func ParseBearerAuthorizationHeader(authorization string, keyfunc *func(_jwtToken *jwt.Token) (interface{}, error)) (*jwt.Token, error) {
 	if authorization == "" {
 		return nil, errors.New("no authorization header provided")
 	}
