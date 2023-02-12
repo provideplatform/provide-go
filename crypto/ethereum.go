@@ -78,6 +78,11 @@ const defaultEvmSyncTimeout = time.Second * 5
 var customRpcTimeout *time.Duration
 var customEvmSyncTimeout *time.Duration
 
+// chain ids
+const polygonMainnetChainID = 137
+const polygonMumbaiChainID = 80001
+const sepoliaChainID = 11155111
+
 func rpcTimeout() time.Duration {
 	if customRpcTimeout != nil {
 		return *customRpcTimeout
@@ -488,6 +493,18 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 		kovanConfig := params.GoerliChainConfig
 		kovanConfig.ChainID = chainID
 		return kovanConfig
+	case polygonMainnetChainID:
+		polygonConfig := params.MainnetChainConfig
+		polygonConfig.ChainID = chainID
+		return polygonConfig
+	case polygonMumbaiChainID:
+		polygonConfig := params.MainnetChainConfig
+		polygonConfig.ChainID = chainID
+		return polygonConfig
+	case sepoliaChainID:
+		sepoliaConfig := params.MainnetChainConfig
+		sepoliaConfig.ChainID = chainID
+		return sepoliaConfig
 	}
 
 	return params.MainnetChainConfig
