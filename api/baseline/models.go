@@ -72,6 +72,7 @@ type IssueVerifiableCredentialRequest struct {
 	OrganizationID *uuid.UUID `json:"organization_id,omitempty"`
 	PublicKey      *string    `json:"public_key,omitempty"`
 	Signature      *string    `json:"signature"`
+	WorkgroupID    *uuid.UUID `json:"workgroup_id,omitempty"`
 }
 
 // IssueVerifiableCredentialResponse represents a response to a VC issuance request
