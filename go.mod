@@ -17,7 +17,7 @@ require (
 	github.com/kthomas/go.uuid v1.2.1-0.20190324131420-28d1fa77e9a4
 	github.com/ockam-network/did v0.1.3
 	github.com/vincent-petithory/dataurl v0.0.0-20191104211930-d1553a71de50
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/crypto v0.1.0
 	gopkg.in/dedis/crypto.v0 v0.0.0-20170824083343-8f53a63e87fd
 	gopkg.in/dedis/kyber.v0 v0.0.0-20170824083343-8f53a63e87fd
 )
