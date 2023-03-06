@@ -802,6 +802,27 @@ func CreateTransaction(token string, params map[string]interface{}) (*Transactio
 	return tx, nil
 }
 
+// BroadcastTransaction
+func BroadcastTransaction(token string, params map[string]interface{}) (*Transaction, error) {
+	status, resp, err := InitNChainService(token).Post("transactions/broadcast", params)
+	if err != nil {
+		return nil, err
+	}
+
+	if status != 201 {
+		return nil, fmt.Errorf("failed to broadcast tx; status: %v", status)
+	}
+
+	tx := &Transaction{}
+	raw, _ := json.Marshal(resp)
+	err = json.Unmarshal(raw, &tx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to broadcast tx; status: %v; %s", status, err.Error())
+	}
+
+	return tx, nil
+}
+
 // ListTransactions
 func ListTransactions(token string, params map[string]interface{}) ([]*Transaction, error) {
 	status, resp, err := InitNChainService(token).Get("transactions", params)
