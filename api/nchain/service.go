@@ -814,10 +814,10 @@ func BroadcastTransaction(token string, params map[string]interface{}) (*Transac
 	}
 
 	tx := &Transaction{}
-	raw, _ := json.Marshal(resp)
+	raw, _ := json.MarshalIndent(resp, "", "  ")
 	err = json.Unmarshal(raw, &tx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to broadcast tx; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to broadcast tx; status: %v; %s\n%s", status, err.Error(), string(raw))
 	}
 
 	return tx, nil
