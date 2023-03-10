@@ -1301,6 +1301,38 @@ func EVMGetTokenBalance(rpcClientKey, rpcURL, tokenAddr, addr string, contractAB
 	return balance, nil
 }
 
+// EVMGetTokenDecimals attempts to retrieve the number of decimals supported by an arbitrary token contract
+func EVMGetTokenDecimals(rpcClientKey, rpcURL, from, tokenAddr string) (*uint8, error) {
+	client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
+	if err != nil {
+		return nil, err
+	}
+	_abi, err := abi.JSON(strings.NewReader(string(`{"abi":[{"inputs": [], "name": "decimals", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}]}`)))
+	if err != nil {
+		prvdcommon.Log.Warningf("failed to initialize ABI from contract  params to json; %s", err.Error())
+		return nil, err
+	}
+	to := common.HexToAddress(tokenAddr)
+	msg := ethereum.CallMsg{
+		From:     common.HexToAddress(from),
+		To:       &to,
+		Gas:      0,
+		GasPrice: big.NewInt(0),
+		Value:    nil,
+		Data:     common.FromHex(EVMHashFunctionSelector("decimals()")),
+	}
+	result, _ := client.CallContract(context.TODO(), msg, nil)
+	var decimals *big.Int
+	if method, ok := _abi.Methods["decimals"]; ok {
+		err = method.Outputs.Unpack(&decimals, result)
+		if err != nil {
+			prvdcommon.Log.Warningf("failed to read token decimals from deployed token contract %s; %s", tokenAddr, err.Error())
+		}
+	}
+	decimalsUint8 := uint8(decimals.Uint64())
+	return &decimalsUint8, nil
+}
+
 // EVMGetTokenSymbol attempts to retrieve the symbol of a token presumed to be deployed at the given token contract address
 func EVMGetTokenSymbol(rpcClientKey, rpcURL, from, tokenAddr string, contractABI interface{}) (*string, error) {
 	client, err := EVMDialJsonRpc(rpcClientKey, rpcURL)
