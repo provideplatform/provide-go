@@ -1307,7 +1307,7 @@ func EVMGetTokenDecimals(rpcClientKey, rpcURL, from, tokenAddr string) (*uint8, 
 	if err != nil {
 		return nil, err
 	}
-	_abi, err := abi.JSON(strings.NewReader(string(`{"abi":[{"inputs": [], "name": "decimals", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}]}`)))
+	_abi, err := abi.JSON(strings.NewReader(`[{"inputs": [], "name": "decimals", "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}], "stateMutability": "view", "type": "function"}]`))
 	if err != nil {
 		prvdcommon.Log.Warningf("failed to initialize ABI from contract  params to json; %s", err.Error())
 		return nil, err
