@@ -1322,15 +1322,14 @@ func EVMGetTokenDecimals(rpcClientKey, rpcURL, from, tokenAddr string) (*uint8, 
 		Data:     common.FromHex(EVMHashFunctionSelector("decimals()")),
 	}
 	result, _ := client.CallContract(context.TODO(), msg, nil)
-	var decimals *big.Int
+	var decimals uint8
 	if method, ok := _abi.Methods["decimals"]; ok {
 		err = method.Outputs.Unpack(&decimals, result)
 		if err != nil {
 			prvdcommon.Log.Warningf("failed to read token decimals from deployed token contract %s; %s", tokenAddr, err.Error())
 		}
 	}
-	decimalsUint8 := uint8(decimals.Uint64())
-	return &decimalsUint8, nil
+	return &decimals, nil
 }
 
 // EVMGetTokenSymbol attempts to retrieve the symbol of a token presumed to be deployed at the given token contract address
