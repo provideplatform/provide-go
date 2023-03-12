@@ -736,18 +736,22 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				intval = big.NewInt(int64(valInt64))
 			} else if valFloat64, valFloat64Ok := v.(float64); valFloat64Ok {
 				intval = big.NewInt(int64(valFloat64))
+			} else if str, strOk := v.(string); strOk {
+				intval = new(big.Int)
+				if _, ok := intval.SetString(str, 10); !ok {
+					intval = nil
+				}
 			}
 			if intval != nil {
 				return evmReadInteger(t.GetType().Kind(), intval.Bytes()), nil
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			if val, valOk := v.(string); valOk {
-				intval, err := strconv.Atoi(val)
-				if err != nil {
-					prvdcommon.Log.Warningf("failed to coerce string val %s to integer type in accordance with abi; %s", v, err.Error())
-					return nil, err
+				intval := new(big.Int)
+				if _, ok := intval.SetString(val, 10); !ok {
+					intval = nil
 				}
-				return big.NewInt(int64(intval)), nil
+				return intval, nil
 			}
 			return big.NewInt(int64(v.(int64))), nil
 		case reflect.Float64:
