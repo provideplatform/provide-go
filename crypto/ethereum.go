@@ -276,7 +276,7 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 		}
 
 		args = append(args, param)
-		prvdcommon.Log.Debugf("Coerced encoding of %s abi parameter; value: %s", input.Type.String(), param)
+		prvdcommon.Log.Debugf("coerced encoding of %s abi parameter; value: %s", input.Type.String(), param)
 	}
 
 	encodedArgs, err := method.Inputs.Pack(args...)
@@ -741,6 +741,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				if _, ok := intval.SetString(str, 10); !ok {
 					intval = nil
 				}
+				return intval, nil // this can be returned here... no need to call evmReadInteger()
 			}
 			if intval != nil {
 				return evmReadInteger(t.GetType().Kind(), intval.Bytes()), nil
