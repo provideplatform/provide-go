@@ -754,6 +754,7 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 				}
 				return intval, nil
 			}
+
 			return big.NewInt(int64(v.(int64))), nil
 		case reflect.Float64:
 			return big.NewInt(int64(v.(float64))), nil
@@ -761,9 +762,24 @@ func coerceAbiParameter(t abi.Type, v interface{}) (interface{}, error) {
 			switch v.(type) {
 			case float64:
 				return big.NewInt(int64(v.(float64))), nil
+			case string:
+				intval := new(big.Int)
+				if _, ok := intval.SetString(v.(string), 10); !ok {
+					intval = nil
+				}
+				return intval, nil
 			}
 		default:
-			return evmReadInteger(t.GetType().Kind(), v.([]byte)), nil
+			switch v.(type) {
+			case string:
+				intval := new(big.Int)
+				if _, ok := intval.SetString(v.(string), 10); !ok {
+					intval = nil
+				}
+				return intval, nil
+			default:
+				return evmReadInteger(t.GetType().Kind(), v.([]byte)), nil
+			}
 		}
 	case abi.BoolTy:
 		if boolstr, ok := v.(string); ok {
