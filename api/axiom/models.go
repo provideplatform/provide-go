@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package baseline
+package axiom
 
 import (
 	"encoding/json"

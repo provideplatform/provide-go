@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package baseline
+package axiom
 
 import (
 	"encoding/json"
@@ -25,30 +25,30 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultBaselineHost = "baseline.provide.services"
-const defaultBaselinePath = "api/v1"
-const defaultBaselineScheme = "https"
+const defaultAxiomHost = "axiom.provide.services"
+const defaultAxiomPath = "api/v1"
+const defaultAxiomScheme = "https"
 
-// Service for the baseline api
+// Service for the axiom api
 type Service struct {
 	api.Client
 }
 
-// InitBaselineService convenience method to initialize a `baseline.Service` instance
-func InitBaselineService(token string) *Service {
-	host := defaultBaselineHost
-	if os.Getenv("BASELINE_API_HOST") != "" {
-		host = os.Getenv("BASELINE_API_HOST")
+// InitAxiomService convenience method to initialize a `axiom.Service` instance
+func InitAxiomService(token string) *Service {
+	host := defaultAxiomHost
+	if os.Getenv("AXIOM_API_HOST") != "" {
+		host = os.Getenv("AXIOM_API_HOST")
 	}
 
-	path := defaultBaselinePath
-	if os.Getenv("BASELINE_API_PATH") != "" {
-		path = os.Getenv("BASELINE_API_PATH")
+	path := defaultAxiomPath
+	if os.Getenv("AXIOM_API_PATH") != "" {
+		path = os.Getenv("AXIOM_API_PATH")
 	}
 
-	scheme := defaultBaselineScheme
-	if os.Getenv("BASELINE_API_SCHEME") != "" {
-		scheme = os.Getenv("BASELINE_API_SCHEME")
+	scheme := defaultAxiomScheme
+	if os.Getenv("AXIOM_API_SCHEME") != "" {
+		scheme = os.Getenv("AXIOM_API_SCHEME")
 	}
 
 	return &Service{
@@ -63,7 +63,7 @@ func InitBaselineService(token string) *Service {
 
 // ListMappings lists mappings using the given params
 func ListMappings(token string, params map[string]interface{}) ([]*Mapping, error) {
-	status, resp, err := InitBaselineService(token).Get("mappings", params)
+	status, resp, err := InitAxiomService(token).Get("mappings", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mappings; status: %v; %s", status, err.Error())
 	}
@@ -85,7 +85,7 @@ func ListMappings(token string, params map[string]interface{}) ([]*Mapping, erro
 
 // CreateMapping creates a mapping using the given params
 func CreateMapping(token string, params map[string]interface{}) (*Mapping, error) {
-	status, resp, err := InitBaselineService(token).Post("mappings", params)
+	status, resp, err := InitAxiomService(token).Post("mappings", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mapping; status: %v; %s", status, err.Error())
 	}
@@ -104,7 +104,7 @@ func CreateMapping(token string, params map[string]interface{}) (*Mapping, error
 // UpdateMapping updates a mapping
 func UpdateMapping(token, mappingID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("mappings/%s", mappingID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update mapping; status: %v; %s", status, err.Error())
 	}
@@ -119,7 +119,7 @@ func UpdateMapping(token, mappingID string, params map[string]interface{}) error
 // DeleteMapping deletes a mapping
 func DeleteMapping(token, mappingID string) error {
 	uri := fmt.Sprintf("mappings/%s", mappingID)
-	status, _, err := InitBaselineService(token).Delete(uri)
+	status, _, err := InitAxiomService(token).Delete(uri)
 	if err != nil {
 		return fmt.Errorf("failed to delete mapping; status: %v; %s", status, err.Error())
 	}
@@ -134,7 +134,7 @@ func DeleteMapping(token, mappingID string) error {
 // ListSubjectAccounts lists BPI subject accounts using the given organization and params
 func ListSubjectAccounts(token, organizationID string, params map[string]interface{}) ([]*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list BPI subject accounts; status: %v; %s", status, err.Error())
 	}
@@ -157,7 +157,7 @@ func ListSubjectAccounts(token, organizationID string, params map[string]interfa
 // GetSubjectAccountDetails retrieves details for the given BPI subject account id
 func GetSubjectAccountDetails(token, organizationID, subjectAccountID string, params map[string]interface{}) (*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts/%s", organizationID, subjectAccountID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func GetSubjectAccountDetails(token, organizationID, subjectAccountID string, pa
 // CreateSubjectAccount creates a BPI subject account using the given organization and params
 func CreateSubjectAccount(token, organizationID string, params map[string]interface{}) (*SubjectAccount, error) {
 	uri := fmt.Sprintf("subjects/%s/accounts", organizationID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create BPI subject account; status: %v; %s", status, err.Error())
 	}
@@ -195,7 +195,7 @@ func CreateSubjectAccount(token, organizationID string, params map[string]interf
 // UpdateSubjectAccount updates a BPI subject account
 func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("subjects/%s/accounts/%s", organizationID, subjectAccountID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update BPI subject account; status: %v; %s", status, err.Error())
 	}
@@ -209,7 +209,7 @@ func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params
 
 // ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
 func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, error) {
-	status, resp, err := InitBaselineService(token).Get("workgroups", params)
+	status, resp, err := InitAxiomService(token).Get("workgroups", params)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, 
 // GetWorkgroupDetails retrieves details for the given workgroup id
 func GetWorkgroupDetails(token, workgroupID string, params map[string]interface{}) (*Workgroup, error) {
 	uri := fmt.Sprintf("workgroups/%s", workgroupID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func GetWorkgroupDetails(token, workgroupID string, params map[string]interface{
 
 // CreateWorkgroup initializes a new or previously-joined workgroup on the local baseline stack
 func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, error) {
-	status, resp, err := InitBaselineService(token).Post("workgroups", params)
+	status, resp, err := InitAxiomService(token).Post("workgroups", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create workgroup; status: %v; %s", status, err.Error())
 	}
@@ -273,7 +273,7 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 // UpdateWorkgroup updates a baseline workgroup
 func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workgroups/%s", workgroupID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update workgroup; status: %v; %s", status, err.Error())
 	}
@@ -288,7 +288,7 @@ func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) e
 // FetchWorkgroupAnalytics retrieves analytics data for the given workgroupID
 func FetchWorkgroupAnalytics(token, workgroupID string, params map[string]interface{}) (*WorkgroupDashboardAPIResponse, error) {
 	uri := fmt.Sprintf("workgroups/%s/analytics", workgroupID)
-	status, _, err := InitBaselineService(token).Get(uri, params)
+	status, _, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch workgroup analytics; status: %v; %s", status, err.Error())
 	}
@@ -306,7 +306,7 @@ func FetchWorkgroupAnalytics(token, workgroupID string, params map[string]interf
 
 // ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
 func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, error) {
-	status, resp, err := InitBaselineService(token).Get("workflows", params)
+	status, resp, err := InitAxiomService(token).Get("workflows", params)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, er
 // GetWorkflowDetails retrieves details for the given workflow id
 func GetWorkflowDetails(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
 	uri := fmt.Sprintf("workflows/%s", workflowID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func GetWorkflowDetails(token, workflowID string, params map[string]interface{})
 
 // CreateWorkflow initializes a new workflow on the local baseline stack
 func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, error) {
-	status, resp, err := InitBaselineService(token).Post("workflows", params)
+	status, resp, err := InitAxiomService(token).Post("workflows", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create workflow; status: %v; %s", status, err.Error())
 	}
@@ -366,7 +366,7 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 // UpdateWorkflow updates a baseline workflow
 func UpdateWorkflow(token, workflowID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workflows/%s", workflowID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update workflow; status: %v; %s", status, err.Error())
 	}
@@ -381,7 +381,7 @@ func UpdateWorkflow(token, workflowID string, params map[string]interface{}) err
 // DeployWorkflow deploys a workflow to the specified layer(s), preventing future changes
 func DeployWorkflow(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
 	uri := fmt.Sprintf("workflows/%s/deploy", workflowID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy workflow; status: %v; %s", status, err.Error())
 	}
@@ -400,7 +400,7 @@ func DeployWorkflow(token, workflowID string, params map[string]interface{}) (*W
 // FetchWorkflowVersions returns all of the versions of a given workflow
 func FetchWorkflowVersions(token, workflowID string, params map[string]interface{}) ([]*Workflow, error) {
 	uri := fmt.Sprintf("workflows/%s/versions", workflowID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +423,7 @@ func FetchWorkflowVersions(token, workflowID string, params map[string]interface
 // VersionWorkflow creates a new version of a previously deployed workflow
 func VersionWorkflow(token, workflowID string, params map[string]interface{}) (*Workflow, error) {
 	uri := fmt.Sprintf("workflows/%s/versions", workflowID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +442,7 @@ func VersionWorkflow(token, workflowID string, params map[string]interface{}) (*
 // ListWorksteps retrieves a paginated list of baseline worksteps scoped to the given API token
 func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*
 // GetWorkstepDetails retrieves the details of a workstep
 func GetWorkstepDetails(token, workflowID, workstepID string, params map[string]interface{}) (*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +484,7 @@ func GetWorkstepDetails(token, workflowID, workstepID string, params map[string]
 // CreateWorkstep initializes a new workstep on the local baseline stack
 func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create workstep; status: %v; %s", status, err.Error())
 	}
@@ -503,7 +503,7 @@ func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*W
 // UpdateWorkstep updates a baseline workstep
 func UpdateWorkstep(token, workflowID, workstepID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update workstep; status: %v; %s", status, err.Error())
 	}
@@ -518,7 +518,7 @@ func UpdateWorkstep(token, workflowID, workstepID string, params map[string]inte
 // ExecuteWorkstep executes a specific workstep
 func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]interface{}) (interface{}, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s/execute", workflowID, workstepID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute workstep; status: %v; %s", status, err.Error())
 	}
@@ -532,7 +532,7 @@ func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]int
 
 // SendProtocolMessage is a generic way to dispatch a protocol message
 func SendProtocolMessage(token string, params map[string]interface{}) (interface{}, error) {
-	status, resp, err := InitBaselineService(token).Post("protocol_messages", params)
+	status, resp, err := InitAxiomService(token).Post("protocol_messages", params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dispatch baseline protocol message; status: %v; %s", status, err.Error())
 	}
@@ -546,14 +546,14 @@ func SendProtocolMessage(token string, params map[string]interface{}) (interface
 
 // Status returns the status of the service
 func Status() error {
-	host := defaultBaselineHost
-	if os.Getenv("BASELINE_API_HOST") != "" {
-		host = os.Getenv("BASELINE_API_HOST")
+	host := defaultAxiomHost
+	if os.Getenv("AXIOM_API_HOST") != "" {
+		host = os.Getenv("AXIOM_API_HOST")
 	}
 
-	scheme := defaultBaselineScheme
-	if os.Getenv("BASELINE_API_SCHEME") != "" {
-		scheme = os.Getenv("BASELINE_API_SCHEME")
+	scheme := defaultAxiomScheme
+	if os.Getenv("AXIOM_API_SCHEME") != "" {
+		scheme = os.Getenv("AXIOM_API_SCHEME")
 	}
 
 	service := &Service{
@@ -579,7 +579,7 @@ func Status() error {
 // ListSystems returns the systems for a workgroup
 func ListSystems(token, workgroupID string, params map[string]interface{}) ([]*System, error) {
 	uri := fmt.Sprintf("workgroups/%s/systems", workgroupID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -602,7 +602,7 @@ func ListSystems(token, workgroupID string, params map[string]interface{}) ([]*S
 // GetSystemDetails returns the system details for a workgroup
 func GetSystemDetails(token, workgroupID, systemID string, params map[string]interface{}) (*System, error) {
 	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -621,7 +621,7 @@ func GetSystemDetails(token, workgroupID, systemID string, params map[string]int
 // CreateSystem initializes a new system of record on the local baseline stack
 func CreateSystem(token, workgroupID string, params map[string]interface{}) (*System, error) {
 	uri := fmt.Sprintf("workgroups/%s/systems", workgroupID)
-	status, resp, err := InitBaselineService(token).Post(uri, params)
+	status, resp, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create system; status: %v; %s", status, err.Error())
 	}
@@ -640,7 +640,7 @@ func CreateSystem(token, workgroupID string, params map[string]interface{}) (*Sy
 // UpdateSystem updates a baseline system of record
 func UpdateSystem(token, workgroupID, systemID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
-	status, _, err := InitBaselineService(token).Put(uri, params)
+	status, _, err := InitAxiomService(token).Put(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to update system; status: %v; %s", status, err.Error())
 	}
@@ -655,7 +655,7 @@ func UpdateSystem(token, workgroupID, systemID string, params map[string]interfa
 // DeleteSystem deletes a system
 func DeleteSystem(token, workgroupID, systemID string) error {
 	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
-	status, _, err := InitBaselineService(token).Delete(uri)
+	status, _, err := InitAxiomService(token).Delete(uri)
 	if err != nil {
 		return fmt.Errorf("failed to delete system; status: %v; %s", status, err.Error())
 	}
@@ -670,7 +670,7 @@ func DeleteSystem(token, workgroupID, systemID string) error {
 // ListSchemas returns the schemas from a workgroup system of record
 func ListSchemas(token, workgroupID string, params map[string]interface{}) ([]*Schema, error) {
 	uri := fmt.Sprintf("workgroups/%s/schemas", workgroupID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -693,7 +693,7 @@ func ListSchemas(token, workgroupID string, params map[string]interface{}) ([]*S
 // GetSchemaDetails retrieves details for the given schema id
 func GetSchemaDetails(token, workgroupID, schemaID string, params map[string]interface{}) (*Schema, error) {
 	uri := fmt.Sprintf("workgroups/%s/schemas/%s", workgroupID, schemaID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -711,7 +711,7 @@ func GetSchemaDetails(token, workgroupID, schemaID string, params map[string]int
 
 // SystemReachability returns whether a system of record is a valid tenant and if so, configures said tenant
 func SystemReachability(token string, params map[string]interface{}) error {
-	status, _, err := InitBaselineService(token).Post("systems/reachability", params)
+	status, _, err := InitAxiomService(token).Post("systems/reachability", params)
 	if err != nil {
 		return err
 	}
@@ -726,7 +726,7 @@ func SystemReachability(token string, params map[string]interface{}) error {
 // FetchWorkstepParticipants returns the participants for a given workstep
 func FetchWorkstepParticipants(token, workflowID, workstepID string, params map[string]interface{}) ([]*Participant, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants", workflowID, workstepID)
-	status, resp, err := InitBaselineService(token).Get(uri, params)
+	status, resp, err := InitAxiomService(token).Get(uri, params)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +750,7 @@ func FetchWorkstepParticipants(token, workflowID, workstepID string, params map[
 // CreateWorkstepParticipant adds a participant to a given workstep
 func CreateWorkstepParticipant(token, workflowID, workstepID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants", workflowID, workstepID)
-	status, _, err := InitBaselineService(token).Post(uri, params)
+	status, _, err := InitAxiomService(token).Post(uri, params)
 	if err != nil {
 		return fmt.Errorf("failed to create workstep participant; status: %v; %s", status, err.Error())
 	}
@@ -765,7 +765,7 @@ func CreateWorkstepParticipant(token, workflowID, workstepID string, params map[
 // DeleteWorkstepParticipant removes a participant from a given workstep
 func DeleteWorkstepParticipant(token, workflowID, workstepID, address string) error {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s/participants/%s", workflowID, workstepID, address)
-	status, _, err := InitBaselineService(token).Delete(uri)
+	status, _, err := InitAxiomService(token).Delete(uri)
 	if err != nil {
 		return fmt.Errorf("failed to delete workstep participant; status: %v; %s", status, err.Error())
 	}
