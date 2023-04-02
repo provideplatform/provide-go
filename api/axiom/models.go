@@ -37,7 +37,7 @@ const ProtocolMessageOpcodeSync = "SYNC"
 // BaselineContext represents a collection of BaselineRecord instances in the context of a workflow
 type BaselineContext struct {
 	ID         *uuid.UUID        `sql:"-" json:"id,omitempty"`
-	BaselineID *uuid.UUID        `sql:"-" json:"baseline_id,omitempty"`
+	AxiomID    *uuid.UUID        `sql:"-" json:"axiom_id,omitempty"`
 	Records    []*BaselineRecord `sql:"-" json:"records,omitempty"`
 	Workflow   *WorkflowInstance `sql:"-" json:"-"`
 	WorkflowID *uuid.UUID        `sql:"-" json:"workflow_id"`
@@ -46,11 +46,11 @@ type BaselineContext struct {
 // BaselineRecord represents a link between an object in the internal system of record
 // and the external BaselineContext
 type BaselineRecord struct {
-	ID         *string          `sql:"-" json:"id,omitempty"`
-	BaselineID *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"`
-	Context    *BaselineContext `sql:"-" json:"-"`
-	ContextID  *uuid.UUID       `sql:"-" json:"context_id"`
-	Type       *string          `sql:"-" json:"type"`
+	ID        *string          `sql:"-" json:"id,omitempty"`
+	AxiomID   *uuid.UUID       `sql:"-" json:"axiom_id,omitempty"`
+	Context   *BaselineContext `sql:"-" json:"-"`
+	ContextID *uuid.UUID       `sql:"-" json:"context_id"`
+	Type      *string          `sql:"-" json:"type"`
 }
 
 // Config represents the instance configuration
@@ -124,7 +124,7 @@ type MappingField struct {
 // Message is a proxy-internal wrapper for protocol message handling
 type Message struct {
 	ID              *string          `sql:"-" json:"id,omitempty"`
-	BaselineID      *uuid.UUID       `sql:"-" json:"baseline_id,omitempty"` // optional; when included, can be used to map outbound message just-in-time
+	AxiomID         *uuid.UUID       `sql:"-" json:"axiom_id,omitempty"` // optional; when included, can be used to map outbound message just-in-time
 	Errors          []*api.Error     `sql:"-" json:"errors,omitempty"`
 	MessageID       *string          `sql:"-" json:"message_id,omitempty"`
 	Payload         interface{}      `sql:"-" json:"payload,omitempty"`
@@ -154,14 +154,14 @@ type Participant struct {
 // ProtocolMessage is a baseline protocol message
 // see https://github.com/ethereum-oasis/baseline/blob/master/core/types/src/protocol.ts
 type ProtocolMessage struct {
-	BaselineID *uuid.UUID              `sql:"-" json:"baseline_id,omitempty"`
-	Opcode     *string                 `sql:"-" json:"opcode,omitempty"`
-	Sender     *string                 `sql:"-" json:"sender,omitempty"`
-	Recipient  *string                 `sql:"-" json:"recipient,omitempty"`
-	Shield     *string                 `sql:"-" json:"shield,omitempty"`
-	Signature  *string                 `sql:"-" json:"signature,omitempty"`
-	Type       *string                 `sql:"-" json:"type,omitempty"`
-	Payload    *ProtocolMessagePayload `sql:"-" json:"payload,omitempty"`
+	AxiomID   *uuid.UUID              `sql:"-" json:"axiom_id,omitempty"`
+	Opcode    *string                 `sql:"-" json:"opcode,omitempty"`
+	Sender    *string                 `sql:"-" json:"sender,omitempty"`
+	Recipient *string                 `sql:"-" json:"recipient,omitempty"`
+	Shield    *string                 `sql:"-" json:"shield,omitempty"`
+	Signature *string                 `sql:"-" json:"signature,omitempty"`
+	Type      *string                 `sql:"-" json:"type,omitempty"`
+	Payload   *ProtocolMessagePayload `sql:"-" json:"payload,omitempty"`
 
 	WorkgroupID *uuid.UUID `sql:"-" json:"workgroup_id,omitempty"`
 	WorkflowID  *uuid.UUID `sql:"-" json:"workgroup_id,omitempty"`
