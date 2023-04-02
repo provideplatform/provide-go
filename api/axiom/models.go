@@ -30,27 +30,27 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const ProtocolMessageOpcodeBaseline = "BLINE"
+const ProtocolMessageOpcodeAxiom = "AXIOM"
 const ProtocolMessageOpcodeJoin = "JOIN"
 const ProtocolMessageOpcodeSync = "SYNC"
 
-// BaselineContext represents a collection of BaselineRecord instances in the context of a workflow
-type BaselineContext struct {
+// AxiomContext represents a collection of AxiomRecord instances in the context of a workflow
+type AxiomContext struct {
 	ID         *uuid.UUID        `sql:"-" json:"id,omitempty"`
 	AxiomID    *uuid.UUID        `sql:"-" json:"axiom_id,omitempty"`
-	Records    []*BaselineRecord `sql:"-" json:"records,omitempty"`
+	Records    []*AxiomRecord    `sql:"-" json:"records,omitempty"`
 	Workflow   *WorkflowInstance `sql:"-" json:"-"`
 	WorkflowID *uuid.UUID        `sql:"-" json:"workflow_id"`
 }
 
-// BaselineRecord represents a link between an object in the internal system of record
-// and the external BaselineContext
-type BaselineRecord struct {
-	ID        *string          `sql:"-" json:"id,omitempty"`
-	AxiomID   *uuid.UUID       `sql:"-" json:"axiom_id,omitempty"`
-	Context   *BaselineContext `sql:"-" json:"-"`
-	ContextID *uuid.UUID       `sql:"-" json:"context_id"`
-	Type      *string          `sql:"-" json:"type"`
+// AxiomRecord represents a link between an object in the internal system of record
+// and the external AxiomContext
+type AxiomRecord struct {
+	ID        *string       `sql:"-" json:"id,omitempty"`
+	AxiomID   *uuid.UUID    `sql:"-" json:"axiom_id,omitempty"`
+	Context   *AxiomContext `sql:"-" json:"-"`
+	ContextID *uuid.UUID    `sql:"-" json:"context_id"`
+	Type      *string       `sql:"-" json:"type"`
 }
 
 // Config represents the instance configuration
@@ -188,17 +188,17 @@ type PublicWorkgroupInvitationRequest struct {
 	OrganizationName *string `json:"organization_name"`
 }
 
-// BaselineClaims represent JWT claims encoded within a generic verifiable credential for use with the baseline protocol
-type BaselineClaims struct {
+// AxiomClaims represent JWT claims encoded within a generic verifiable credential for use with the baseline protocol
+type AxiomClaims struct {
 	jwt.MapClaims
 	BPIEndpoint             *string `json:"bpi_endpoint,omitempty"`
 	RegistryContractAddress *string `json:"registry_contract_address"`
 	WorkgroupID             *string `json:"workgroup_id"`
 }
 
-// BaselineInviteClaims represent JWT claims encoded within an verifiable credential representing an invitation
-type BaselineInviteClaims struct {
-	BaselineClaims
+// AxiomInviteClaims represent JWT claims encoded within an verifiable credential representing an invitation
+type AxiomInviteClaims struct {
+	AxiomClaims
 	InvitorBPIEndpoint         *string `json:"invitor_bpi_endpoint,omitempty"`
 	InvitorOrganizationAddress *string `json:"invitor_organization_address"`
 	InvitorSubjectAccountID    *string `json:"invitor_subject_account_id"`
