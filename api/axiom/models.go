@@ -133,12 +133,12 @@ type Message struct {
 	Status          *string          `sql:"-" json:"status,omitempty"`
 	Type            *string          `sql:"-" json:"type,omitempty"`
 
-	// HACK -- convenience ptr ... for access during baselineOutbound()
+	// HACK -- convenience ptr ... for access during axiomOutbound()
 	subjectAccount *SubjectAccount `sql:"-" json:"-"`
 	token          *string         `sql:"-" json:"-"`
 }
 
-// Participant is a party to a baseline workgroup or workflow context
+// Participant is a party to a axiom workgroup or workflow context
 type Participant struct {
 	Metadata          map[string]interface{} `sql:"-" json:"metadata,omitempty"`
 	BPIEndpoint       *string                `sql:"-" json:"bpi_endpoint,omitempty"`
@@ -151,8 +151,8 @@ type Participant struct {
 	Worksteps  []*Workstep  `sql:"-" json:"worksteps,omitempty"`
 }
 
-// ProtocolMessage is a baseline protocol message
-// see https://github.com/ethereum-oasis/baseline/blob/master/core/types/src/protocol.ts
+// ProtocolMessage is a axiom protocol message
+// see https://github.com/ethereum-oasis/axiom/blob/master/core/types/src/protocol.ts
 type ProtocolMessage struct {
 	AxiomID   *uuid.UUID              `sql:"-" json:"axiom_id,omitempty"`
 	Opcode    *string                 `sql:"-" json:"opcode,omitempty"`
@@ -167,12 +167,12 @@ type ProtocolMessage struct {
 	WorkflowID  *uuid.UUID `sql:"-" json:"workgroup_id,omitempty"`
 	WorkstepID  *uuid.UUID `sql:"-" json:"workstep_id,omitempty"`
 
-	// HACK -- convenience ptr ... for access during baselineInbound()
+	// HACK -- convenience ptr ... for access during axiomInbound()
 	subjectAccount *SubjectAccount `sql:"-" json:"-"`
 	token          *string         `sql:"-" json:"-"`
 }
 
-// ProtocolMessagePayload is a baseline protocol message payload
+// ProtocolMessagePayload is a axiom protocol message payload
 type ProtocolMessagePayload struct {
 	Object  map[string]interface{} `sql:"-" json:"object,omitempty"`
 	Proof   *string                `sql:"-" json:"proof,omitempty"`
@@ -188,7 +188,7 @@ type PublicWorkgroupInvitationRequest struct {
 	OrganizationName *string `json:"organization_name"`
 }
 
-// AxiomClaims represent JWT claims encoded within a generic verifiable credential for use with the baseline protocol
+// AxiomClaims represent JWT claims encoded within a generic verifiable credential for use with the axiom protocol
 type AxiomClaims struct {
 	jwt.MapClaims
 	BPIEndpoint             *string `json:"bpi_endpoint,omitempty"`
@@ -261,7 +261,7 @@ type ClaimParams struct {
 	Workgroup                *Workgroup `json:"workgroup"`
 }
 
-// SubjectAccount is a baseline BPI Subject Account per the specification
+// SubjectAccount is a axiom BPI Subject Account per the specification
 type SubjectAccount struct {
 	api.ModelWithDID
 	SubjectID *string    `json:"subject_id"`
@@ -292,13 +292,13 @@ type SubjectAccountMetadata struct {
 	// Counterparties are the default counterparties
 	Counterparties []*Participant `sql:"-" json:"counterparties,omitempty"`
 
-	// NetworkID is the baseline network id
+	// NetworkID is the axiom network id
 	NetworkID *string `json:"network_id,omitempty"`
 
-	// OrganizationAddress is the baseline organization address
+	// OrganizationAddress is the axiom organization address
 	OrganizationAddress *string `json:"organization_address,omitempty"`
 
-	// OrganizationDomain is the baseline organization domain
+	// OrganizationDomain is the axiom organization domain
 	OrganizationDomain *string `json:"organization_domain,omitempty"`
 
 	// OrganizationID is the id of the org
@@ -307,13 +307,13 @@ type SubjectAccountMetadata struct {
 	// OrganizationMessagingEndpoint is the public organziation messaging endpoint
 	OrganizationMessagingEndpoint *string `json:"organization_messaging_endpoint,omitempty"`
 
-	// OrganizationProxyEndpoint is the configured endpoint for the baseline proxy REST API
+	// OrganizationProxyEndpoint is the configured endpoint for the axiom proxy REST API
 	OrganizationProxyEndpoint *string `json:"organization_proxy_endpoint,omitempty"`
 
 	// OrganizationRefreshToken is the refresh token for the org
 	OrganizationRefreshToken *string `json:"organization_refresh_token,omitempty"`
 
-	// OrganizationWebsocketEndpoint is the configured endpoint for the baseline websocket
+	// OrganizationWebsocketEndpoint is the configured endpoint for the axiom websocket
 	OrganizationWebsocketEndpoint *string `json:"organization_websocket_endpoint,omitempty"`
 
 	// RegistryContractAddress is a contract address
@@ -332,7 +332,7 @@ type SubjectAccountMetadata struct {
 	Vault *vault.Vault `sql:"-" json:"-"`
 }
 
-// Workgroup is a baseline workgroup context
+// Workgroup is a axiom workgroup context
 type Workgroup struct {
 	api.Model
 	Participants       []*Participant `sql:"-" json:"participants,omitempty"`
@@ -349,7 +349,7 @@ type Workgroup struct {
 	OrganizationID *uuid.UUID  `json:"-"`
 }
 
-// Workflow is a baseline workflow prototype
+// Workflow is a axiom workflow prototype
 type Workflow struct {
 	api.Model
 	DeployedAt *time.Time       `json:"deployed_at"`
@@ -375,14 +375,14 @@ type WorkflowVersion struct {
 	Version           string    `json:"version"`
 }
 
-// WorkflowInstance is a baseline workflow instance
+// WorkflowInstance is a axiom workflow instance
 type WorkflowInstance struct {
 	Workflow
 	WorkflowID *uuid.UUID          `json:"workflow_id,omitempty"` // references the workflow prototype identifier
 	Worksteps  []*WorkstepInstance `json:"worksteps,omitempty"`
 }
 
-// Workstep is a baseline workstep context
+// Workstep is a axiom workstep context
 type Workstep struct {
 	api.Model
 	Name            *string          `json:"name"`
@@ -403,7 +403,7 @@ type Workstep struct {
 	userInputCardinality bool `json:"-"`
 }
 
-// WorkstepInstance is a baseline workstep instance
+// WorkstepInstance is a axiom workstep instance
 type WorkstepInstance struct {
 	Workstep
 	WorkstepID *uuid.UUID `json:"workstep_id,omitempty"` // references the workstep prototype identifier

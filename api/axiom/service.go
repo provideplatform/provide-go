@@ -207,7 +207,7 @@ func UpdateSubjectAccount(token, organizationID, subjectAccountID string, params
 	return nil
 }
 
-// ListWorkgroups retrieves a paginated list of baseline workgroups scoped to the given API token
+// ListWorkgroups retrieves a paginated list of axiom workgroups scoped to the given API token
 func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, error) {
 	status, resp, err := InitAxiomService(token).Get("workgroups", params)
 	if err != nil {
@@ -215,7 +215,7 @@ func ListWorkgroups(token string, params map[string]interface{}) ([]*Workgroup, 
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workgroups; status: %v", status)
+		return nil, fmt.Errorf("failed to list axiom workgroups; status: %v", status)
 	}
 
 	workgroups := make([]*Workgroup, 0)
@@ -248,7 +248,7 @@ func GetWorkgroupDetails(token, workgroupID string, params map[string]interface{
 	return workgroup, nil
 }
 
-// CreateWorkgroup initializes a new or previously-joined workgroup on the local baseline stack
+// CreateWorkgroup initializes a new or previously-joined workgroup on the local axiom stack
 func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, error) {
 	status, resp, err := InitAxiomService(token).Post("workgroups", params)
 	if err != nil {
@@ -270,7 +270,7 @@ func CreateWorkgroup(token string, params map[string]interface{}) (*Workgroup, e
 	return nil, nil
 }
 
-// UpdateWorkgroup updates a baseline workgroup
+// UpdateWorkgroup updates a axiom workgroup
 func UpdateWorkgroup(token, workgroupID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workgroups/%s", workgroupID)
 	status, _, err := InitAxiomService(token).Put(uri, params)
@@ -304,7 +304,7 @@ func FetchWorkgroupAnalytics(token, workgroupID string, params map[string]interf
 	return &analytics, nil
 }
 
-// ListWorkflows retrieves a paginated list of baseline workflows scoped to the given API token
+// ListWorkflows retrieves a paginated list of axiom workflows scoped to the given API token
 func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, error) {
 	status, resp, err := InitAxiomService(token).Get("workflows", params)
 	if err != nil {
@@ -312,7 +312,7 @@ func ListWorkflows(token string, params map[string]interface{}) ([]*Workflow, er
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workflows; status: %v", status)
+		return nil, fmt.Errorf("failed to list axiom workflows; status: %v", status)
 	}
 
 	workflows := make([]*Workflow, 0)
@@ -345,7 +345,7 @@ func GetWorkflowDetails(token, workflowID string, params map[string]interface{})
 	return workflow, nil
 }
 
-// CreateWorkflow initializes a new workflow on the local baseline stack
+// CreateWorkflow initializes a new workflow on the local axiom stack
 func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, error) {
 	status, resp, err := InitAxiomService(token).Post("workflows", params)
 	if err != nil {
@@ -363,7 +363,7 @@ func CreateWorkflow(token string, params map[string]interface{}) (*Workflow, err
 	return workflow, nil
 }
 
-// UpdateWorkflow updates a baseline workflow
+// UpdateWorkflow updates a axiom workflow
 func UpdateWorkflow(token, workflowID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workflows/%s", workflowID)
 	status, _, err := InitAxiomService(token).Put(uri, params)
@@ -406,7 +406,7 @@ func FetchWorkflowVersions(token, workflowID string, params map[string]interface
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline workflow versions; status: %v", status)
+		return nil, fmt.Errorf("failed to list axiom workflow versions; status: %v", status)
 	}
 
 	workflows := make([]*Workflow, 0)
@@ -439,7 +439,7 @@ func VersionWorkflow(token, workflowID string, params map[string]interface{}) (*
 	return workflow, nil
 }
 
-// ListWorksteps retrieves a paginated list of baseline worksteps scoped to the given API token
+// ListWorksteps retrieves a paginated list of axiom worksteps scoped to the given API token
 func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
 	status, resp, err := InitAxiomService(token).Get(uri, params)
@@ -448,7 +448,7 @@ func ListWorksteps(token, workflowID string, params map[string]interface{}) ([]*
 	}
 
 	if status != 200 {
-		return nil, fmt.Errorf("failed to list baseline worksteps; status: %v", status)
+		return nil, fmt.Errorf("failed to list axiom worksteps; status: %v", status)
 	}
 
 	worksteps := make([]*Workstep, 0)
@@ -481,7 +481,7 @@ func GetWorkstepDetails(token, workflowID, workstepID string, params map[string]
 	return workstep, nil
 }
 
-// CreateWorkstep initializes a new workstep on the local baseline stack
+// CreateWorkstep initializes a new workstep on the local axiom stack
 func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*Workstep, error) {
 	uri := fmt.Sprintf("workflows/%s/worksteps", workflowID)
 	status, resp, err := InitAxiomService(token).Post(uri, params)
@@ -500,7 +500,7 @@ func CreateWorkstep(token, workflowID string, params map[string]interface{}) (*W
 	return workstep, nil
 }
 
-// UpdateWorkstep updates a baseline workstep
+// UpdateWorkstep updates a axiom workstep
 func UpdateWorkstep(token, workflowID, workstepID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workflows/%s/worksteps/%s", workflowID, workstepID)
 	status, _, err := InitAxiomService(token).Put(uri, params)
@@ -534,11 +534,11 @@ func ExecuteWorkstep(token, workflowID, workstepID string, params map[string]int
 func SendProtocolMessage(token string, params map[string]interface{}) (interface{}, error) {
 	status, resp, err := InitAxiomService(token).Post("protocol_messages", params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to dispatch baseline protocol message; status: %v; %s", status, err.Error())
+		return nil, fmt.Errorf("failed to dispatch axiom protocol message; status: %v; %s", status, err.Error())
 	}
 
 	if status != 202 {
-		return nil, fmt.Errorf("failed to dispatch baseline protocol message; status: %v", status)
+		return nil, fmt.Errorf("failed to dispatch axiom protocol message; status: %v", status)
 	}
 
 	return resp, nil
@@ -618,7 +618,7 @@ func GetSystemDetails(token, workgroupID, systemID string, params map[string]int
 	return &system, nil
 }
 
-// CreateSystem initializes a new system of record on the local baseline stack
+// CreateSystem initializes a new system of record on the local axiom stack
 func CreateSystem(token, workgroupID string, params map[string]interface{}) (*System, error) {
 	uri := fmt.Sprintf("workgroups/%s/systems", workgroupID)
 	status, resp, err := InitAxiomService(token).Post(uri, params)
@@ -637,7 +637,7 @@ func CreateSystem(token, workgroupID string, params map[string]interface{}) (*Sy
 	return &system, nil
 }
 
-// UpdateSystem updates a baseline system of record
+// UpdateSystem updates a axiom system of record
 func UpdateSystem(token, workgroupID, systemID string, params map[string]interface{}) error {
 	uri := fmt.Sprintf("workgroups/%s/systems/%s", workgroupID, systemID)
 	status, _, err := InitAxiomService(token).Put(uri, params)
