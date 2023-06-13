@@ -83,6 +83,7 @@ var customEvmSyncTimeout *time.Duration
 const polygonMainnetChainID = 137
 const polygonMumbaiChainID = 80001
 const sepoliaChainID = 11155111
+const celoAlfajoresChainID = 44787
 
 func rpcTimeout() time.Duration {
 	if customRpcTimeout != nil {
@@ -506,6 +507,10 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 		sepoliaConfig := params.MainnetChainConfig
 		sepoliaConfig.ChainID = chainID
 		return sepoliaConfig
+	case celoAlfajoresChainID:
+		celoAlfajoresConfig := params.MainnetChainConfig
+		celoAlfajoresConfig.ChainID = chainID
+		return celoAlfajoresConfig
 	}
 
 	return params.MainnetChainConfig
