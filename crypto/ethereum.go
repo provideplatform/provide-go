@@ -274,6 +274,10 @@ func EVMEncodeABI(method *abi.Method, params ...interface{}) ([]byte, error) {
 			}
 		default:
 			param, _ = coerceAbiParameter(input.Type, params[i])
+
+			if strings.EqualFold(input.Type.String(), "uint8") && param == nil {
+				param = uint8(0)
+			}
 		}
 
 		args = append(args, param)
