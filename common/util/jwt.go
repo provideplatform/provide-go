@@ -50,10 +50,10 @@ const authorizationHeader = "authorization"
 
 const defaultJWTApplicationClaimsKey = "prvd"
 const defaultJWTNatsClaimsKey = "nats"
-const defaultJWTAuthorizationAudience = "https://provide.services/api/v1"
-const defaultJWTAuthorizationIssuer = "https://ident.provide.services"
+const defaultJWTAuthorizationAudience = "https://provide.technology/api/v1"
+const defaultJWTAuthorizationIssuer = "https://ident.provide.technology"
 const defaultJWTAuthorizationTTL = time.Hour * 24
-const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
+const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.technology"
 const defaultTokenSigningKeyspec = "RSA-4096"
 
 const requireJWTSigningKeyTickerInterval = time.Millisecond * 2500
