@@ -32,9 +32,9 @@ func ResolveCapabilitiesManifest() (map[string]interface{}, error) {
 	for {
 		common.Log.Tracef("attempting to fetch capabilities manifest (attempt #%d)", i)
 		client := &api.Client{
-			Host:   "s3.amazonaws.com",
+			Host:   "prvd.blob.core.windows.net",
 			Scheme: "https",
-			Path:   "static.provide.services/capabilities",
+			Path:   "static/capabilities",
 		}
 
 		_, resp, err := client.Get("provide-capabilities-manifest.json", map[string]interface{}{})
