@@ -18,11 +18,15 @@ package util
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	selfsignedcert "github.com/kthomas/go-self-signed-cert"
+	uuid "github.com/kthomas/go.uuid"
 	common "github.com/provideplatform/provide-go/common"
 )
 
@@ -37,7 +41,7 @@ var (
 	// CertificatePath is the SSL certificate path used by HTTPS listener
 	CertificatePath string
 
-	// PrivateKeyPath is the private key used by HTTPS listener
+	// PrivateKeyPath is the private key path used by HTTPS listener
 	PrivateKeyPath string
 
 	// ServeTLS is true when CertificatePath and PrivateKeyPath are valid
@@ -80,11 +84,46 @@ func TrackAPICalls() gin.HandlerFunc {
 }
 
 func requireTLSConfiguration() {
+	certificate := os.Getenv("TLS_CERTIFICATE")
 	certificatePath := os.Getenv("TLS_CERTIFICATE_PATH")
+
 	privateKeyPath := os.Getenv("TLS_PRIVATE_KEY_PATH")
+	privateKey := os.Getenv("TLS_PRIVATE_KEY")
+
 	if certificatePath != "" && privateKeyPath != "" {
+		if certificate != "" || privateKey != "" {
+			log.Printf("ambiguous TLS configuration provided")
+			os.Exit(1)
+		}
+
 		CertificatePath = certificatePath
 		PrivateKeyPath = privateKeyPath
+		ServeTLS = true
+	} else if certificate != "" && privateKey != "" {
+		if certificatePath != "" || privateKeyPath != "" {
+			log.Printf("ambiguous TLS configuration provided")
+			os.Exit(1)
+		}
+
+		uuidStr, _ := uuid.NewV4()
+
+		certPath := append([]string{os.TempDir()}, fmt.Sprintf(".%s.server.crt", uuidStr))
+		keyPath := append([]string{os.TempDir()}, fmt.Sprintf(".%s.server.key", uuidStr))
+
+		CertificatePath = filepath.FromSlash(strings.ReplaceAll(filepath.Join(certPath...), string(os.PathSeparator), "/"))
+		err := os.WriteFile(CertificatePath, []byte(certificate), 0600)
+		if err != nil {
+			log.Printf("failed to write TLS certificate to temporary file; %s", err.Error())
+			os.Exit(1)
+		}
+
+		PrivateKeyPath = filepath.FromSlash(strings.ReplaceAll(filepath.Join(keyPath...), string(os.PathSeparator), "/"))
+		err = os.WriteFile(PrivateKeyPath, []byte(privateKey), 0600)
+		if err != nil {
+			log.Printf("failed to write TLS private key to temporary file; %s", err.Error())
+			os.Exit(1)
+		}
+
 		ServeTLS = true
 	} else if os.Getenv("REQUIRE_TLS") == "true" {
 		privKeyPath, certPath, err := selfsignedcert.GenerateToDisk([]string{})
