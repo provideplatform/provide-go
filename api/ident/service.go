@@ -25,7 +25,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultIdentHost = "ident.provide.services"
+const defaultIdentHost = "ident.provide.technology"
 const defaultIdentPath = "api/v1"
 const defaultIdentScheme = "https"
 

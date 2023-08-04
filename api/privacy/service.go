@@ -25,7 +25,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultPrivacyHost = "privacy.provide.services"
+const defaultPrivacyHost = "privacy.provide.technology"
 const defaultPrivacyPath = "api/v1"
 const defaultPrivacyScheme = "https"
 
