@@ -67,13 +67,18 @@ func TrackAPICalls() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			var subject string
-			appID := AuthorizedSubjectID(c, "application")
-			if appID != nil {
-				subject = fmt.Sprintf("application:%s", appID)
+			orgID := AuthorizedSubjectID(c, "organization")
+			if orgID != nil {
+				subject = fmt.Sprintf("organization:%s", orgID)
 			} else {
-				userID := AuthorizedSubjectID(c, "user")
-				if userID != nil {
-					subject = fmt.Sprintf("user|%s", userID)
+				appID := AuthorizedSubjectID(c, "application")
+				if appID != nil {
+					subject = fmt.Sprintf("application:%s", appID)
+				} else {
+					userID := AuthorizedSubjectID(c, "user")
+					if userID != nil {
+						subject = fmt.Sprintf("user|%s", userID)
+					}
 				}
 			}
 
