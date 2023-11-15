@@ -25,7 +25,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultC2Host = "c2.provide.technology"
+const defaultC2Host = "c2.provide.services"
 const defaultC2Path = "api/v1"
 const defaultC2Scheme = "https"
 

@@ -25,7 +25,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultAxiomHost = "axiom.provide.technology"
+const defaultAxiomHost = "axiom.provide.services"
 const defaultAxiomPath = "api/v1"
 const defaultAxiomScheme = "https"
 
