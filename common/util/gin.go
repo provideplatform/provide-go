@@ -116,14 +116,14 @@ func requireTLSConfiguration() {
 		keyPath := append([]string{os.TempDir()}, fmt.Sprintf(".%s.server.key", uuidStr))
 
 		CertificatePath = filepath.FromSlash(strings.ReplaceAll(filepath.Join(certPath...), string(os.PathSeparator), "/"))
-		err := os.WriteFile(CertificatePath, []byte(certificate), 0600)
+		err := os.WriteFile(CertificatePath, []byte(strings.ReplaceAll(certificate, "\\n", "\n")), 0600)
 		if err != nil {
 			log.Printf("failed to write TLS certificate to temporary file; %s", err.Error())
 			os.Exit(1)
 		}
 
 		PrivateKeyPath = filepath.FromSlash(strings.ReplaceAll(filepath.Join(keyPath...), string(os.PathSeparator), "/"))
-		err = os.WriteFile(PrivateKeyPath, []byte(privateKey), 0600)
+		err = os.WriteFile(PrivateKeyPath, []byte(strings.ReplaceAll(privateKey, "\\n", "\n")), 0600)
 		if err != nil {
 			log.Printf("failed to write TLS private key to temporary file; %s", err.Error())
 			os.Exit(1)
