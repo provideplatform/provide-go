@@ -110,7 +110,7 @@ func requireTLSConfiguration() {
 			os.Exit(1)
 		}
 
-		uuidStr, _ := uuid.NewV4()
+		uuidStr := uuid.NewV4()
 
 		certPath := append([]string{os.TempDir()}, fmt.Sprintf(".%s.server.crt", uuidStr))
 		keyPath := append([]string{os.TempDir()}, fmt.Sprintf(".%s.server.key", uuidStr))

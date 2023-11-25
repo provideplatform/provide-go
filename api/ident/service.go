@@ -17,8 +17,10 @@
 package ident
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/provideplatform/provide-go/api"
@@ -833,7 +835,13 @@ func GetJWKs() ([]*JSONWebKey, error) {
 		},
 	}
 
-	status, resp, err := service.Get(".well-known/keys", map[string]interface{}{})
+	tlsClientConfig := &tls.Config{}
+	hostIP := net.ParseIP(host)
+	if hostIP != nil && hostIP.IsPrivate() {
+		tlsClientConfig.InsecureSkipVerify = false
+	}
+
+	status, resp, err := service.GetWithTLSClientConfig(".well-known/keys", map[string]interface{}{}, tlsClientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch well-known JWKs; %s", err.Error())
 	}

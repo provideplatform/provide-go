@@ -175,11 +175,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		},
 		Timeout: rpcTimeout(),
 	}
-	id, err := uuid.NewV4()
-	if err != nil {
-		prvdcommon.Log.Warningf("failed to generate UUID for JSON-RPC request; %s", err.Error())
-		return err
-	}
+	id := uuid.NewV4()
 	payload := map[string]interface{}{
 		"method":  method,
 		"params":  params,
@@ -487,14 +483,8 @@ func EVMChainConfigFactory(chainID *big.Int) *params.ChainConfig {
 	switch chainID.Uint64() {
 	case params.MainnetChainConfig.ChainID.Uint64():
 		return params.MainnetChainConfig
-	case params.RopstenChainConfig.ChainID.Uint64():
-		return params.RopstenChainConfig
-	case params.RinkebyChainConfig.ChainID.Uint64():
-		return params.RinkebyChainConfig
 	case params.GoerliChainConfig.ChainID.Uint64():
 		return params.GoerliChainConfig
-	case params.YoloV1ChainConfig.ChainID.Uint64():
-		return params.YoloV1ChainConfig
 	case kovanChainID: // HACK
 		kovanConfig := params.GoerliChainConfig
 		kovanConfig.ChainID = chainID
@@ -547,8 +537,13 @@ func EVMTxFactory(
 		return nil, nil, nil, err
 	}
 
+	timestamp, err := EVMGetBlockTimestamp(rpcClientKey, rpcURL, block)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	chainParams := EVMChainConfigFactory(chainID)
-	signer := types.MakeSigner(chainParams, big.NewInt(int64(block)))
+	signer := types.MakeSigner(chainParams, big.NewInt(int64(block)), timestamp)
 
 	if nonce == nil {
 		pendingNonce, err := client.PendingNonceAt(context.TODO(), common.HexToAddress(from))
@@ -1122,6 +1117,23 @@ func EVMGetBlockByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*api.
 	return jsonRPCResponse, err
 }
 
+// EVMGetBlockTimestamp retrieves a block timestamp (seconds since epoch time) for the given block by number
+func EVMGetBlockTimestamp(rpcClientKey, rpcURL string, blockNumber uint64) (uint64, error) {
+	resp, err := EVMGetLatestBlock(rpcClientKey, rpcURL)
+	if err != nil {
+		return 0, err
+	}
+	blockTimestampStr, blockTimestampStrOk := resp.Result.(map[string]interface{})["timestamp"].(string)
+	if !blockTimestampStrOk {
+		return 0, errors.New("unable to parse block timestamp from JSON-RPC response")
+	}
+	blockTimestamp, err := hexutil.DecodeUint64(blockTimestampStr)
+	if err != nil {
+		return 0, fmt.Errorf("unable to decode block timestamp hex; %s", err.Error())
+	}
+	return blockTimestamp, nil
+}
+
 // EVMGetHeaderByNumber retrieves a given block header by number
 func EVMGetHeaderByNumber(rpcClientKey, rpcURL string, blockNumber uint64) (*api.EthereumJsonRpcResponse, error) {
 	var jsonRPCResponse = &api.EthereumJsonRpcResponse{}
@@ -1319,8 +1331,17 @@ func EVMGetTokenBalance(rpcClientKey, rpcURL, tokenAddr, addr string, contractAB
 	}
 	result, _ := client.CallContract(context.TODO(), msg, nil)
 	if method, ok := abi.Methods["balanceOf"]; ok {
-		method.Outputs.Unpack(&balance, result)
-		if balance != nil {
+		_balance, err := method.Outputs.Unpack(result)
+		if err != nil {
+			prvdcommon.Log.Warningf("unable to read balance of unsupported token contract address: %s", tokenAddr)
+			return nil, err
+		} else if len(_balance) != 1 {
+			prvdcommon.Log.Warningf("unable to read balance of unsupported token contract address: %s", tokenAddr)
+			return nil, fmt.Errorf("unable to read balance of unsupported token contract address: %s", tokenAddr)
+		}
+
+		if bal, ok := _balance[0].(*big.Int); ok {
+			balance = bal
 			symbol, _ := EVMGetTokenSymbol(rpcClientKey, rpcURL, addr, tokenAddr, contractABI)
 			if symbol != nil {
 				prvdcommon.Log.Debugf("read %s token balance (%v) from token contract address: %s", *symbol, balance, addr)
@@ -1355,9 +1376,17 @@ func EVMGetTokenDecimals(rpcClientKey, rpcURL, from, tokenAddr string) (*uint8, 
 	result, _ := client.CallContract(context.TODO(), msg, nil)
 	var decimals uint8
 	if method, ok := _abi.Methods["decimals"]; ok {
-		err = method.Outputs.Unpack(&decimals, result)
+		_decimals, err := method.Outputs.Unpack(result)
 		if err != nil {
 			prvdcommon.Log.Warningf("failed to read token decimals from deployed token contract %s; %s", tokenAddr, err.Error())
+			return nil, err
+		} else if len(_decimals) != 1 {
+			prvdcommon.Log.Warningf("failed to read token decimals from deployed token contract %s; %s", tokenAddr, err.Error())
+			return nil, fmt.Errorf("failed to read token decimals from deployed token contract %s; %s", tokenAddr, err.Error())
+		}
+
+		if dec, ok := _decimals[0].(*big.Int); ok {
+			decimals = uint8(dec.Int64())
 		}
 	}
 	return &decimals, nil
@@ -1385,10 +1414,16 @@ func EVMGetTokenSymbol(rpcClientKey, rpcURL, from, tokenAddr string, contractABI
 	result, _ := client.CallContract(context.TODO(), msg, nil)
 	var symbol string
 	if method, ok := _abi.Methods["symbol"]; ok {
-		err = method.Outputs.Unpack(&symbol, result)
+		_symbol, err := method.Outputs.Unpack(result)
 		if err != nil {
 			prvdcommon.Log.Warningf("failed to read token symbol from deployed token contract %s; %s", tokenAddr, err.Error())
+			return nil, err
+		} else if len(_symbol) != 1 {
+			prvdcommon.Log.Warningf("failed to read token symbol from deployed token contract %s; %s", tokenAddr, err.Error())
+			return nil, fmt.Errorf("failed to read token symbol from deployed token contract %s; %s", tokenAddr, err.Error())
 		}
+
+		symbol = fmt.Sprint(_symbol[0])
 	}
 	return prvdcommon.StringOrNil(symbol), nil
 }
