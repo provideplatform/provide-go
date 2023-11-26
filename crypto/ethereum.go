@@ -175,7 +175,7 @@ func EVMInvokeJsonRpcClient(rpcClientKey, rpcURL, method string, params []interf
 		},
 		Timeout: rpcTimeout(),
 	}
-	id := uuid.NewV4()
+	id, _ := uuid.NewV4()
 	payload := map[string]interface{}{
 		"method":  method,
 		"params":  params,
