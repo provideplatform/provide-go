@@ -838,7 +838,7 @@ func GetJWKs() ([]*JSONWebKey, error) {
 	tlsClientConfig := &tls.Config{}
 	hostIP := net.ParseIP(host)
 	if hostIP != nil && hostIP.IsPrivate() {
-		tlsClientConfig.InsecureSkipVerify = false
+		tlsClientConfig.InsecureSkipVerify = true
 	}
 
 	status, resp, err := service.GetWithTLSClientConfig(".well-known/keys", map[string]interface{}{}, tlsClientConfig)
