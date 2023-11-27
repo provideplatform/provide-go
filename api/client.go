@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -155,11 +156,12 @@ func (c *Client) sendRequest(
 	contentType string,
 	params map[string]interface{},
 ) (resp *http.Response, err error) {
-	return c.sendRequestWithTLSClientConfig(method, urlString, contentType, params,
-		&tls.Config{
-			InsecureSkipVerify: false,
-		},
-	)
+	tlsClientConfig, err := c.tlsClientConfigForURL(urlString)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.sendRequestWithTLSClientConfig(method, urlString, contentType, params, tlsClientConfig)
 }
 
 func (c *Client) sendRequestWithTLSClientConfig(
@@ -280,6 +282,25 @@ func (c *Client) sendRequestWithTLSClientConfig(
 
 	req.Header = headers
 	return client.Do(req)
+}
+
+// TODO -- optimize: cache URL => tls config in a map so lookup happens once
+func (c *Client) tlsClientConfigForURL(urlString string) (*tls.Config, error) {
+	tlsClientConfig := &tls.Config{
+		InsecureSkipVerify: false,
+	}
+
+	_url, err := url.Parse(urlString)
+	if err != nil {
+		return nil, err
+	}
+
+	hostIP := net.ParseIP(_url.Hostname())
+	if hostIP != nil && hostIP.IsPrivate() {
+		tlsClientConfig.InsecureSkipVerify = true
+	}
+
+	return tlsClientConfig, nil
 }
 
 // Get constructs and synchronously sends an API GET request

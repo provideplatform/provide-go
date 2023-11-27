@@ -32,14 +32,14 @@ type AutoIncrementingModel struct {
 	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
-// Model base class with uuid v4 primary key id
+// Model base class with uuid v4 primary key
 type Model struct {
 	ID        uuid.UUID `sql:"primary_key;type:uuid;default:uuid_generate_v4()" json:"id"`
 	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at,omitempty"`
 	Errors    []*Error  `sql:"-" json:"errors,omitempty"`
 }
 
-// Model base class with text primary key id
+// ModelWithDID base class with string-based primary key for DID support
 type ModelWithDID struct {
 	ID        *string   `sql:"primary_key" json:"id"`
 	CreatedAt time.Time `sql:"not null;default:now()" json:"created_at,omitempty"`
