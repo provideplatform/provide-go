@@ -30,9 +30,9 @@ import (
 const defaultzApplicationClaimsKey = "prvd"
 const defaultJWTNatsClaimsKey = "nats"
 const defaultJWTAuthorizationAudience = "https://provide.technology/api/v1"
-const defaultJWTAuthorizationIssuer = "https://ident.provide.services"
+const defaultJWTAuthorizationIssuer = "https://ident.provide.technology"
 const defaultJWTAuthorizationTTL = time.Hour * 24
-const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.services"
+const defaultNatsJWTAuthorizationAudience = "https://websocket.provide.technology"
 
 var (
 	// Log is the configured logger

@@ -26,7 +26,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultNChainHost = "nchain.provide.services"
+const defaultNChainHost = "nchain.provide.technology"
 const defaultNChainPath = "api/v1"
 const defaultNChainScheme = "https"
 

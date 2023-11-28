@@ -25,7 +25,7 @@ import (
 	"github.com/provideplatform/provide-go/common"
 )
 
-const defaultVaultHost = "vault.provide.services"
+const defaultVaultHost = "vault.provide.technology"
 const defaultVaultPath = "api/v1"
 const defaultVaultScheme = "https"
 
